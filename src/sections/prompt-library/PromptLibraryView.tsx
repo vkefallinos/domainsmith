@@ -1,6 +1,6 @@
 import data from '@/../product/sections/prompt-library/data.json'
 import { PromptLibrary } from './components/PromptLibrary'
-import type { PromptLibraryProps } from '@/../product/sections/prompt-library/types'
+import type { Directory, PromptFragment } from '@/../product/sections/prompt-library/types'
 
 // This is a preview wrapper for Design OS only
 // It imports sample data and feeds it to the props-based component
@@ -45,8 +45,8 @@ export default function PromptLibraryPreview() {
 
   return (
     <PromptLibrary
-      fileSystem={data.fileSystem}
-      selectedFile={data.selectedFile}
+      fileSystem={data.fileSystem as Directory}
+      selectedFile={data.selectedFile as PromptFragment | null}
       expandedFolders={data.expandedFolders}
       unsavedChanges={data.unsavedChanges}
       onSelectFile={handleSelectFile}

@@ -2,12 +2,13 @@
 
 import data from '@/../product/sections/workspaces/data.json'
 import { Workspaces } from './components/Workspaces'
+import type { WorkspaceUser, RoleDefinition } from '@/../product/sections/workspaces/types'
 
 export default function WorkspacesPreview() {
   return (
     <Workspaces
-      users={data.workspaceUsers}
-      roles={data.roles}
+      users={data.workspaceUsers as WorkspaceUser[]}
+      roles={data.roles as RoleDefinition[]}
       selectedUserId={data.workspaceUsers[0].id}
       searchQuery=""
       onSelectUser={(id) => console.log('Selected user:', id)}

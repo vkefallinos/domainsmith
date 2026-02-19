@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import type { Domain } from '@/../product/sections/agent-builder/types'
 import { clsx } from 'clsx'
 
@@ -67,7 +68,7 @@ function CheckIcon() {
   )
 }
 
-const iconMap: Record<string, () => JSX.Element> = {
+const iconMap: Record<string, () => ReactElement> = {
   shield: ShieldIcon,
   cloud: CloudIcon,
   lock: LockIcon,

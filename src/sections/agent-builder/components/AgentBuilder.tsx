@@ -1,8 +1,6 @@
 import type {
   AgentBuilderProps,
   AgentBuilderCallbacks,
-  Domain,
-  AgentConfig
 } from '@/../product/sections/agent-builder/types'
 import { DomainCatalog } from './DomainCatalog'
 import { ConfigurationForm } from './ConfigurationForm'

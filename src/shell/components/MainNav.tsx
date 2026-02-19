@@ -1,4 +1,4 @@
-import { ChevronLeft, type LucideIcon, Layout as DefaultIcon } from 'lucide-react'
+import { type LucideIcon, Layout as DefaultIcon } from 'lucide-react'
 
 export interface NavigationItem {
   label: string

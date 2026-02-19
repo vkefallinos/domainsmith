@@ -1,5 +1,6 @@
 import data from '@/../product/sections/agent-runtime/data.json'
 import { AgentRuntime } from './components/AgentRuntime'
+import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
 
 // Simulated state for preview
 let selectedAgentId = data.agents[0].id
@@ -11,9 +12,9 @@ export default function AgentRuntimePreview() {
 
   return (
     <AgentRuntime
-      agents={data.agents}
+      agents={data.agents as Agent[]}
       selectedAgentId={selectedAgentId}
-      conversation={conversation}
+      conversation={conversation as Conversation | null}
       isPromptPanelExpanded={isPromptPanelExpanded}
       isLoading={false}
       onSelectAgent={(id) => {
