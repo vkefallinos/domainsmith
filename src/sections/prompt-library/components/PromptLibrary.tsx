@@ -7,12 +7,10 @@ import {
   File,
   Folder,
   FolderOpen,
-  Plus,
   MoreVertical,
   Save,
   X,
   FileText,
-  Check,
   AlertCircle,
   Loader2,
   Search,
@@ -492,7 +490,7 @@ export function PromptLibrary({
   onCreateFile,
   onCreateFolder,
   onRename,
-  onMove,
+  onMove: _onMove,
   onDelete,
 }: PromptLibraryProps) {
   const [contextMenu, setContextMenu] = useState<{
@@ -502,7 +500,7 @@ export function PromptLibrary({
   const [showNewFileModal, setShowNewFileModal] = useState(false)
   const [showNewFolderModal, setShowNewFolderModal] = useState(false)
   const [showRenameModal, setShowRenameModal] = useState(false)
-  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [_showMoveModal, setShowMoveModal] = useState(false)
   const [editorContent, setEditorContent] = useState(selectedFile?.content || '')
   const [searchQuery, setSearchQuery] = useState('')
   const [newFileParentPath, setNewFileParentPath] = useState('/')

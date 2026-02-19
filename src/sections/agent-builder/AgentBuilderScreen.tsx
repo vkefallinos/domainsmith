@@ -10,6 +10,7 @@
 import { useState } from 'react'
 import data from '@/../product/sections/agent-builder/data.json'
 import { AgentBuilder } from './components/AgentBuilder'
+import type { Domain, AgentConfig, PromptPreview } from '@/../product/sections/agent-builder/types'
 
 // Simulated prompt generation
 function generatePrompt(
@@ -54,7 +55,7 @@ export default function AgentBuilderScreen() {
     reportFormat: 'Both'
   })
   const [loadedAgentId, setLoadedAgentId] = useState<string | null>(null)
-  const [promptPreview, setPromptPreview] = useState(data.promptPreview)
+  const [promptPreview, setPromptPreview] = useState<PromptPreview | undefined>(data.promptPreview)
   const [isLoading, setIsLoading] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
@@ -100,7 +101,7 @@ export default function AgentBuilderScreen() {
     const agent = data.savedAgentConfigs.find(a => a.id === agentId)
     if (agent) {
       setSelectedDomainIds(agent.selectedDomains)
-      setFormValues(agent.formValues)
+      setFormValues(agent.formValues as unknown as Record<string, string | string[] | boolean>)
       setLoadedAgentId(agentId)
       setValidationErrors({})
     }
@@ -121,8 +122,8 @@ export default function AgentBuilderScreen() {
 
   return (
     <AgentBuilder
-      domains={data.domains}
-      savedAgentConfigs={data.savedAgentConfigs}
+      domains={data.domains as Domain[]}
+      savedAgentConfigs={data.savedAgentConfigs as unknown as AgentConfig[]}
       selectedDomainIds={selectedDomainIds}
       formValues={formValues}
       loadedAgentId={loadedAgentId}
