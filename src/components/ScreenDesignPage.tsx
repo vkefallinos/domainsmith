@@ -167,7 +167,7 @@ export function ScreenDesignPage() {
           style={{ width: previewWidth, minWidth: MIN_WIDTH, maxWidth: '100%' }}
         >
           <iframe
-            src={`/sections/${sectionId}/screen-designs/${screenDesignName}/fullscreen`}
+            src={`${import.meta.env.BASE_URL}sections/${sectionId}/screen-designs/${screenDesignName}/fullscreen`}
             className="w-full h-full border-0"
             title="Screen Design Preview"
           />

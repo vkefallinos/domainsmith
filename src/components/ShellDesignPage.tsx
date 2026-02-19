@@ -154,7 +154,7 @@ export function ShellDesignPage() {
           style={{ width: previewWidth, minWidth: MIN_WIDTH, maxWidth: '100%' }}
         >
           <iframe
-            src="/shell/design/fullscreen"
+            src={`${import.meta.env.BASE_URL}shell/design/fullscreen`}
             className="w-full h-full border-0"
             title="Shell Preview"
           />
