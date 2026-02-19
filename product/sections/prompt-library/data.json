@@ -1,0 +1,241 @@
+{
+  "_meta": {
+    "models": {
+      "FileSystemNode": "A node in the file tree, representing either a directory or a prompt fragment file.",
+      "Directory": "A folder that can contain other directories and/or prompt fragments, with optional metadata configuration.",
+      "PromptFragment": "A markdown file containing prompt content with optional frontmatter metadata.",
+      "DirectoryConfig": "Metadata configuration stored in a directory's config.json file."
+    },
+    "relationships": [
+      "FileSystemNode is a union type of Directory and PromptFragment",
+      "Directory contains children which are FileSystemNodes",
+      "Directory has an optional DirectoryConfig for metadata",
+      "PromptFragment contains markdown content with optional frontmatter"
+    ]
+  },
+  "fileSystem": {
+    "id": "root",
+    "name": "Prompt Library",
+    "type": "directory",
+    "path": "/",
+    "children": [
+      {
+        "id": "dir-networking",
+        "name": "networking",
+        "type": "directory",
+        "path": "/networking",
+        "config": {
+          "label": "Networking",
+          "description": "Prompt fragments for network infrastructure and connectivity domains",
+          "icon": "network",
+          "color": "#3b82f6"
+        },
+        "children": [
+          {
+            "id": "dir-networking-basics",
+            "name": "basics",
+            "type": "directory",
+            "path": "/networking/basics",
+            "config": {
+              "label": "Network Fundamentals",
+              "description": "Core networking concepts and terminology"
+            },
+            "children": [
+              {
+                "id": "frag-ip-addressing",
+                "name": "ip-addressing.md",
+                "type": "file",
+                "path": "/networking/basics/ip-addressing.md",
+                "frontmatter": {
+                  "title": "IP Addressing Fundamentals",
+                  "category": "basics",
+                  "tags": ["ipv4", "ipv6", "subnetting"],
+                  "author": "net-admin",
+                  "created": "2024-01-15",
+                  "modified": "2024-02-01"
+                },
+                "content": "# IP Addressing\n\nYou are an expert in IP addressing schemes. When discussing IP addresses:\n\n- Always distinguish between IPv4 and IPv6\n- Explain subnet masks clearly\n- Use CIDR notation for network prefixes\n- Clarify public vs private address ranges\n\n## IPv4 Ranges\n\n- Class A: 10.0.0.0/8 (private)\n- Class B: 172.16.0.0/12 (private)\n- Class C: 192.168.0.0/16 (private)"
+              },
+              {
+                "id": "frag-dns-concepts",
+                "name": "dns-concepts.md",
+                "type": "file",
+                "path": "/networking/basics/dns-concepts.md",
+                "frontmatter": {
+                  "title": "DNS Fundamentals",
+                  "category": "basics",
+                  "tags": ["dns", "resolution", "records"]
+                },
+                "content": "# DNS Concepts\n\nYou are a DNS specialist. When answering DNS questions:\n\n- Explain the hierarchy from root to TLD to authoritative\n- Describe record types clearly (A, AAAA, CNAME, MX, TXT, SRV)\n- Include TTL considerations\n- Mention caching behaviors at each level\n\n## Common Record Types\n\n- **A**: Maps hostname to IPv4\n- **AAAA**: Maps hostname to IPv6\n- **CNAME**: Alias to another hostname\n- **MX**: Mail server for a domain"
+              }
+            ]
+          },
+          {
+            "id": "dir-networking-eduroam",
+            "name": "eduroam",
+            "type": "directory",
+            "path": "/networking/eduroam",
+            "config": {
+              "label": "eduroam",
+              "description": "eduroam federation and configuration"
+            },
+            "children": [
+              {
+                "id": "frag-eduroam-overview",
+                "name": "overview.md",
+                "type": "file",
+                "path": "/networking/eduroam/overview.md",
+                "frontmatter": {
+                  "title": "eduroam Overview",
+                  "category": "eduroam",
+                  "tags": ["federation", "wifi", "roaming"]
+                },
+                "content": "# eduroam Overview\n\nYou are an eduroam federation expert. Key points:\n\n- eduroam is a global roaming service for research and education\n- Uses 802.1X authentication with RADIUS\n- Hierarchical RADIUS proxy structure\n- Users log in with home institution credentials\n\n## Architecture\n\nThe eduroam federation operates through a tree of RADIUS servers. When a user authenticates at a visited institution, the request is proxied up the tree to their home institution's RADIUS server for validation."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dir-identity",
+        "name": "identity",
+        "type": "directory",
+        "path": "/identity",
+        "config": {
+          "label": "Identity & Access",
+          "description": "Identity management, authentication, and authorization prompts",
+          "icon": "shield",
+          "color": "#8b5cf6"
+        },
+        "children": [
+          {
+            "id": "frag-saml-intro",
+            "name": "saml-introduction.md",
+            "type": "file",
+            "path": "/identity/saml-introduction.md",
+            "frontmatter": {
+              "title": "SAML 2.0 Introduction",
+              "category": "federation",
+              "tags": ["saml", "sso", "federation"]
+            },
+            "content": "# SAML 2.0 Introduction\n\nYou are a SAML federation specialist. Explain SAML concepts clearly:\n\n- SAML enables web Single Sign-On (SSO)\n- XML-based protocol for exchanging authentication data\n- Key roles: Service Provider (SP) and Identity Provider (IdP)\n- SAML assertions contain authentication statements\n\n## SAML Flow\n\n1. User accesses SP resource\n2. SP generates SAML request and redirects to IdP\n3. User authenticates at IdP\n4. IdP issues SAML response\n5. SP validates response and grants access"
+          },
+          {
+            "id": "frag-oauth-flow",
+            "name": "oauth-authorization-flow.md",
+            "type": "file",
+            "path": "/identity/oauth-authorization-flow.md",
+            "frontmatter": {
+              "title": "OAuth 2.0 Authorization",
+              "category": "api-security",
+              "tags": ["oauth", "authorization", "tokens"]
+            },
+            "content": "# OAuth 2.0 Authorization\n\nYou are an OAuth 2.0 expert. When discussing authorization:\n\n- Distinguish OAuth (delegated authorization) from authentication\n- Explain the four grant types clearly\n- Emphasize security considerations for tokens\n- Describe token lifecycle and revocation\n\n## Grant Types\n\n1. **Authorization Code** - Most secure, for server-side apps\n2. **Implicit** - Deprecated, for browser-based apps\n3. **Password Credentials** - Legacy, for trusted first-party apps\n4. **Client Credentials** - For service-to-service auth\n\nAlways use Authorization Code flow with PKCE when possible."
+          },
+          {
+            "id": "frag-multi-factor",
+            "name": "multi-factor-authentication.md",
+            "type": "file",
+            "path": "/identity/multi-factor-authentication.md",
+            "frontmatter": {
+              "title": "Multi-Factor Authentication",
+              "category": "security",
+              "tags": ["mfa", "2fa", "totp", "webauthn"]
+            },
+            "content": "# Multi-Factor Authentication\n\nYou are an MFA specialist. Key concepts:\n\n- MFA requires at least two independent authentication factors\n- Factors: something you know, have, are\n- TOTP (Time-based One-Time Password) uses shared secret + time\n- WebAuthn/FIDO2 provides phishing-resistant hardware-bound credentials\n\n## MFA Methods\n\n- **TOTP apps**: Google Authenticator, Authy\n- **SMS codes**: Less secure due to SIM swapping risks\n- **Hardware keys**: YubiKey, Titan - most secure\n- **Biometrics**: Fingerprint, Face ID - something you are"
+          }
+        ]
+      },
+      {
+        "id": "dir-security",
+        "name": "security",
+        "type": "directory",
+        "path": "/security",
+        "config": {
+          "label": "Security",
+          "description": "Security policies, incident response, and best practices"
+        },
+        "children": [
+          {
+            "id": "dir-security-policies",
+            "name": "policies",
+            "type": "directory",
+            "path": "/security/policies",
+            "children": []
+          },
+          {
+            "id": "frag-incident-response",
+            "name": "incident-response-playbook.md",
+            "type": "file",
+            "path": "/security/incident-response-playbook.md",
+            "frontmatter": {
+              "title": "Incident Response Playbook",
+              "category": "operations",
+              "tags": ["incident", "response", "security"],
+              "severity": "high"
+            },
+            "content": "# Incident Response Playbook\n\nYou are a security incident response expert. When handling incident discussions:\n\n- Follow the NIST incident response lifecycle\n- Emphasize documentation throughout\n- Prioritize containment and recovery\n- Conduct post-incident reviews\n\n## NIST Incident Response Lifecycle\n\n1. **Preparation** - Develop IR plan, train team, deploy tools\n2. **Detection/Analysis** - Identify incidents, determine scope\n3. **Containment** - Limit damage, preserve evidence\n4. **Eradication** - Remove root cause, clean systems\n5. **Recovery** - Restore operations, validate systems\n6. **Post-Incident** - Lessons learned, update procedures"
+          }
+        ]
+      },
+      {
+        "id": "dir-templates",
+        "name": "templates",
+        "type": "directory",
+        "path": "/templates",
+        "config": {
+          "label": "Templates",
+          "description": "Reusable prompt templates and boilerplates"
+        },
+        "children": [
+          {
+            "id": "frag-template-agent",
+            "name": "agent-template.md",
+            "type": "file",
+            "path": "/templates/agent-template.md",
+            "frontmatter": {
+              "title": "Agent Template",
+              "category": "template",
+              "tags": ["template", "boilerplate"]
+            },
+            "content": "# Agent Template\n\nUse this template when creating new agent prompt fragments:\n\n## Role\n\nDescribe the agent's role and expertise area.\n\n## Context\n\nProvide background information the agent should know.\n\n## Constraints\n\nList any limitations or rules the agent must follow.\n\n## Output Format\n\nSpecify how the agent should structure responses."
+          }
+        ]
+      },
+      {
+        "id": "dir-archives",
+        "name": "archives",
+        "type": "directory",
+        "path": "/archives",
+        "config": {
+          "label": "Archives",
+          "description": "Deprecated or unused prompt fragments"
+        },
+        "children": []
+      }
+    ]
+  },
+  "selectedFile": {
+    "id": "frag-dns-concepts",
+    "name": "dns-concepts.md",
+    "type": "file",
+    "path": "/networking/basics/dns-concepts.md",
+    "frontmatter": {
+      "title": "DNS Fundamentals",
+      "category": "basics",
+      "tags": ["dns", "resolution", "records"],
+      "author": "net-admin",
+      "created": "2024-01-18",
+      "modified": "2024-02-03"
+    },
+    "content": "# DNS Concepts\n\nYou are a DNS specialist. When answering DNS questions:\n\n- Explain the hierarchy from root to TLD to authoritative\n- Describe record types clearly (A, AAAA, CNAME, MX, TXT, SRV)\n- Include TTL considerations\n- Mention caching behaviors at each level\n\n## Common Record Types\n\n- **A**: Maps hostname to IPv4\n- **AAAA**: Maps hostname to IPv6\n- **CNAME**: Alias to another hostname\n- **MX**: Mail server for a domain"
+  },
+  "unsavedChanges": false,
+  "expandedFolders": [
+    "/networking",
+    "/networking/basics",
+    "/identity",
+    "/security",
+    "/templates"
+  ]
+}

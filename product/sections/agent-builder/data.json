@@ -1,0 +1,406 @@
+{
+  "_meta": {
+    "models": {
+      "Domain": "An available domain/expertise area that can be selected when building an agent. Each domain has a schema that defines the form fields for configuration.",
+      "SchemaField": "A single form field definition within a domain's schema, defining the type, label, validation rules, and default value.",
+      "AgentConfig": "A saved agent configuration containing the selected domains and filled form values that define an agent's behavior.",
+      "PromptPreview": "A live-generated preview of the system prompt assembled from the selected domains and form values."
+    },
+    "relationships": [
+      "Domain has many SchemaFields (defined by its schema)",
+      "AgentConfig references many Domains (multi-selection)",
+      "AgentConfig has many form field values corresponding to the schemas of selected domains",
+      "PromptPreview is generated from AgentConfig by combining domain templates with form values"
+    ]
+  },
+  "domains": [
+    {
+      "id": "domain-cybersecurity",
+      "name": "Cybersecurity",
+      "description": "Security assessment, vulnerability analysis, and threat detection expertise",
+      "category": "Security",
+      "tags": ["security", "audit", "compliance"],
+      "icon": "shield",
+      "schema": {
+        "fields": [
+          {
+            "id": "scope",
+            "type": "textarea",
+            "label": "Assessment Scope",
+            "placeholder": "Describe the systems, networks, or assets to be assessed...",
+            "required": true,
+            "default": ""
+          },
+          {
+            "id": "complianceStandards",
+            "type": "multiselect",
+            "label": "Compliance Standards",
+            "options": ["ISO 27001", "NIST CSF", "PCI DSS", "SOC 2", "GDPR", "HIPAA"],
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "severityThreshold",
+            "type": "select",
+            "label": "Minimum Severity Threshold",
+            "options": ["Critical", "High", "Medium", "Low"],
+            "required": true,
+            "default": "High"
+          },
+          {
+            "id": "reportFormat",
+            "type": "select",
+            "label": "Report Format",
+            "options": ["Executive Summary", "Technical Detail", "Both"],
+            "required": false,
+            "default": "Both"
+          }
+        ]
+      },
+      "template": "You are a cybersecurity specialist focused on {{scope}}. Assess findings against {{complianceStandards}} standards. Report findings at {{severityThreshold}} severity level and above. Format output as {{reportFormat}}."
+    },
+    {
+      "id": "domain-cloud-architecture",
+      "name": "Cloud Architecture",
+      "description": "AWS, Azure, and GCP infrastructure design and optimization",
+      "category": "Infrastructure",
+      "tags": ["cloud", "aws", "azure", "gcp", "devops"],
+      "icon": "cloud",
+      "schema": {
+        "fields": [
+          {
+            "id": "primaryProvider",
+            "type": "select",
+            "label": "Primary Cloud Provider",
+            "options": ["AWS", "Azure", "Google Cloud", "Multi-cloud"],
+            "required": true,
+            "default": "AWS"
+          },
+          {
+            "id": "architectureType",
+            "type": "select",
+            "label": "Architecture Pattern",
+            "options": ["Serverless", "Microservices", "Monolith", "Event-driven", "Hybrid"],
+            "required": true,
+            "default": "Microservices"
+          },
+          {
+            "id": "costOptimization",
+            "type": "toggle",
+            "label": "Enable Cost Optimization Guidance",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "scalingRequirements",
+            "type": "textarea",
+            "label": "Scaling Requirements",
+            "placeholder": "Describe expected traffic patterns and scaling needs...",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      "template": "You are a cloud architecture consultant specializing in {{primaryProvider}}. Focus on {{architectureType}} patterns{{#if costOptimization}} with emphasis on cost optimization{{/if}}{{#if scalingRequirements}}. Scaling context: {{scalingRequirements}}{{/if}}."
+    },
+    {
+      "id": "domain-data-privacy",
+      "name": "Data Privacy",
+      "description": "GDPR, CCPA, and global privacy regulation compliance guidance",
+      "category": "Compliance",
+      "tags": ["privacy", "gdpr", "ccpa", "compliance"],
+      "icon": "lock",
+      "schema": {
+        "fields": [
+          {
+            "id": "jurisdictions",
+            "type": "multiselect",
+            "label": "Applicable Jurisdictions",
+            "options": ["EU (GDPR)", "California (CCPA/CPRA)", "UK (UK GDPR)", "Canada (PIPEDA)", "Australia (Privacy Act)"],
+            "required": true,
+            "default": ["EU (GDPR)"]
+          },
+          {
+            "id": "dataCategories",
+            "type": "textarea",
+            "label": "Data Categories Handled",
+            "placeholder": "Describe types of personal data processed (e.g., health, financial, behavioral)...",
+            "required": true,
+            "default": ""
+          },
+          {
+            "id": "includeDPIA",
+            "type": "toggle",
+            "label": "Include DPIA Framework",
+            "required": false,
+            "default": false
+          },
+          {
+            "id": "dataSubjectRights",
+            "type": "multiselect",
+            "label": "Focus on Data Subject Rights",
+            "options": ["Right to Access", "Right to Erasure", "Right to Portability", "Right to Object", "All Rights"],
+            "required": false,
+            "default": []
+          }
+        ]
+      },
+      "template": "You are a data privacy advisor for jurisdictions: {{jurisdictions}}. The organization handles: {{dataCategories}}.{{#if includeDPIA}} Include Data Protection Impact Assessment guidance.{{/if}}{{#if dataSubjectRights}} Pay special attention to: {{dataSubjectRights}}.{{/if}}"
+    },
+    {
+      "id": "domain-network-engineering",
+      "name": "Network Engineering",
+      "description": "Network design, protocols, and troubleshooting expertise",
+      "category": "Infrastructure",
+      "tags": ["networking", "tcp/ip", "routing", "firewalls"],
+      "icon": "network",
+      "schema": {
+        "fields": [
+          {
+            "id": "networkType",
+            "type": "select",
+            "label": "Network Type",
+            "options": ["Enterprise LAN", "Data Center", "WAN/SD-WAN", "Cloud Network", "Industrial/OT"],
+            "required": true,
+            "default": "Enterprise LAN"
+          },
+          {
+            "id": "protocols",
+            "type": "multiselect",
+            "label": "Relevant Protocols",
+            "options": ["BGP", "OSPF", "MPLS", "VXLAN", "HTTP/HTTPS", "DNS", "DHCP"],
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "securityLevel",
+            "type": "select",
+            "label": "Security Posture",
+            "options": ["Open/Permissive", "Standard", "High Security", "Air-gapped/Isolated"],
+            "required": true,
+            "default": "Standard"
+          }
+        ]
+      },
+      "template": "You are a network engineer for {{networkType}} environments{{#if protocols}} with expertise in: {{protocols}}{{/if}}. Security posture: {{securityLevel}}."
+    },
+    {
+      "id": "domain-incident-response",
+      "name": "Incident Response",
+      "description": "Security incident handling, forensics, and recovery procedures",
+      "category": "Security",
+      "tags": ["ir", "forensics", "emergency"],
+      "icon": "alert",
+      "schema": {
+        "fields": [
+          {
+            "id": "responseTier",
+            "type": "select",
+            "label": "Response Tier",
+            "options": ["Tier 1 - Triage", "Tier 2 - Investigation", "Tier 3 - Forensics", "Tier 4 - Crisis Management"],
+            "required": true,
+            "default": "Tier 2 - Investigation"
+          },
+          {
+            "id": "incidentTypes",
+            "type": "multiselect",
+            "label": "Incident Types",
+            "options": ["Malware/Ransomware", "Phishing/BEC", "DDoS", "Insider Threat", "Data Breach", "Supply Chain"],
+            "required": true,
+            "default": []
+          },
+          {
+            "id": "timeToObjectives",
+            "type": "text",
+            "label": "Time Objectives (MTTR/MTTD)",
+            "placeholder": "e.g., MTTD < 1 hour, MTTR < 4 hours",
+            "required": false,
+            "default": ""
+          },
+          {
+            "id": "includePlaybooks",
+            "type": "toggle",
+            "label": "Include Runbook Suggestions",
+            "required": false,
+            "default": true
+          }
+        ]
+      },
+      "template": "You are an incident response handler at {{responseTier}} level. Focus on: {{incidentTypes}}.{{#if timeToObjectives}} Time objectives: {{timeToObjectives}}.{{/if}}{{#if includePlaybooks}} Include specific runbook steps for each scenario.{{/if}}"
+    },
+    {
+      "id": "domain-software-development",
+      "name": "Software Development",
+      "description": "Code review, architecture, and best practices across programming languages",
+      "category": "Development",
+      "tags": ["coding", "review", "architecture", "best-practices"],
+      "icon": "code",
+      "schema": {
+        "fields": [
+          {
+            "id": "primaryLanguage",
+            "type": "select",
+            "label": "Primary Language",
+            "options": ["Python", "JavaScript/TypeScript", "Java", "C#", "Go", "Rust", "Other"],
+            "required": true,
+            "default": "Python"
+          },
+          {
+            "id": "focusAreas",
+            "type": "multiselect",
+            "label": "Focus Areas",
+            "options": ["Code Quality", "Performance", "Security", "Testability", "Maintainability"],
+            "required": false,
+            "default": ["Code Quality"]
+          },
+          {
+            "id": "frameworks",
+            "type": "text",
+            "label": "Relevant Frameworks",
+            "placeholder": "e.g., React, Django, Spring Boot...",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      "template": "You are a software development expert specializing in {{primaryLanguage}}{{#if frameworks}} with {{frameworks}} framework experience{{/if}}. Prioritize: {{focusAreas}}."
+    }
+  ],
+  "savedAgentConfigs": [
+    {
+      "id": "agent-001",
+      "name": "Security Auditor",
+      "description": "Combined cybersecurity and data privacy agent for compliance audits",
+      "selectedDomains": ["domain-cybersecurity", "domain-data-privacy"],
+      "formValues": {
+        "scope": "Customer-facing web application and underlying database infrastructure",
+        "complianceStandards": ["SOC 2", "GDPR", "ISO 27001"],
+        "severityThreshold": "Medium",
+        "reportFormat": "Both",
+        "jurisdictions": ["EU (GDPR)", "California (CCPA/CPRA)"],
+        "dataCategories": "User names, email addresses, payment information, and usage analytics",
+        "includeDPIA": true,
+        "dataSubjectRights": ["Right to Erasure", "Right to Access"]
+      },
+      "createdAt": "2025-10-15T09:30:00Z",
+      "updatedAt": "2025-11-22T14:20:00Z"
+    },
+    {
+      "id": "agent-002",
+      "name": "Cloud Migration Advisor",
+      "description": "Helps plan and execute cloud infrastructure migrations",
+      "selectedDomains": ["domain-cloud-architecture", "domain-network-engineering"],
+      "formValues": {
+        "primaryProvider": "AWS",
+        "architectureType": "Hybrid",
+        "costOptimization": true,
+        "scalingRequirements": "Seasonal traffic peaks of 10x baseline during holiday periods",
+        "networkType": "Cloud Network",
+        "protocols": ["BGP", "HTTP/HTTPS", "DNS"],
+        "securityLevel": "High Security"
+      },
+      "createdAt": "2025-09-08T11:45:00Z",
+      "updatedAt": "2025-09-08T11:45:00Z"
+    },
+    {
+      "id": "agent-003",
+      "name": "Incident Responder - Ransomware",
+      "description": "Specialized responder for ransomware and malware incidents",
+      "selectedDomains": ["domain-incident-response", "domain-cybersecurity"],
+      "formValues": {
+        "responseTier": "Tier 3 - Forensics",
+        "incidentTypes": ["Malware/Ransomware", "Data Breach"],
+        "timeToObjectives": "MTTD < 15 min, MTTR < 2 hours",
+        "includePlaybooks": true,
+        "scope": "Enterprise Windows environment with Active Directory",
+        "complianceStandards": [],
+        "severityThreshold": "Critical",
+        "reportFormat": "Technical Detail"
+      },
+      "createdAt": "2025-11-05T16:00:00Z",
+      "updatedAt": "2025-12-01T10:30:00Z"
+    },
+    {
+      "id": "agent-004",
+      "name": "DevOps Consultant",
+      "description": "Full-stack development and cloud infrastructure guidance",
+      "selectedDomains": ["domain-software-development", "domain-cloud-architecture"],
+      "formValues": {
+        "primaryLanguage": "Python",
+        "focusAreas": ["Code Quality", "Security", "Testability"],
+        "frameworks": "Django, Terraform, Kubernetes",
+        "primaryProvider": "Multi-cloud",
+        "architectureType": "Microservices",
+        "costOptimization": true,
+        "scalingRequirements": ""
+      },
+      "createdAt": "2025-10-20T08:15:00Z",
+      "updatedAt": "2025-10-20T08:15:00Z"
+    },
+    {
+      "id": "agent-005",
+      "name": "Privacy Compliance Assistant",
+      "description": "Focused guidance on GDPR and international privacy requirements",
+      "selectedDomains": ["domain-data-privacy"],
+      "formValues": {
+        "jurisdictions": ["EU (GDPR)", "UK (UK GDPR)", "Canada (PIPEDA)"],
+        "dataCategories": "Employee records including: personal identification, financial details, health information, and performance evaluations",
+        "includeDPIA": true,
+        "dataSubjectRights": ["All Rights"]
+      },
+      "createdAt": "2025-08-30T13:20:00Z",
+      "updatedAt": "2025-11-10T09:45:00Z"
+    },
+    {
+      "id": "agent-006",
+      "name": "Network Security Architect",
+      "description": "Designs secure network infrastructure with segmentation and access controls",
+      "selectedDomains": ["domain-network-engineering", "domain-cybersecurity"],
+      "formValues": {
+        "networkType": "Data Center",
+        "protocols": ["BGP", "OSPF", "VXLAN"],
+        "securityLevel": "High Security",
+        "scope": "Multi-tier data center with separate management, production, and DMZ zones",
+        "complianceStandards": ["PCI DSS"],
+        "severityThreshold": "High",
+        "reportFormat": "Executive Summary"
+      },
+      "createdAt": "2025-11-18T15:50:00Z",
+      "updatedAt": "2025-11-18T15:50:00Z"
+    },
+    {
+      "id": "agent-007",
+      "name": "Code Review Assistant",
+      "description": "General-purpose code review focused on quality and security",
+      "selectedDomains": ["domain-software-development"],
+      "formValues": {
+        "primaryLanguage": "TypeScript",
+        "focusAreas": ["Security", "Code Quality", "Maintainability"],
+        "frameworks": "React, Node.js, Express"
+      },
+      "createdAt": "2025-12-05T10:00:00Z",
+      "updatedAt": "2025-12-05T10:00:00Z"
+    },
+    {
+      "id": "agent-008",
+      "name": "Draft SOC Analyst",
+      "description": "Incomplete configuration - still being configured",
+      "selectedDomains": ["domain-incident-response"],
+      "formValues": {
+        "responseTier": "Tier 1 - Triage",
+        "incidentTypes": [],
+        "timeToObjectives": "",
+        "includePlaybooks": true
+      },
+      "createdAt": "2025-12-10T14:30:00Z",
+      "updatedAt": "2025-12-10T14:30:00Z"
+    }
+  ],
+  "promptPreview": {
+    "agentId": "agent-001",
+    "domains": ["Cybersecurity", "Data Privacy"],
+    "generatedPrompt": "You are a cybersecurity specialist focused on Customer-facing web application and underlying database infrastructure. Assess findings against SOC 2, GDPR, ISO 27001 standards. Report findings at Medium severity level and above. Format output as Both.\n\nYou are a data privacy advisor for jurisdictions: EU (GDPR), California (CCPA/CPRA). The organization handles: User names, email addresses, payment information, and usage analytics. Include Data Protection Impact Assessment guidance. Pay special attention to: Right to Erasure, Right to Access.\n\nWhen responding, integrate both security and privacy perspectives. Always consider the compliance implications of security recommendations and the security requirements of privacy obligations.",
+    "tokenCount": 245,
+    "lastGenerated": "2025-11-22T14:20:00Z"
+  }
+}
