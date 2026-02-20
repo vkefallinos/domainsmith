@@ -23,7 +23,6 @@ export function AgentHeader({
   onSave,
   onNewAgent
 }: AgentHeaderProps) {
-  const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [showSaveDialog, setShowSaveDialog] = useState(false)
@@ -37,7 +36,6 @@ export function AgentHeader({
       setShowSaveDialog(false)
       setName('')
       setDescription('')
-      setIsEditing(false)
     }
   }
 

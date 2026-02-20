@@ -10,11 +10,12 @@
 import { useState } from 'react'
 import data from '@/../product/sections/agent-builder/data.json'
 import { AgentBuilder } from './components/AgentBuilder'
+import type { Domain, AgentConfig, FormValues, PromptPreview } from '@/../product/sections/agent-builder/types'
 
 // Simulated prompt generation
 function generatePrompt(
-  selectedDomains: typeof data.domains,
-  formValues: Record<string, string | string[] | boolean>
+  selectedDomains: Domain[],
+  formValues: FormValues
 ): string {
   const domainTemplates = selectedDomains.map(domain => {
     let template = domain.template
@@ -47,7 +48,7 @@ function generatePrompt(
 
 export default function AgentBuilderScreen() {
   const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>(['domain-cybersecurity'])
-  const [formValues, setFormValues] = useState<Record<string, string | string[] | boolean>>({
+  const [formValues, setFormValues] = useState<FormValues>({
     scope: 'Customer-facing web application and underlying database infrastructure',
     complianceStandards: ['SOC 2', 'GDPR'],
     severityThreshold: 'High',
@@ -76,7 +77,7 @@ export default function AgentBuilderScreen() {
 
     // Simulate API call
     setTimeout(() => {
-      const selectedDomains = data.domains.filter(d => selectedDomainIds.includes(d.id))
+      const selectedDomains = (data.domains as Domain[]).filter(d => selectedDomainIds.includes(d.id))
       const generatedPrompt = generatePrompt(selectedDomains, formValues)
 
       setPromptPreview({
@@ -97,7 +98,7 @@ export default function AgentBuilderScreen() {
   }
 
   const handleLoadAgent = (agentId: string) => {
-    const agent = data.savedAgentConfigs.find(a => a.id === agentId)
+    const agent = (data.savedAgentConfigs as unknown as AgentConfig[]).find(a => a.id === agentId)
     if (agent) {
       setSelectedDomainIds(agent.selectedDomains)
       setFormValues(agent.formValues)
@@ -121,8 +122,8 @@ export default function AgentBuilderScreen() {
 
   return (
     <AgentBuilder
-      domains={data.domains}
-      savedAgentConfigs={data.savedAgentConfigs}
+      domains={data.domains as unknown as Domain[]}
+      savedAgentConfigs={data.savedAgentConfigs as unknown as AgentConfig[]}
       selectedDomainIds={selectedDomainIds}
       formValues={formValues}
       loadedAgentId={loadedAgentId}

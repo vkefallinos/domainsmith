@@ -1,5 +1,6 @@
 import type { Domain } from '@/../product/sections/agent-builder/types'
 import { clsx } from 'clsx'
+import type { ReactElement } from 'react'
 
 interface DomainCatalogProps {
   domains: Domain[]

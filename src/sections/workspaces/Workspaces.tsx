@@ -6,9 +6,9 @@ import { Workspaces } from './components/Workspaces'
 export default function WorkspacesPreview() {
   return (
     <Workspaces
-      users={data.workspaceUsers}
-      roles={data.roles}
-      selectedUserId={data.workspaceUsers[0].id}
+      users={data.workspaceUsers as WorkspaceUser[]}
+      roles={data.roles as RoleDefinition[]}
+      selectedUserId={(data.workspaceUsers as WorkspaceUser[])[0]?.id}
       searchQuery=""
       onSelectUser={(id) => console.log('Selected user:', id)}
       onSearchChange={(query) => console.log('Search:', query)}

@@ -4,15 +4,157 @@
       "FileSystemNode": "A node in the file tree, representing either a directory or a prompt fragment file.",
       "Directory": "A folder that can contain other directories and/or prompt fragments, with optional metadata configuration.",
       "PromptFragment": "A markdown file containing prompt content with optional frontmatter metadata.",
-      "DirectoryConfig": "Metadata configuration stored in a directory's config.json file."
+      "DirectoryConfig": "Metadata configuration stored in a directory's config.json file.",
+      "Tool": "A function-calling capability that can be enabled on files or directories.",
+      "ToolParameter": "A configurable parameter for a tool, with a name, type, description, and optional default value.",
+      "ToolConfiguration": "The enabled state and parameter values for a specific tool on a file or directory.",
+      "InheritedTool": "A tool configuration inherited from a parent directory."
     },
     "relationships": [
       "FileSystemNode is a union type of Directory and PromptFragment",
       "Directory contains children which are FileSystemNodes",
-      "Directory has an optional DirectoryConfig for metadata",
-      "PromptFragment contains markdown content with optional frontmatter"
+      "Directory has an optional DirectoryConfig for metadata and tool configurations",
+      "Directory has many ToolConfigurations in its config.json",
+      "PromptFragment contains markdown content with optional frontmatter",
+      "PromptFragment has many ToolConfigurations in its frontmatter",
+      "Tool has many ToolParameters",
+      "ToolConfiguration belongs to one Tool",
+      "InheritedTool comes from a parent Directory's configuration"
     ]
   },
+  "availableTools": [
+    {
+      "id": "tool-weather-api",
+      "name": "Weather API",
+      "description": "Fetch current weather and forecasts for any location worldwide",
+      "parameters": [
+        {
+          "name": "apiKey",
+          "type": "string",
+          "description": "Your OpenWeatherMap API key",
+          "required": true,
+          "secret": true
+        },
+        {
+          "name": "units",
+          "type": "enum",
+          "description": "Temperature units",
+          "options": ["metric", "imperial", "kelvin"],
+          "default": "metric",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "tool-web-search",
+      "name": "Web Search",
+      "description": "Search the web for current information and resources",
+      "parameters": [
+        {
+          "name": "maxResults",
+          "type": "number",
+          "description": "Maximum number of results to return",
+          "default": 10,
+          "required": false
+        },
+        {
+          "name": "safeSearch",
+          "type": "boolean",
+          "description": "Enable safe search filtering",
+          "default": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "tool-dns-lookup",
+      "name": "DNS Lookup",
+      "description": "Query DNS records for any domain",
+      "parameters": [
+        {
+          "name": "recordTypes",
+          "type": "enum",
+          "description": "DNS record types to query",
+          "options": ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SOA"],
+          "default": "A",
+          "required": false,
+          "multiple": true
+        }
+      ]
+    },
+    {
+      "id": "tool-http-client",
+      "name": "HTTP Client",
+      "description": "Make HTTP requests to external APIs and services",
+      "parameters": [
+        {
+          "name": "timeout",
+          "type": "number",
+          "description": "Request timeout in seconds",
+          "default": 30,
+          "required": false
+        },
+        {
+          "name": "followRedirects",
+          "type": "boolean",
+          "description": "Automatically follow HTTP redirects",
+          "default": true,
+          "required": false
+        },
+        {
+          "name": "maxRedirects",
+          "type": "number",
+          "description": "Maximum number of redirects to follow",
+          "default": 5,
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "tool-code-executor",
+      "name": "Code Executor",
+      "description": "Execute sandboxed code snippets in various languages",
+      "parameters": [
+        {
+          "name": "language",
+          "type": "enum",
+          "description": "Default execution language",
+          "options": ["python", "javascript", "bash", "ruby"],
+          "default": "python",
+          "required": false
+        },
+        {
+          "name": "timeout",
+          "type": "number",
+          "description": "Execution timeout in seconds",
+          "default": 60,
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "tool-geocoding",
+      "name": "Geocoding",
+      "description": "Convert addresses to coordinates and vice versa",
+      "parameters": [
+        {
+          "name": "provider",
+          "type": "enum",
+          "description": "Geocoding provider",
+          "options": ["openstreetmap", "google", "mapbox"],
+          "default": "openstreetmap",
+          "required": false
+        },
+        {
+          "name": "apiKey",
+          "type": "string",
+          "description": "API key for selected provider (if required)",
+          "required": false,
+          "secret": true
+        }
+      ]
+    }
+  ],
   "fileSystem": {
     "id": "root",
     "name": "Prompt Library",
@@ -28,7 +170,24 @@
           "label": "Networking",
           "description": "Prompt fragments for network infrastructure and connectivity domains",
           "icon": "network",
-          "color": "#3b82f6"
+          "color": "#3b82f6",
+          "tools": [
+            {
+              "toolId": "tool-dns-lookup",
+              "enabled": true,
+              "parameters": {
+                "recordTypes": ["A", "AAAA", "MX", "TXT"]
+              }
+            },
+            {
+              "toolId": "tool-http-client",
+              "enabled": true,
+              "parameters": {
+                "timeout": 30,
+                "followRedirects": true
+              }
+            }
+          ]
         },
         "children": [
           {
@@ -52,7 +211,23 @@
                   "tags": ["ipv4", "ipv6", "subnetting"],
                   "author": "net-admin",
                   "created": "2024-01-15",
-                  "modified": "2024-02-01"
+                  "modified": "2024-02-01",
+                  "tools": [
+                    {
+                      "toolId": "tool-dns-lookup",
+                      "enabled": true,
+                      "parameters": {
+                        "recordTypes": ["A", "AAAA"]
+                      }
+                    },
+                    {
+                      "toolId": "tool-geocoding",
+                      "enabled": true,
+                      "parameters": {
+                        "provider": "openstreetmap"
+                      }
+                    }
+                  ]
                 },
                 "content": "# IP Addressing\n\nYou are an expert in IP addressing schemes. When discussing IP addresses:\n\n- Always distinguish between IPv4 and IPv6\n- Explain subnet masks clearly\n- Use CIDR notation for network prefixes\n- Clarify public vs private address ranges\n\n## IPv4 Ranges\n\n- Class A: 10.0.0.0/8 (private)\n- Class B: 172.16.0.0/12 (private)\n- Class C: 192.168.0.0/16 (private)"
               },
@@ -105,7 +280,18 @@
           "label": "Identity & Access",
           "description": "Identity management, authentication, and authorization prompts",
           "icon": "shield",
-          "color": "#8b5cf6"
+          "color": "#8b5cf6",
+          "tools": [
+            {
+              "toolId": "tool-http-client",
+              "enabled": true,
+              "parameters": {
+                "timeout": 60,
+                "followRedirects": false,
+                "maxRedirects": 3
+              }
+            }
+          ]
         },
         "children": [
           {
@@ -226,9 +412,45 @@
       "tags": ["dns", "resolution", "records"],
       "author": "net-admin",
       "created": "2024-01-18",
-      "modified": "2024-02-03"
+      "modified": "2024-02-03",
+      "tools": [
+        {
+          "toolId": "tool-dns-lookup",
+          "enabled": true,
+          "parameters": {
+            "recordTypes": ["A", "AAAA", "MX", "TXT", "NS"]
+          }
+        }
+      ]
     },
     "content": "# DNS Concepts\n\nYou are a DNS specialist. When answering DNS questions:\n\n- Explain the hierarchy from root to TLD to authoritative\n- Describe record types clearly (A, AAAA, CNAME, MX, TXT, SRV)\n- Include TTL considerations\n- Mention caching behaviors at each level\n\n## Common Record Types\n\n- **A**: Maps hostname to IPv4\n- **AAAA**: Maps hostname to IPv6\n- **CNAME**: Alias to another hostname\n- **MX**: Mail server for a domain"
+  },
+  "selectedNode": {
+    "id": "frag-dns-concepts",
+    "type": "file",
+    "inheritedTools": [
+      {
+        "toolId": "tool-http-client",
+        "sourcePath": "/networking",
+        "parameters": {
+          "timeout": 30,
+          "followRedirects": true
+        }
+      }
+    ],
+    "configuredTools": [
+      {
+        "toolId": "tool-dns-lookup",
+        "parameters": {
+          "recordTypes": ["A", "AAAA", "MX", "TXT", "NS"]
+        }
+      }
+    ]
+  },
+  "toolSidebar": {
+    "isOpen": true,
+    "searchQuery": "",
+    "filterCategory": null
   },
   "unsavedChanges": false,
   "expandedFolders": [

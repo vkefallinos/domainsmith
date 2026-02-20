@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, type KeyboardEvent } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect, type KeyboardEvent } from 'react'
 import {
   ChevronRight,
   ChevronDown,
@@ -18,6 +18,7 @@ import {
   Search,
   FolderPlus,
   FilePlus,
+  Wrench,
 } from 'lucide-react'
 import type {
   PromptLibraryProps,
@@ -26,7 +27,10 @@ import type {
   Directory,
   NewFileForm,
   NewFolderForm,
+  ToolConfiguration,
+  InheritedTool,
 } from '@/../product/sections/prompt-library/types'
+import { ToolSidebar } from './ToolSidebar'
 
 // Sub-component: Context Menu
 interface ContextMenuProps {
@@ -135,6 +139,15 @@ function TreeNode({
 
   const nodeColor = getNodeColor()
 
+  // Check if node has tools configured
+  const hasTools = isDir
+    ? (node as Directory).config?.tools && (node as Directory).config!.tools!.length > 0
+    : (node as PromptFragment).frontmatter?.tools && (node as PromptFragment).frontmatter!.tools!.length > 0
+
+  const toolCount = isDir
+    ? (node as Directory).config?.tools?.filter(t => t.enabled).length || 0
+    : (node as PromptFragment).frontmatter?.tools?.filter(t => t.enabled).length || 0
+
   return (
     <div>
       <div
@@ -172,6 +185,13 @@ function TreeNode({
         <span className="text-sm font-medium truncate flex-1">
           {node.name}
         </span>
+        {/* Tool badge indicator */}
+        {hasTools && toolCount > 0 && (
+          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-medium" title="Has configured tools">
+            <Wrench className="w-3 h-3" />
+            {toolCount}
+          </span>
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation()
@@ -485,6 +505,10 @@ export function PromptLibrary({
   unsavedChanges,
   isLoading = false,
   error = null,
+  availableTools = [],
+  toolSidebar = { isOpen: false, searchQuery: '', filterCategory: null },
+  inheritedTools = [],
+  configuredTools = [],
   onSelectFile,
   onToggleFolder,
   onEditContent,
@@ -494,6 +518,10 @@ export function PromptLibrary({
   onRename,
   onMove,
   onDelete,
+  onToggleToolSidebar,
+  onToolSearchChange,
+  onToggleTool,
+  onUpdateToolParameters,
 }: PromptLibraryProps) {
   const [contextMenu, setContextMenu] = useState<{
     node: FileSystemNode | null
@@ -502,12 +530,22 @@ export function PromptLibrary({
   const [showNewFileModal, setShowNewFileModal] = useState(false)
   const [showNewFolderModal, setShowNewFolderModal] = useState(false)
   const [showRenameModal, setShowRenameModal] = useState(false)
-  const [showMoveModal, setShowMoveModal] = useState(false)
   const [editorContent, setEditorContent] = useState(selectedFile?.content || '')
   const [searchQuery, setSearchQuery] = useState('')
   const [newFileParentPath, setNewFileParentPath] = useState('/')
 
+  // Tool sidebar state
+  const [toolSidebarOpen, setToolSidebarOpen] = useState(false)
+  const [toolSearchQuery, setToolSearchQuery] = useState('')
+  // Local tool configuration state (for the currently selected file/directory)
+  const [localConfiguredTools, setLocalConfiguredTools] = useState<ToolConfiguration[]>([])
+  const [localInheritedTools, setLocalInheritedTools] = useState<InheritedTool[]>([])
+
   const editorRef = useRef<HTMLTextAreaElement>(null)
+
+  // Determine selected node type for tool sidebar
+  const selectedNodeType = selectedFile ? 'file' as const : undefined
+  const selectedNodePath = selectedFile?.path
 
   // Update editor content when selection changes
   const handleSelectFile = useCallback((file: PromptFragment) => {
@@ -547,7 +585,7 @@ export function PromptLibrary({
 
   const handleMove = useCallback(() => {
     if (contextMenu.node) {
-      setShowMoveModal(true)
+      setContextMenu({ node: null, position: { x: 0, y: 0 } })
     }
   }, [contextMenu.node])
 
@@ -566,6 +604,164 @@ export function PromptLibrary({
     setShowNewFolderModal(false)
     onCreateFolder(form)
   }, [onCreateFolder])
+
+  // ===== Tool Configuration Handlers =====
+
+  // Helper: Get all parent directories for a path
+  const getParentPaths = useCallback((filePath: string): string[] => {
+    const parts = filePath.split('/').filter(Boolean)
+    const parents: string[] = []
+    for (let i = 1; i < parts.length; i++) {
+      parents.push('/' + parts.slice(0, i).join('/'))
+    }
+    return parents
+  }, [])
+
+  // Helper: Find a directory in the tree by path
+  const findDirectoryByPath = useCallback((path: string, node: FileSystemNode = fileSystem): Directory | null => {
+    if (node.path === path && node.type === 'directory') {
+      return node as Directory
+    }
+    if (node.type === 'directory' && node.children) {
+      for (const child of node.children) {
+        const found = findDirectoryByPath(path, child)
+        if (found) return found
+      }
+    }
+    return null
+  }, [fileSystem])
+
+  // Compute inherited tools from parent directories
+  const computeInheritedTools = useCallback((filePath: string): InheritedTool[] => {
+    const parentPaths = getParentPaths(filePath)
+    const inherited: InheritedTool[] = []
+
+    for (const parentPath of parentPaths) {
+      const dir = findDirectoryByPath(parentPath)
+      if (dir?.config?.tools) {
+        for (const tool of dir.config.tools) {
+          if (tool.enabled) {
+            inherited.push({
+              toolId: tool.toolId,
+              sourcePath: parentPath,
+              parameters: tool.parameters,
+            })
+          }
+        }
+      }
+    }
+
+    return inherited
+  }, [getParentPaths, findDirectoryByPath])
+
+  // Update local tool state when file selection changes
+  useEffect(() => {
+    if (selectedFile) {
+      // Get configured tools from file frontmatter
+      const fileTools = selectedFile.frontmatter?.tools || []
+      setLocalConfiguredTools(fileTools)
+
+      // Get inherited tools from parent directories
+      const inherited = computeInheritedTools(selectedFile.path)
+      setLocalInheritedTools(inherited)
+    } else {
+      setLocalConfiguredTools([])
+      setLocalInheritedTools([])
+    }
+  }, [selectedFile, computeInheritedTools])
+
+  // Toggle tool sidebar open/closed
+  const handleToggleToolSidebar = useCallback(() => {
+    setToolSidebarOpen(prev => !prev)
+    if (onToggleToolSidebar) {
+      onToggleToolSidebar()
+    }
+  }, [onToggleToolSidebar])
+
+  // Handle tool search
+  const handleToolSearchChange = useCallback((query: string) => {
+    setToolSearchQuery(query)
+    if (onToolSearchChange) {
+      onToolSearchChange(query)
+    }
+  }, [onToolSearchChange])
+
+  // Toggle tool enabled/disabled
+  const handleToggleTool = useCallback((toolId: string, enabled: boolean) => {
+    setLocalConfiguredTools(prev => {
+      const existing = prev.find(t => t.toolId === toolId)
+      if (existing) {
+        // Update existing
+        if (enabled) {
+          // Keep enabled, just update
+          return prev.map(t => t.toolId === toolId ? { ...t, enabled } : t)
+        } else {
+          // Remove if disabling (or keep as enabled: false to explicitly disable)
+          return prev.map(t => t.toolId === toolId ? { ...t, enabled } : t)
+        }
+      } else {
+        // Add new tool configuration
+        const newConfig: ToolConfiguration = {
+          toolId,
+          enabled,
+          parameters: {},
+        }
+        return [...prev, newConfig]
+      }
+    })
+
+    // Call parent callback
+    if (onToggleTool) {
+      onToggleTool(toolId, enabled)
+    }
+
+    // Trigger save to persist to frontmatter/config.json
+    if (onSave) {
+      onSave()
+    }
+  }, [onToggleTool, onSave])
+
+  // Update tool parameters
+  const handleUpdateToolParameters = useCallback((
+    toolId: string,
+    parameters: Record<string, string | number | boolean | string[]>
+  ) => {
+    setLocalConfiguredTools(prev => {
+      const existing = prev.find(t => t.toolId === toolId)
+      if (existing) {
+        return prev.map(t =>
+          t.toolId === toolId
+            ? { ...t, parameters: { ...t.parameters, ...parameters } }
+            : t
+        )
+      } else {
+        // Create new tool config with parameters
+        const newConfig: ToolConfiguration = {
+          toolId,
+          enabled: true,
+          parameters,
+        }
+        return [...prev, newConfig]
+      }
+    })
+
+    // Call parent callback
+    if (onUpdateToolParameters) {
+      onUpdateToolParameters(toolId, parameters)
+    }
+
+    // Trigger save to persist
+    if (onSave) {
+      onSave()
+    }
+  }, [onUpdateToolParameters, onSave])
+
+  // Build tool sidebar state object
+  const toolSidebarState = useMemo(() => ({
+    isOpen: toolSidebarOpen,
+    searchQuery: toolSearchQuery,
+    filterCategory: null,
+  }), [toolSidebarOpen, toolSearchQuery])
 
   // Filter tree nodes based on search
   const filterNodes = (nodes: FileSystemNode[], query: string): FileSystemNode[] => {
@@ -711,6 +907,27 @@ export function PromptLibrary({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Tool Sidebar Toggle */}
+            <button
+              onClick={handleToggleToolSidebar}
+              className={`
+                p-2 rounded-lg transition-all flex items-center gap-2
+                ${toolSidebarOpen
+                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                  : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400'
+                }
+              `}
+              title="Configure tools"
+            >
+              <Wrench className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm font-medium">Tools</span>
+              {localConfiguredTools.filter(t => t.enabled).length > 0 && (
+                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
+                  {localConfiguredTools.filter(t => t.enabled).length}
+                </span>
+              )}
+            </button>
+
             {selectedFile && (
               <button
                 onClick={handleSave}
@@ -847,6 +1064,21 @@ export function PromptLibrary({
         nodeName={contextMenu.node?.name || ''}
         onClose={() => setShowRenameModal(false)}
         onSubmit={handleRenameSubmit}
+      />
+
+      {/* Tool Configuration Sidebar */}
+      <ToolSidebar
+        isOpen={toolSidebarOpen}
+        availableTools={availableTools}
+        inheritedTools={localInheritedTools}
+        configuredTools={localConfiguredTools}
+        state={toolSidebarState}
+        selectedNodePath={selectedNodePath}
+        selectedNodeType={selectedNodeType}
+        onClose={handleToggleToolSidebar}
+        onSearchChange={handleToolSearchChange}
+        onToggleTool={handleToggleTool}
+        onUpdateToolParameters={handleUpdateToolParameters}
       />
     </div>
   )

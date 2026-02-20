@@ -34,16 +34,34 @@ A domain expert or end user who can author prompt fragments, configure agents, o
 
 A chat session with an agent, containing messages exchanged between the user and the agent over time.
 
+### Tool
+
+A function-calling capability that agents can invoke — either a built-in DomainSmith tool or an installed npm package.
+
+### ToolPackage
+
+An npm package that can be installed to add tools to the Tool Library, with metadata about available functions and dependencies.
+
+### EnvironmentVariable
+
+A workspace-level configuration value (API keys, endpoints, secrets) that tools can reference for secure credential management.
+
 ## Relationships
 
 - Workspace has many Directories
 - Workspace has many AgentConfig
+- Workspace has many EnvironmentVariables
+- Workspace has many installed ToolPackages
 - Directory has many PromptFragments
 - Directory has many subdirectories
 - Directory generates one Schema
+- Directory has many Tools (via config.json)
+- PromptFragment has many Tools (via frontmatter)
 - AgentConfig belongs to one User
 - AgentConfig generates one Agent
 - Agent belongs to one Workspace
 - Agent has many Conversations
+- Agent has many Tools (inherited from selected prompt fragments)
 - Conversation belongs to one Agent
 - User belongs to many Workspaces
+- Tool belongs to one ToolPackage

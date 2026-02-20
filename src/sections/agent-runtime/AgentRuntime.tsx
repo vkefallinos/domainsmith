@@ -2,12 +2,12 @@ import data from '@/../product/sections/agent-runtime/data.json'
 import { AgentRuntime } from './components/AgentRuntime'
 
 // Simulated state for preview
-let selectedAgentId = data.agents[0].id
+let selectedAgentId = (data.agents as Agent[])[0].id
 let isPromptPanelExpanded = false
 
 export default function AgentRuntimePreview() {
   // Find conversation for selected agent
-  const conversation = data.conversations.find(c => c.agentId === selectedAgentId) || null
+  const conversation = (data.conversations as Conversation[]).find(c => c.agentId === selectedAgentId) || null
 
   return (
     <AgentRuntime

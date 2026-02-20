@@ -17,6 +17,9 @@ Enterprises need governance, version control, and collaboration for AI systems. 
 ### Problem 4: Domain specialization
 General LLMs lack domain-specific knowledge and constraints. DomainSmith enables experts to encode their domain expertise as structured, reusable prompt fragments that create perfectly tailored, token-efficient system prompts.
 
+### Problem 5: Agent tooling integration
+AI agents need external capabilities — APIs, databases, utilities — to be useful. DomainSmith provides a Tool Library where function-calling tools (built-in or npm-installable) are cataloged, configured, and automatically attached to agents based on prompt fragment selection.
+
 ## Key Features
 - Modular prompt authoring via filesystem-based fragments (.md files)
 - Automatic schema generation from directory structures
@@ -24,3 +27,6 @@ General LLMs lack domain-specific knowledge and constraints. DomainSmith enables
 - JSON-based agent payload generation and validation
 - Multi-user workspaces with collaboration support
 - Version-controlled prompt fragments and taxonomies
+- Tool Library with function-calling capabilities (built-in + npm packages)
+- Automatic tool attachment based on prompt fragment metadata and directory config
+- Workspace-level environment variables for secure tool configuration
