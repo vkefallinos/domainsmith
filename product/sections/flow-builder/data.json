@@ -1,0 +1,607 @@
+{
+  "_meta": {
+    "models": {
+      "Flow": "A sequential task flow that defines a series of operations to be executed in order. Can be standalone or attached to an agent via slash command.",
+      "Task": "A single step within a flow that performs a specific operation (schema output, tool call, data transformation, or LLM prompt).",
+      "SlashCommand": "A custom command trigger (e.g., /summarize) that users can type to invoke an attached flow.",
+      "OutputSchema": "A JSON Schema definition that describes the expected output structure of a task.",
+      "ToolReference": "A reference to a tool from the Tool Library that a task can invoke.",
+      "DataTransformation": "A ruleset describing how to transform data from a previous task's output."
+    },
+    "relationships": [
+      "Flow belongs to one Workspace",
+      "Flow can be attached to many Agents (reusable)",
+      "Flow has many Tasks in sequence",
+      "SlashCommand belongs to one Agent",
+      "SlashCommand triggers one Flow",
+      "Task has one OutputSchema (for schema-output type tasks)",
+      "Task has one ToolReference (for tool-calling type tasks)",
+      "Task has one DataTransformation (for data-transformation type tasks)",
+      "Task receives input from the previous Task in the Flow"
+    ]
+  },
+  "flows": [
+    {
+      "id": "flow_001",
+      "name": "Customer Onboarding Analysis",
+      "description": "Analyzes new customer data, enriches with external data, and generates a summary report",
+      "status": "active",
+      "scope": "standalone",
+      "agentId": null,
+      "tags": ["customer-success", "analytics", "automation"],
+      "taskCount": 4,
+      "createdAt": "2025-01-15T10:30:00Z",
+      "updatedAt": "2025-02-10T14:22:00Z",
+      "lastRunAt": "2025-02-10T14:22:00Z"
+    },
+    {
+      "id": "flow_002",
+      "name": "Document Processing Pipeline",
+      "description": "Extracts text from uploaded documents, classifies content, and stores structured metadata",
+      "status": "active",
+      "scope": "standalone",
+      "agentId": null,
+      "tags": ["documents", "nlp", "processing"],
+      "taskCount": 3,
+      "createdAt": "2025-01-20T09:15:00Z",
+      "updatedAt": "2025-02-08T11:45:00Z",
+      "lastRunAt": "2025-02-08T11:45:00Z"
+    },
+    {
+      "id": "flow_003",
+      "name": "Support Ticket Triage",
+      "description": "Categorizes incoming support tickets, assigns priority, and suggests initial responses",
+      "status": "draft",
+      "scope": "standalone",
+      "agentId": null,
+      "tags": ["support", "triage", "automation"],
+      "taskCount": 5,
+      "createdAt": "2025-02-01T16:00:00Z",
+      "updatedAt": "2025-02-12T09:30:00Z",
+      "lastRunAt": null
+    },
+    {
+      "id": "flow_004",
+      "name": "Lead Enrichment Flow",
+      "description": "Takes basic lead information and enriches with company data, technographic details, and social signals",
+      "status": "active",
+      "scope": "standalone",
+      "agentId": null,
+      "tags": ["sales", "enrichment", "leads"],
+      "taskCount": 4,
+      "createdAt": "2025-01-25T13:20:00Z",
+      "updatedAt": "2025-02-05T10:10:00Z",
+      "lastRunAt": "2025-02-05T10:10:00Z"
+    },
+    {
+      "id": "flow_005",
+      "name": "Content Moderation Pipeline",
+      "description": "Scans user-generated content for policy violations, extracts entities, and flags for review",
+      "status": "active",
+      "scope": "standalone",
+      "agentId": null,
+      "tags": ["moderation", "safety", "content"],
+      "taskCount": 3,
+      "createdAt": "2025-01-18T08:00:00Z",
+      "updatedAt": "2025-01-18T08:00:00Z",
+      "lastRunAt": "2025-02-09T15:30:00Z"
+    },
+    {
+      "id": "flow_006",
+      "name": "Invoice Data Extraction",
+      "description": "Extracts key fields from invoice documents and validates against purchase order data",
+      "status": "draft",
+      "scope": "standalone",
+      "agentId": null,
+      "tags": ["finance", "extraction", "invoices"],
+      "taskCount": 2,
+      "createdAt": "2025-02-10T11:00:00Z",
+      "updatedAt": "2025-02-10T11:00:00Z",
+      "lastRunAt": null
+    },
+    {
+      "id": "flow_007",
+      "name": "Meeting Notes Summary",
+      "description": "Processes meeting transcripts to extract action items, decisions, and generates a structured summary",
+      "status": "active",
+      "scope": "standalone",
+      "agentId": null,
+      "tags": ["productivity", "meetings", "summaries"],
+      "taskCount": 4,
+      "createdAt": "2025-01-22T14:45:00Z",
+      "updatedAt": "2025-02-11T16:20:00Z",
+      "lastRunAt": "2025-02-11T16:20:00Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task_001",
+      "flowId": "flow_001",
+      "type": "schema-output",
+      "order": 1,
+      "name": "Extract Customer Fields",
+      "description": "Extracts structured customer data from input",
+      "config": {
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "customerName": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "company": { "type": "string" },
+            "planTier": { "type": "string", "enum": ["basic", "pro", "enterprise"] }
+          },
+          "required": ["customerName", "email", "company"]
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_002",
+      "flowId": "flow_001",
+      "type": "tool-calling",
+      "order": 2,
+      "name": "Enrich with Company Data",
+      "description": "Calls company enrichment API to get additional firmographic data",
+      "config": {
+        "toolId": "clearbit_company_api",
+        "toolName": "Clearbit Company API",
+        "parameters": {
+          "domain": "{{previousTask.company}}",
+          "fields": ["industry", "employees", "revenue", "founded"]
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_003",
+      "flowId": "flow_001",
+      "type": "data-transformation",
+      "order": 3,
+      "name": "Calculate Onboarding Score",
+      "description": "Combines customer and company data to compute an onboarding priority score",
+      "config": {
+        "transformationRules": [
+          {
+            "inputField": "planTier",
+            "outputField": "tierScore",
+            "transform": "mapping",
+            "mapping": { "basic": 1, "pro": 2, "enterprise": 3 }
+          },
+          {
+            "inputField": "employees",
+            "outputField": "sizeScore",
+            "transform": "bucket",
+            "buckets": [
+              { "max": 50, "value": 1 },
+              { "max": 200, "value": 2 },
+              { "max": 1000, "value": 3 },
+              { "default": 4 }
+            ]
+          },
+          {
+            "outputField": "priorityScore",
+            "transform": "expression",
+            "expression": "tierScore * 2 + sizeScore"
+          }
+        ]
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_004",
+      "flowId": "flow_001",
+      "type": "llm-prompt",
+      "order": 4,
+      "name": "Generate Onboarding Plan",
+      "description": "Creates a personalized onboarding plan based on all collected data",
+      "config": {
+        "promptTemplate": "Based on the following customer profile:\n\nCustomer: {{task_1.customerName}}\nCompany: {{task_1.company}} ({{task_2.industry}}, {{task_2.employees}} employees)\nPlan Tier: {{task_1.planTier}}\nPriority Score: {{task_3.priorityScore}}\n\nGenerate a personalized onboarding plan with specific milestones, recommended training modules, and success metrics.",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.7
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_005",
+      "flowId": "flow_002",
+      "type": "llm-prompt",
+      "order": 1,
+      "name": "Extract Document Text",
+      "description": "Extracts and cleans text content from the uploaded document",
+      "config": {
+        "promptTemplate": "Extract all text content from the provided document. Preserve headings, lists, and table structures. Clean up any formatting artifacts from OCR or PDF conversion.",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.3
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_006",
+      "flowId": "flow_002",
+      "type": "schema-output",
+      "order": 2,
+      "name": "Classify Document Type",
+      "description": "Categorizes the document into predefined types",
+      "config": {
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "documentType": {
+              "type": "string",
+              "enum": ["contract", "invoice", "report", "correspondence", "technical", "other"]
+            },
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "keyTopics": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["documentType", "confidence"]
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_007",
+      "flowId": "flow_002",
+      "type": "tool-calling",
+      "order": 3,
+      "name": "Store Metadata",
+      "description": "Stores the extracted and classified metadata in the document database",
+      "config": {
+        "toolId": "document_store_insert",
+        "toolName": "Document Store Insert",
+        "parameters": {
+          "collection": "processed_documents",
+          "document": {
+            "text": "{{task_1.extractedText}}",
+            "type": "{{task_2.documentType}}",
+            "topics": "{{task_2.keyTopics}}",
+            "processedAt": "{{now}}"
+          }
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_008",
+      "flowId": "flow_003",
+      "type": "schema-output",
+      "order": 1,
+      "name": "Parse Ticket Data",
+      "description": "Extracts key information from the support ticket submission",
+      "config": {
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "subject": { "type": "string" },
+            "category": { "type": "string" },
+            "urgency": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+            "customerTier": { "type": "string" }
+          },
+          "required": ["subject", "category"]
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_009",
+      "flowId": "flow_003",
+      "type": "data-transformation",
+      "order": 2,
+      "name": "Calculate Priority",
+      "description": "Determines ticket priority based on urgency and customer tier",
+      "config": {
+        "transformationRules": [
+          {
+            "outputField": "priorityScore",
+            "transform": "expression",
+            "expression": "urgency === 'critical' ? 100 : urgency === 'high' ? 75 : urgency === 'medium' ? 50 : 25"
+          },
+          {
+            "outputField": "priorityLevel",
+            "transform": "expression",
+            "expression": "priorityScore >= 75 ? 'P1' : priorityScore >= 50 ? 'P2' : 'P3'"
+          }
+        ]
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_010",
+      "flowId": "flow_003",
+      "type": "llm-prompt",
+      "order": 3,
+      "name": "Generate Response Draft",
+      "description": "Creates an initial response template based on ticket category and priority",
+      "config": {
+        "promptTemplate": "Draft a response for a {{task_1.category}} support ticket with priority {{task_2.priorityLevel}}.\n\nSubject: {{task_1.subject}}\n\nThe response should:\n1. Acknowledge the issue\n2. Set appropriate expectations based on priority level\n3. Request any additional information needed\n4. Maintain a professional and empathetic tone",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.6
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_011",
+      "flowId": "flow_003",
+      "type": "tool-calling",
+      "order": 4,
+      "name": "Lookup Customer History",
+      "description": "Retrieves previous interactions and tickets from the customer",
+      "config": {
+        "toolId": "support_history_lookup",
+        "toolName": "Support History Lookup",
+        "parameters": {
+          "customerId": "{{input.customerId}}",
+          "includeResolved": true,
+          "limit": 10
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_012",
+      "flowId": "flow_003",
+      "type": "llm-prompt",
+      "order": 5,
+      "name": "Refine Response with Context",
+      "description": "Updates the response draft with customer history context",
+      "config": {
+        "promptTemplate": "Update the following draft response with additional context from the customer's support history:\n\nDraft Response:\n{{task_3.draftResponse}}\n\nCustomer History ({{task_4.historyCount}} previous tickets):\n{{task_4.recentIssues}}\n\nAdjust the response to acknowledge any patterns or recurring issues. If this is a first-time customer, ensure a welcoming tone.",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.5
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_013",
+      "flowId": "flow_004",
+      "type": "schema-output",
+      "order": 1,
+      "name": "Parse Lead Data",
+      "description": "Extracts and validates lead information from the input",
+      "config": {
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "fullName": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "company": { "type": "string" },
+            "jobTitle": { "type": "string" },
+            "source": { "type": "string" }
+          },
+          "required": ["fullName", "email", "company"]
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_014",
+      "flowId": "flow_004",
+      "type": "tool-calling",
+      "order": 2,
+      "name": "Enrich Company Data",
+      "description": "Fetches detailed company information from Clearbit",
+      "config": {
+        "toolId": "clearbit_company_api",
+        "toolName": "Clearbit Company API",
+        "parameters": {
+          "domain": "{{extractDomain(task_1.email)}}",
+          "fields": ["industry", "employees", "revenue", "technologies", "alexaRank"]
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_015",
+      "flowId": "flow_004",
+      "type": "tool-calling",
+      "order": 3,
+      "name": "Get LinkedIn Profile",
+      "description": "Retrieves professional profile data from LinkedIn",
+      "config": {
+        "toolId": "linkedin_profile_fetch",
+        "toolName": "LinkedIn Profile Fetch",
+        "parameters": {
+          "email": "{{task_1.email}}",
+          "fields": ["profileUrl", "currentPosition", "companySize", "connections"]
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_016",
+      "flowId": "flow_004",
+      "type": "data-transformation",
+      "order": 4,
+      "name": "Compute Lead Score",
+      "description": "Calculates a lead score based on all enriched data",
+      "config": {
+        "transformationRules": [
+          {
+            "outputField": "leadScore",
+            "transform": "expression",
+            "expression": "(task_2.revenue > 10000000 ? 30 : 10) + (task_2.employees > 500 ? 25 : 5) + (task_3.connections > 500 ? 20 : 5) + (contains(task_2.technologies, 'salesforce') ? 15 : 0) + (task_1.source === 'referral' ? 10 : 5)"
+          },
+          {
+            "outputField": "segment",
+            "transform": "expression",
+            "expression": "leadScore >= 75 ? 'enterprise' : leadScore >= 50 ? 'mid-market' : 'smb'"
+          }
+        ]
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_017",
+      "flowId": "flow_005",
+      "type": "llm-prompt",
+      "order": 1,
+      "name": "Analyze Content",
+      "description": "Analyzes user-generated content for policy violations and safety concerns",
+      "config": {
+        "promptTemplate": "Analyze the following user-generated content for policy violations:\n\n{{input.content}}\n\nCheck for:\n1. Hate speech or harassment\n2. Self-harm or suicide content\n3. Violence or threats\n4. Sexual content\n5. Spam or deceptive practices\n\nReturn a structured assessment with:\n- violationFound: boolean\n- violationCategories: array of strings\n- confidence: number 0-1\n- explanation: string",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.2
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_018",
+      "flowId": "flow_005",
+      "order": 2,
+      "type": "data-transformation",
+      "name": "Flag for Review",
+      "description": "Sets review flag based on analysis results",
+      "config": {
+        "transformationRules": [
+          {
+            "outputField": "requiresReview",
+            "transform": "expression",
+            "expression": "task_1.violationFound === true || task_1.confidence < 0.8"
+          },
+          {
+            "outputField": "reviewPriority",
+            "transform": "expression",
+            "expression": "task_1.violationFound === true ? 'high' : task_1.confidence < 0.5 ? 'medium' : 'low'"
+          }
+        ]
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_019",
+      "flowId": "flow_005",
+      "type": "schema-output",
+      "order": 3,
+      "name": "Extract Entities",
+      "description": "Extracts named entities from the content for indexing",
+      "config": {
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "people": { "type": "array", "items": { "type": "string" } },
+            "organizations": { "type": "array", "items": { "type": "string" } },
+            "locations": { "type": "array", "items": { "type": "string" } },
+            "dates": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "status": "valid"
+      }
+    },
+    {
+      "id": "task_020",
+      "flowId": "flow_006",
+      "type": "llm-prompt",
+      "order": 1,
+      "name": "Extract Invoice Fields",
+      "description": "Extracts key fields from invoice document for processing",
+      "config": {
+        "promptTemplate": "Extract the following fields from the invoice:\n- Invoice number\n- Invoice date\n- Due date\n- Vendor name\n- Line items (description, quantity, unit price, total)\n- Subtotal\n- Tax amount\n- Total amount\n\nReturn as structured JSON.",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.1
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_021",
+      "flowId": "flow_006",
+      "type": "tool-calling",
+      "order": 2,
+      "name": "Validate Against PO",
+      "description": "Cross-references invoice with existing purchase order",
+      "config": {
+        "toolId": "erp_po_validation",
+        "toolName": "ERP PO Validation",
+        "parameters": {
+          "invoiceNumber": "{{task_1.invoiceNumber}}",
+          "vendorId": "{{task_1.vendorName}}",
+          "matchThreshold": 0.95
+        }
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_022",
+      "flowId": "flow_007",
+      "type": "llm-prompt",
+      "order": 1,
+      "name": "Transcribe and Clean",
+      "description": "Processes meeting transcript to clean up artifacts and speaker attribution",
+      "config": {
+        "promptTemplate": "Clean up the following meeting transcript:\n\n{{input.transcript}}\n\nTasks:\n1. Fix speaker attribution errors\n2. Remove filler words and disfluencies\n3. Clarify unclear passages (mark with [unclear] if necessary)\n4. Preserve the actual content and meaning",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.3
+      },
+      "status": "valid"
+    },
+    {
+      "id": "task_023",
+      "flowId": "flow_007",
+      "type": "schema-output",
+      "order": 2,
+      "name": "Extract Action Items",
+      "description": "Identifies and structures action items from the meeting",
+      "config": {
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "actionItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "description": { "type": "string" },
+                  "assignee": { "type": "string" },
+                  "dueDate": { "type": "string" },
+                  "priority": { "type": "string", "enum": ["high", "medium", "low"] }
+                },
+                "required": ["description"]
+              }
+            }
+          }
+        },
+        "status": "valid"
+      }
+    },
+    {
+      "id": "task_024",
+      "flowId": "flow_007",
+      "type": "schema-output",
+      "order": 3,
+      "name": "Extract Decisions",
+      "description": "Identifies key decisions made during the meeting",
+      "config": {
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "decisions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "topic": { "type": "string" },
+                  "decision": { "type": "string" },
+                  "participants": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["topic", "decision"]
+              }
+            }
+          }
+        },
+        "status": "valid"
+      }
+    },
+    {
+      "id": "task_025",
+      "flowId": "flow_007",
+      "type": "llm-prompt",
+      "order": 4,
+      "name": "Generate Meeting Summary",
+      "description": "Creates a comprehensive summary with action items and decisions",
+      "config": {
+        "promptTemplate": "Generate a meeting summary based on:\n\nClean Transcript:\n{{task_1.cleanedTranscript}}\n\nAction Items:\n{{task_2.actionItems}}\n\nDecisions:\n{{task_3.decisions}}\n\nCreate a well-structured summary that includes:\n1. Meeting overview (purpose, attendees, duration)\n2. Key discussion points\n3. Decisions made\n4. Action items table\n5. Next meeting information (if mentioned)",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.5
+      },
+      "status": "valid"
+    }
+  ]
+}

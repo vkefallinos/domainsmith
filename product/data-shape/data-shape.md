@@ -46,12 +46,25 @@ An npm package that can be installed to add tools to the Tool Library, with meta
 
 A workspace-level configuration value (API keys, endpoints, secrets) that tools can reference for secure credential management.
 
+### Flow
+
+A sequential task flow that can be attached to an agent, consisting of multiple tasks that execute in order. Each task can output structured data, call tools, transform data, or generate LLM responses.
+
+### Task
+
+A single step within a flow that performs a specific operation (schema output, tool call, data transformation, or LLM prompt).
+
+### SlashCommand
+
+A custom command trigger (e.g., `/summarize`, `/analyze`) that users can type in conversation to invoke an attached flow on an agent.
+
 ## Relationships
 
 - Workspace has many Directories
 - Workspace has many AgentConfig
 - Workspace has many EnvironmentVariables
 - Workspace has many installed ToolPackages
+- Workspace has many Flows
 - Directory has many PromptFragments
 - Directory has many subdirectories
 - Directory generates one Schema
@@ -62,6 +75,17 @@ A workspace-level configuration value (API keys, endpoints, secrets) that tools 
 - Agent belongs to one Workspace
 - Agent has many Conversations
 - Agent has many Tools (inherited from selected prompt fragments)
+- Agent has many Flows (attached via slash commands)
+- Agent has many SlashCommands (triggers for attached flows)
+- Flow belongs to one Workspace
+- Flow can be attached to many Agents (reusable)
+- Flow has many Tasks in sequence
+- Task has one OutputSchema (for schema-output type tasks)
+- Task has one ToolReference (for tool-calling type tasks)
+- Task has one DataTransformation (for data-transformation type tasks)
+- Task receives input from the previous Task in the Flow
+- SlashCommand belongs to one Agent
+- SlashCommand triggers one Flow
 - Conversation belongs to one Agent
 - User belongs to many Workspaces
 - Tool belongs to one ToolPackage

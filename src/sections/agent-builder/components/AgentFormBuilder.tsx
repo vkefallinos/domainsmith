@@ -1,5 +1,8 @@
-import type { AgentBuilderScreenProps, Domain, SchemaField, Tool, EnabledToolMapping } from '@/../product/sections/agent-builder/types'
+import type { AgentBuilderScreenProps, Domain, SchemaField, Tool, EnabledToolMapping, AttachedFlow } from '@/../product/sections/agent-builder/types'
 import type { SchemaFieldType, ToolSource, ToolConfigStatus } from '@/../product/sections/agent-builder/types'
+import { SlashCommandsPanel } from './SlashCommandCard'
+import { FlowBuilderModal } from './FlowBuilderModal'
+import { useState } from 'react'
 
 interface AgentFormBuilderProps extends AgentBuilderScreenProps {
   view: 'builder' | 'templates'
@@ -259,9 +262,12 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     enabledTools = [],
     enabledFields = [],
     emptyFieldsForRuntime = [],
+    attachedFlows = [],
+    availableFlows = [],
     promptPreview,
     validationErrors = {},
     toolLibraryOpen = false,
+    flowBuilderOpen = false,
     onDomainsChange,
     onFieldValueChange,
     onEnableField,
@@ -274,8 +280,18 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     onGeneratePreview,
     onSaveAsTemplate,
     onDeployToRuntime,
-    onNewAgent
+    onNewAgent,
+    onOpenFlowBuilder,
+    onCloseFlowBuilder,
+    onAttachFlow,
+    onDetachFlow,
+    onToggleSlashCommand,
+    onEditSlashCommand,
+    loadedAgentId
   } = props
+
+  // Tab state for the right panel
+  const [activeTab, setActiveTab] = useState<'tools' | 'commands' | 'preview'>('tools')
 
   // Helper to check if a field is runtime-enabled (will be configured at runtime)
   const isRuntimeEnabled = (fieldId: string) => {
@@ -499,71 +515,128 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
         </div>
       </main>
 
-      {/* Right Panel - Tools & Preview */}
+      {/* Right Panel - Tools, Commands & Preview */}
       <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col">
         {/* Tabs */}
         <div className="flex border-b border-slate-200 dark:border-slate-800">
-          <button className="flex-1 px-4 py-3 text-sm font-medium text-violet-600 dark:text-violet-400 border-b-2 border-violet-600">
+          <button
+            onClick={() => setActiveTab('tools')}
+            className={`flex-1 px-3 py-3 text-sm font-medium border-b-2 transition-all ${
+              activeTab === 'tools'
+                ? 'text-violet-600 dark:text-violet-400 border-violet-600'
+                : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
+            }`}
+          >
             Tools ({enabledToolMappings.length})
           </button>
-          <button className="flex-1 px-4 py-3 text-sm font-medium text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-400">
+          <button
+            onClick={() => setActiveTab('commands')}
+            className={`flex-1 px-3 py-3 text-sm font-medium border-b-2 transition-all ${
+              activeTab === 'commands'
+                ? 'text-violet-600 dark:text-violet-400 border-violet-600'
+                : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
+            }`}
+          >
+            Commands ({attachedFlows?.filter(f => f.slashCommand.enabled).length || 0})
+          </button>
+          <button
+            onClick={() => setActiveTab('preview')}
+            className={`flex-1 px-3 py-3 text-sm font-medium border-b-2 transition-all ${
+              activeTab === 'preview'
+                ? 'text-violet-600 dark:text-violet-400 border-violet-600'
+                : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
+            }`}
+          >
             Preview
           </button>
         </div>
 
         {/* Tools Panel */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Enabled Tools</h3>
-            <button
-              onClick={onOpenToolLibrary}
-              className="text-xs px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors flex items-center gap-1"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Tools
-            </button>
-          </div>
-
-          {enabledToolMappings.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        {activeTab === 'tools' && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Enabled Tools</h3>
+              <button
+                onClick={onOpenToolLibrary}
+                className="text-xs px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded-lg hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors flex items-center gap-1"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-500">No tools enabled yet</p>
-              <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">Tools will auto-enable based on form selections</p>
+                Add Tools
+              </button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {enabledToolMappings.map(mapping => (
-                <EnabledToolCard
-                  key={mapping.tool.id}
-                  mapping={mapping}
-                  onRemove={mapping.source === 'manual' ? () => onRemoveTool(mapping.tool.id) : undefined}
-                  onConfigure={() => onConfigureTool(mapping.tool.id, {})}
-                />
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Prompt Preview Panel */}
-        <div className="border-t border-slate-200 dark:border-slate-800 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">System Prompt</h3>
-            <span className="text-xs text-slate-400">{promptPreview?.tokenCount || 0} tokens</span>
+            {enabledToolMappings.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-500">No tools enabled yet</p>
+                <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">Tools will auto-enable based on form selections</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {enabledToolMappings.map(mapping => (
+                  <EnabledToolCard
+                    key={mapping.tool.id}
+                    mapping={mapping}
+                    onRemove={mapping.source === 'manual' ? () => onRemoveTool(mapping.tool.id) : undefined}
+                    onConfigure={() => onConfigureTool(mapping.tool.id, {})}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="p-3 bg-slate-900 rounded-lg">
-            <pre className="text-xs text-slate-300 font-['JetBrains_Mono'] whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
-              {promptPreview?.generatedPrompt || 'Select domains and fill forms to generate prompt...'}
-            </pre>
+        )}
+
+        {/* Commands Panel */}
+        {activeTab === 'commands' && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <SlashCommandsPanel
+              attachedFlows={attachedFlows || []}
+              onToggleEnabled={onToggleSlashCommand || (() => {})}
+              onEditCommand={(id) => {
+                // Would open edit modal for the command
+                console.log('Edit command:', id)
+              }}
+              onDetachFlow={onDetachFlow || (() => {})}
+              onAttachNewFlow={onOpenFlowBuilder || (() => {})}
+            />
           </div>
-        </div>
+        )}
+
+        {/* Preview Panel */}
+        {activeTab === 'preview' && (
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">System Prompt</h3>
+              <span className="text-xs text-slate-400">{promptPreview?.tokenCount || 0} tokens</span>
+            </div>
+            <div className="p-3 bg-slate-900 rounded-lg">
+              <pre className="text-xs text-slate-300 font-['JetBrains_Mono'] whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
+                {promptPreview?.generatedPrompt || 'Select domains and fill forms to generate prompt...'}
+              </pre>
+            </div>
+          </div>
+        )}
       </aside>
+
+      {/* Flow Builder Modal */}
+      <FlowBuilderModal
+        isOpen={flowBuilderOpen || false}
+        onClose={onCloseFlowBuilder || (() => {})}
+        agentId={loadedAgentId || 'temp'}
+        availableFlows={availableFlows || []}
+        onAttachFlow={onAttachFlow || (() => {})}
+        onCreateNewFlow={() => {
+          // Would open the flow builder in a new context
+          console.log('Create new flow')
+        }}
+      />
     </div>
   )
 }

@@ -3,8 +3,8 @@
  *
  * Types for the agent builder interface where users configure
  * specialized agents by selecting domains, filling out forms,
- * enabling tools from the tool library, and setting fields to be
- * configured at runtime.
+ * enabling tools from the tool library, setting fields to be
+ * configured at runtime, and attaching flows with slash commands.
  */
 
 /**
@@ -26,6 +26,42 @@ export type ToolConfigStatus = 'installed' | 'needs-config' | 'ready';
  * Tool categories for filtering and organization
  */
 export type ToolCategory = 'Security' | 'Cloud' | 'Compliance' | 'Privacy' | 'DevOps' | 'Communication' | 'Reporting';
+
+/**
+ * A slash command attached to an agent that triggers a flow
+ */
+export interface AgentSlashCommand {
+  /** Unique identifier for the slash command */
+  id: string;
+  /** The command trigger (e.g., "summarize" - user types /summarize) */
+  commandId: string;
+  /** Human-readable name for the command */
+  name: string;
+  /** Description of what the command does */
+  description: string;
+  /** ID of the flow this command triggers */
+  flowId: string;
+  /** Name of the flow (for display) */
+  flowName: string;
+  /** Whether the command is enabled */
+  enabled: boolean;
+}
+
+/**
+ * A flow attached to an agent with its slash command configuration
+ */
+export interface AttachedFlow {
+  /** ID of the flow */
+  flowId: string;
+  /** Name of the flow */
+  flowName: string;
+  /** Description of what the flow does */
+  flowDescription: string;
+  /** Number of tasks in the flow */
+  taskCount: number;
+  /** Slash command that triggers this flow */
+  slashCommand: AgentSlashCommand;
+}
 
 /**
  * An available domain/expertise area that can be selected when building an agent
@@ -166,6 +202,8 @@ export interface AgentConfig {
   enabledTools: EnabledTool[];
   /** Field IDs that will be configured at runtime (empty placeholders in builder) */
   emptyFieldsForRuntime: string[];
+  /** Flows attached to this agent with slash commands */
+  attachedFlows?: AttachedFlow[];
   /** When the config was created */
   createdAt: string;
   /** When the config was last updated */
@@ -206,6 +244,10 @@ export interface AgentBuilderProps {
   enabledTools?: EnabledTool[];
   /** Fields enabled for runtime configuration (shown as placeholders, not editable) */
   emptyFieldsForRuntime?: string[];
+  /** Flows attached to this agent with slash commands */
+  attachedFlows?: AttachedFlow[];
+  /** Available flows that can be attached to the agent */
+  availableFlows?: Array<{ id: string; name: string; description: string; taskCount: number }>;
   /** Currently loaded agent config (for editing) */
   loadedAgentId?: string | null;
   /** Live prompt preview */
@@ -216,6 +258,8 @@ export interface AgentBuilderProps {
   validationErrors?: Record<string, string>;
   /** Whether tool library modal is open */
   toolLibraryOpen?: boolean;
+  /** Whether flow builder/selector modal is open */
+  flowBuilderOpen?: boolean;
 }
 
 /**
@@ -254,6 +298,18 @@ export interface AgentBuilderCallbacks {
   onDuplicateAgent: (agentId: string) => void;
   /** Called to create a new agent (clear form) */
   onNewAgent: () => void;
+  /** Called to open the flow builder modal */
+  onOpenFlowBuilder: () => void;
+  /** Called to close the flow builder modal */
+  onCloseFlowBuilder: () => void;
+  /** Called to attach a flow with a slash command */
+  onAttachFlow: (flowId: string, commandId: string, name: string, description: string) => void;
+  /** Called to detach a flow from the agent */
+  onDetachFlow: (slashCommandId: string) => void;
+  /** Called to toggle a slash command enabled/disabled */
+  onToggleSlashCommand: (slashCommandId: string, enabled: boolean) => void;
+  /** Called to edit an existing slash command */
+  onEditSlashCommand: (slashCommandId: string, commandId: string, name: string, description: string) => void;
 }
 
 /**

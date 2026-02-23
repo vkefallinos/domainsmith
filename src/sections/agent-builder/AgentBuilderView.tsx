@@ -3,7 +3,8 @@ import { useState, useCallback } from 'react'
 import { AgentFormBuilder } from './components/AgentFormBuilder'
 import { SavedTemplatesList } from './components/SavedTemplatesList'
 import { ToolLibraryModal } from './components/ToolLibraryModal'
-import type { FormFieldValue } from '@/../product/sections/agent-builder/types'
+import { FlowBuilderModal } from './components/FlowBuilderModal'
+import type { FormFieldValue, AttachedFlow } from '@/../product/sections/agent-builder/types'
 
 export default function AgentBuilderPreview() {
   const [view, setView] = useState<'builder' | 'templates'>('builder')
@@ -21,6 +22,33 @@ export default function AgentBuilderPreview() {
   const [enabledTools, setEnabledTools] = useState(data.savedAgentConfigs[0].enabledTools || [])
   const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>(['scalingRequirements']) // Example: one field set to runtime
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
+  const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
+
+  // Sample attached flows for demo
+  const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>([
+    {
+      flowId: 'flow_001',
+      flowName: 'Customer Onboarding Analysis',
+      flowDescription: 'Analyzes new customer data and generates summary',
+      taskCount: 4,
+      slashCommand: {
+        id: 'sc_001',
+        commandId: 'analyze',
+        name: 'Analyze Customer',
+        description: 'Run customer onboarding analysis',
+        flowId: 'flow_001',
+        flowName: 'Customer Onboarding Analysis',
+        enabled: true
+      }
+    }
+  ])
+
+  // Available flows for attaching
+  const availableFlows = [
+    { id: 'flow_002', name: 'Document Processing Pipeline', description: 'Extracts and classifies document text', taskCount: 3 },
+    { id: 'flow_003', name: 'Support Ticket Triage', description: 'Categorizes and prioritizes support tickets', taskCount: 5 },
+    { id: 'flow_007', name: 'Meeting Notes Summary', description: 'Summarizes meeting transcripts', taskCount: 4 }
+  ]
 
   // Callback handlers
   const handleDomainsChange = useCallback((domainIds: string[]) => {
@@ -112,6 +140,61 @@ export default function AgentBuilderPreview() {
     setView('builder')
   }, [])
 
+  // Flow builder handlers
+  const handleOpenFlowBuilder = useCallback(() => {
+    setFlowBuilderOpen(true)
+  }, [])
+
+  const handleCloseFlowBuilder = useCallback(() => {
+    setFlowBuilderOpen(false)
+  }, [])
+
+  const handleAttachFlow = useCallback((flowId: string, commandId: string, name: string, description: string) => {
+    const flow = availableFlows.find(f => f.id === flowId)
+    if (!flow) return
+
+    const newAttachedFlow: AttachedFlow = {
+      flowId,
+      flowName: flow.name,
+      flowDescription: flow.description,
+      taskCount: flow.taskCount,
+      slashCommand: {
+        id: `sc_${Date.now()}`,
+        commandId,
+        name,
+        description,
+        flowId,
+        flowName: flow.name,
+        enabled: true
+      }
+    }
+
+    setAttachedFlows(prev => [...prev, newAttachedFlow])
+    console.log('Attach flow:', flowId, 'as command:', commandId)
+  }, [availableFlows])
+
+  const handleDetachFlow = useCallback((slashCommandId: string) => {
+    setAttachedFlows(prev => prev.filter(af => af.slashCommand.id !== slashCommandId))
+    console.log('Detach flow with command:', slashCommandId)
+  }, [])
+
+  const handleToggleSlashCommand = useCallback((slashCommandId: string, enabled: boolean) => {
+    setAttachedFlows(prev => prev.map(af => {
+      if (af.slashCommand.id === slashCommandId) {
+        return {
+          ...af,
+          slashCommand: { ...af.slashCommand, enabled }
+        }
+      }
+      return af
+    }))
+    console.log('Toggle command:', slashCommandId, 'enabled:', enabled)
+  }, [])
+
+  const handleEditSlashCommand = useCallback((slashCommandId: string, commandId: string, name: string, description: string) => {
+    console.log('Edit command:', slashCommandId, commandId, name, description)
+  }, [])
+
   // Generate prompt preview
   const promptPreview = data.promptPreview
 
@@ -124,9 +207,13 @@ export default function AgentBuilderPreview() {
     enabledTools,
     enabledFields: emptyFieldsForRuntime, // Same as runtime fields for now
     emptyFieldsForRuntime,
+    attachedFlows,
+    availableFlows,
     promptPreview,
     validationErrors: {},
     toolLibraryOpen,
+    flowBuilderOpen,
+    loadedAgentId: 'preview-agent',
     onDomainsChange: handleDomainsChange,
     onFieldValueChange: handleFieldValueChange,
     onEnableField: handleEnableField,
@@ -144,7 +231,13 @@ export default function AgentBuilderPreview() {
     onLoadAgent: handleLoadAgent,
     onDeleteAgent: handleDeleteAgent,
     onDuplicateAgent: handleDuplicateAgent,
-    onNewAgent: handleNewAgent
+    onNewAgent: handleNewAgent,
+    onOpenFlowBuilder: handleOpenFlowBuilder,
+    onCloseFlowBuilder: handleCloseFlowBuilder,
+    onAttachFlow: handleAttachFlow,
+    onDetachFlow: handleDetachFlow,
+    onToggleSlashCommand: handleToggleSlashCommand,
+    onEditSlashCommand: handleEditSlashCommand
   }
 
   return (
@@ -201,6 +294,16 @@ export default function AgentBuilderPreview() {
         onAddTool={handleAddTool}
         onRemoveTool={handleRemoveTool}
         onConfigureTool={handleConfigureTool}
+      />
+
+      {/* Flow Builder Modal */}
+      <FlowBuilderModal
+        isOpen={flowBuilderOpen}
+        onClose={handleCloseFlowBuilder}
+        agentId="preview-agent"
+        availableFlows={availableFlows}
+        onAttachFlow={handleAttachFlow}
+        onCreateNewFlow={() => console.log('Create new flow')}
       />
     </div>
   )
