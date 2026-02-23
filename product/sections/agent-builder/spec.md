@@ -1,21 +1,25 @@
 # Agent Builder Specification
 
 ## Overview
-A form-centric control panel where users configure specialized agents by selecting multiple domains and filling out auto-generated forms. The split-view interface displays a domain catalog sidebar alongside a dynamic configuration form, with live preview of the generated system prompt and ability to save agent configurations.
+A multi-view control panel where users configure specialized agents by selecting domains, filling out auto-generated forms, and managing tools. The builder automatically enables tools based on field selections, shows tool-to-field mappings, and allows additional tools from the library to be added and configured. Agents can be saved as templates or deployed directly to runtime.
 
 ## User Flows
-- **Create new agent** — Open the builder, select one or more domains from the catalog, configure form fields based on the combined schema, preview the generated prompt, and save the agent configuration
-- **Load and edit existing agent** — Select a previously saved agent from the list, modify domain selections or form values, preview updated prompt, and save changes
-- **Browse domains** — Explore available domains in the sidebar catalog with descriptions, tags, and form field previews before selecting
+- **Create new agent** — Select domains → auto-generated form appears → fill values → tools auto-enable based on selections → add optional tools from library → save as template or deploy
+- **Add tools from library** — Open tool library modal → search/browse tools → select tool → configure tool parameters → tool is added to enabled tools list
+- **Save agent template** — Configure agent → enter template name and description → save → appears in saved templates list for future reuse
+- **Deploy to runtime** — Configure agent → click deploy → agent is instantiated with current configuration → redirects to Agent Runtime
+- **Enable fields for runtime configuration** — Click "Runtime" toggle on any field → field becomes non-editable placeholder showing "Configured at Runtime" → field will be filled later in Agent Runtime
+- **Pre-fill fields with values** — Fill in form fields normally → values are saved with the agent configuration
 
 ## UI Requirements
-- Split-view layout: sidebar (domain catalog) on the left, main content (configuration form) on the right
-- Domain catalog must support multi-selection with visual indication of selected domains
-- Configuration form fields are dynamically generated based on the schema from selected directories/domains
-- Live prompt preview panel shows the assembled system prompt as the user fills out the form
-- Saved agents list allows loading, editing, and deleting previously created configurations
-- Form validation prevents saving incomplete configurations
-- Clear visual distinction between required and optional form fields
+- **Form Builder View**: Domain selector sidebar, auto-generated form fields based on selected domains, enabled tools list with tool-to-field mapping, tool configuration status indicators, live system prompt preview
+- **Field Runtime Toggle**: Every field has a "Runtime" toggle button that switches the field between "pre-fill now" mode and "configure at runtime" mode
+- **Runtime Field Display**: When runtime mode is active, field shows as amber-dashed placeholder with "Configured at Runtime" message, not editable in the builder
+- **Normal Field Display**: When runtime mode is off, field is editable and can be pre-filled with values
+- **Tool Library Modal**: Searchable list of available tools with categories, tool selection, configuration panel for tool parameters (when tool requires configuration), add/remove toggle
+- **Saved Templates List**: Grid/list of saved agent configurations with name, description, last modified, quick actions (edit, duplicate, delete)
+- **Enabled Tools Display**: Shows all tools enabled (auto + manual), indicates which tools came from which field selections, shows configuration status (installed/needs config/ready)
+- **Shell Integration**: View renders inside the app shell with navigation header
 
 ## Configuration
 - shell: true

@@ -1,15 +1,24 @@
 {
   "_meta": {
     "models": {
-      "Domain": "An available domain/expertise area that can be selected when building an agent. Each domain has a schema that defines the form fields for configuration.",
-      "SchemaField": "A single form field definition within a domain's schema, defining the type, label, validation rules, and default value.",
-      "AgentConfig": "A saved agent configuration containing the selected domains and filled form values that define an agent's behavior.",
+      "Domain": "An available domain/expertise area that can be selected when building an agent. Each domain has a schema that defines the form fields for configuration and may enable specific tools when selected.",
+      "SchemaField": "A single form field definition within a domain's schema, defining the type, label, validation rules, default value, and tools that become available when this field has a value.",
+      "AgentConfig": "A saved agent configuration containing the selected domains, filled form values, enabled tools, and optional empty fields for runtime configuration.",
+      "AgentTemplate": "A saved agent configuration that can be reused as a starting point for new agents.",
+      "Tool": "A function-calling capability that can be enabled for an agent, either automatically from field selections or manually from the tool library.",
+      "ToolLibrary": "A collection of available tools that can be searched, configured, and added to an agent.",
+      "EnabledToolMapping": "Shows which tools are enabled and which form field or manual selection caused them to be enabled.",
       "PromptPreview": "A live-generated preview of the system prompt assembled from the selected domains and form values."
     },
     "relationships": [
       "Domain has many SchemaFields (defined by its schema)",
+      "SchemaField may have many Tools that become available when the field is filled",
       "AgentConfig references many Domains (multi-selection)",
       "AgentConfig has many form field values corresponding to the schemas of selected domains",
+      "AgentConfig has many EnabledTools (from field mappings and manual selections)",
+      "AgentConfig may have EmptyFields that are enabled for runtime configuration",
+      "Tool belongs to one ToolPackage",
+      "EnabledToolMapping maps Tools to the SchemaField or manual selection that enabled them",
       "PromptPreview is generated from AgentConfig by combining domain templates with form values"
     ]
   },
@@ -29,7 +38,8 @@
             "label": "Assessment Scope",
             "placeholder": "Describe the systems, networks, or assets to be assessed...",
             "required": true,
-            "default": ""
+            "default": "",
+            "enablesTools": ["nmap-scanner", "ssl-analyzer"]
           },
           {
             "id": "complianceStandards",
@@ -37,7 +47,8 @@
             "label": "Compliance Standards",
             "options": ["ISO 27001", "NIST CSF", "PCI DSS", "SOC 2", "GDPR", "HIPAA"],
             "required": false,
-            "default": []
+            "default": [],
+            "enablesTools": ["compliance-checker"]
           },
           {
             "id": "severityThreshold",
@@ -53,7 +64,8 @@
             "label": "Report Format",
             "options": ["Executive Summary", "Technical Detail", "Both"],
             "required": false,
-            "default": "Both"
+            "default": "Both",
+            "enablesTools": ["report-generator"]
           }
         ]
       },
@@ -74,7 +86,8 @@
             "label": "Primary Cloud Provider",
             "options": ["AWS", "Azure", "Google Cloud", "Multi-cloud"],
             "required": true,
-            "default": "AWS"
+            "default": "AWS",
+            "enablesTools": ["aws-sdk", "azure-cli", "gcloud-sdk"]
           },
           {
             "id": "architectureType",
@@ -89,7 +102,8 @@
             "type": "toggle",
             "label": "Enable Cost Optimization Guidance",
             "required": false,
-            "default": true
+            "default": true,
+            "enablesTools": ["cost-analyzer"]
           },
           {
             "id": "scalingRequirements",
@@ -97,7 +111,8 @@
             "label": "Scaling Requirements",
             "placeholder": "Describe expected traffic patterns and scaling needs...",
             "required": false,
-            "default": ""
+            "default": "",
+            "runtimeOptional": true
           }
         ]
       },
@@ -118,7 +133,8 @@
             "label": "Applicable Jurisdictions",
             "options": ["EU (GDPR)", "California (CCPA/CPRA)", "UK (UK GDPR)", "Canada (PIPEDA)", "Australia (Privacy Act)"],
             "required": true,
-            "default": ["EU (GDPR)"]
+            "default": ["EU (GDPR)"],
+            "enablesTools": ["gdpr-validator", "ccpa-compliance-checker"]
           },
           {
             "id": "dataCategories",
@@ -133,7 +149,8 @@
             "type": "toggle",
             "label": "Include DPIA Framework",
             "required": false,
-            "default": false
+            "default": false,
+            "enablesTools": ["dpia-generator"]
           },
           {
             "id": "dataSubjectRights",
@@ -283,7 +300,53 @@
         "dataSubjectRights": ["Right to Erasure", "Right to Access"]
       },
       "createdAt": "2025-10-15T09:30:00Z",
-      "updatedAt": "2025-11-22T14:20:00Z"
+      "updatedAt": "2025-11-22T14:20:00Z",
+      "enabledTools": [
+        {
+          "toolId": "nmap-scanner",
+          "source": "field",
+          "sourceField": "scope"
+        },
+        {
+          "toolId": "ssl-analyzer",
+          "source": "field",
+          "sourceField": "scope"
+        },
+        {
+          "toolId": "compliance-checker",
+          "source": "field",
+          "sourceField": "complianceStandards"
+        },
+        {
+          "toolId": "report-generator",
+          "source": "field",
+          "sourceField": "reportFormat"
+        },
+        {
+          "toolId": "gdpr-validator",
+          "source": "field",
+          "sourceField": "jurisdictions"
+        },
+        {
+          "toolId": "ccpa-compliance-checker",
+          "source": "field",
+          "sourceField": "jurisdictions"
+        },
+        {
+          "toolId": "dpia-generator",
+          "source": "field",
+          "sourceField": "includeDPIA"
+        },
+        {
+          "toolId": "sentinel-one-integration",
+          "source": "manual",
+          "config": {
+            "apiEndpoint": "https://api.sentinelone.net",
+            "configured": true
+          }
+        }
+      ],
+      "emptyFieldsForRuntime": []
     },
     {
       "id": "agent-002",
@@ -300,7 +363,20 @@
         "securityLevel": "High Security"
       },
       "createdAt": "2025-09-08T11:45:00Z",
-      "updatedAt": "2025-09-08T11:45:00Z"
+      "updatedAt": "2025-09-08T11:45:00Z",
+      "enabledTools": [
+        {
+          "toolId": "aws-sdk",
+          "source": "field",
+          "sourceField": "primaryProvider"
+        },
+        {
+          "toolId": "cost-analyzer",
+          "source": "field",
+          "sourceField": "costOptimization"
+        }
+      ],
+      "emptyFieldsForRuntime": ["scalingRequirements"]
     },
     {
       "id": "agent-003",
@@ -318,7 +394,28 @@
         "reportFormat": "Technical Detail"
       },
       "createdAt": "2025-11-05T16:00:00Z",
-      "updatedAt": "2025-12-01T10:30:00Z"
+      "updatedAt": "2025-12-01T10:30:00Z",
+      "enabledTools": [
+        {
+          "toolId": "nmap-scanner",
+          "source": "field",
+          "sourceField": "scope"
+        },
+        {
+          "toolId": "report-generator",
+          "source": "field",
+          "sourceField": "reportFormat"
+        },
+        {
+          "toolId": "siem-connector",
+          "source": "manual",
+          "config": {
+            "siemType": "splunk",
+            "configured": true
+          }
+        }
+      ],
+      "emptyFieldsForRuntime": []
     },
     {
       "id": "agent-004",
@@ -335,7 +432,9 @@
         "scalingRequirements": ""
       },
       "createdAt": "2025-10-20T08:15:00Z",
-      "updatedAt": "2025-10-20T08:15:00Z"
+      "updatedAt": "2025-10-20T08:15:00Z",
+      "enabledTools": [],
+      "emptyFieldsForRuntime": ["scalingRequirements"]
     },
     {
       "id": "agent-005",
@@ -349,7 +448,25 @@
         "dataSubjectRights": ["All Rights"]
       },
       "createdAt": "2025-08-30T13:20:00Z",
-      "updatedAt": "2025-11-10T09:45:00Z"
+      "updatedAt": "2025-11-10T09:45:00Z",
+      "enabledTools": [
+        {
+          "toolId": "gdpr-validator",
+          "source": "field",
+          "sourceField": "jurisdictions"
+        },
+        {
+          "toolId": "ccpa-compliance-checker",
+          "source": "field",
+          "sourceField": "jurisdictions"
+        },
+        {
+          "toolId": "dpia-generator",
+          "source": "field",
+          "sourceField": "includeDPIA"
+        }
+      ],
+      "emptyFieldsForRuntime": []
     },
     {
       "id": "agent-006",
@@ -366,7 +483,20 @@
         "reportFormat": "Executive Summary"
       },
       "createdAt": "2025-11-18T15:50:00Z",
-      "updatedAt": "2025-11-18T15:50:00Z"
+      "updatedAt": "2025-11-18T15:50:00Z",
+      "enabledTools": [
+        {
+          "toolId": "nmap-scanner",
+          "source": "field",
+          "sourceField": "scope"
+        },
+        {
+          "toolId": "report-generator",
+          "source": "field",
+          "sourceField": "reportFormat"
+        }
+      ],
+      "emptyFieldsForRuntime": []
     },
     {
       "id": "agent-007",
@@ -379,7 +509,9 @@
         "frameworks": "React, Node.js, Express"
       },
       "createdAt": "2025-12-05T10:00:00Z",
-      "updatedAt": "2025-12-05T10:00:00Z"
+      "updatedAt": "2025-12-05T10:00:00Z",
+      "enabledTools": [],
+      "emptyFieldsForRuntime": []
     },
     {
       "id": "agent-008",
@@ -393,7 +525,270 @@
         "includePlaybooks": true
       },
       "createdAt": "2025-12-10T14:30:00Z",
-      "updatedAt": "2025-12-10T14:30:00Z"
+      "updatedAt": "2025-12-10T14:30:00Z",
+      "enabledTools": [],
+      "emptyFieldsForRuntime": []
+    }
+  ],
+  "toolLibrary": [
+    {
+      "id": "nmap-scanner",
+      "name": "NMAP Network Scanner",
+      "description": "Performs network discovery and security scanning using NMAP",
+      "category": "Security",
+      "package": "@domainsmith/nmap-scanner",
+      "version": "2.1.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "ssl-analyzer",
+      "name": "SSL/TLS Analyzer",
+      "description": "Analyzes SSL/TLS certificates and configuration for security issues",
+      "category": "Security",
+      "package": "@domainsmith/ssl-analyzer",
+      "version": "1.4.2",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "compliance-checker",
+      "name": "Compliance Framework Checker",
+      "description": "Validates configurations against common compliance frameworks (ISO, NIST, PCI, SOC 2)",
+      "category": "Compliance",
+      "package": "@domainsmith/compliance-checker",
+      "version": "3.0.1",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "frameworks": ["ISO 27001", "NIST CSF", "PCI DSS", "SOC 2"],
+        "strictMode": false
+      }
+    },
+    {
+      "id": "report-generator",
+      "name": "Security Report Generator",
+      "description": "Generates formatted security assessment reports in multiple formats",
+      "category": "Reporting",
+      "package": "@domainsmith/report-generator",
+      "version": "1.8.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "aws-sdk",
+      "name": "AWS SDK Integration",
+      "description": "Provides access to AWS services for infrastructure querying and management",
+      "category": "Cloud",
+      "package": "aws-sdk",
+      "version": "2.1500.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "region": "us-east-1",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "azure-cli",
+      "name": "Azure CLI Integration",
+      "description": "Provides access to Azure resources and management capabilities",
+      "category": "Cloud",
+      "package": "@azure/identity",
+      "version": "4.0.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "subscriptionId": "",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "gcloud-sdk",
+      "name": "Google Cloud SDK",
+      "description": "Integration with Google Cloud Platform services",
+      "category": "Cloud",
+      "package": "@google-cloud/sdk",
+      "version": "6.0.0",
+      "installed": false,
+      "configRequired": true,
+      "config": {
+        "projectId": "",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "cost-analyzer",
+      "name": "Cloud Cost Analyzer",
+      "description": "Analyzes cloud infrastructure costs and provides optimization recommendations",
+      "category": "Cloud",
+      "package": "@domainsmith/cost-analyzer",
+      "version": "2.3.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "gdpr-validator",
+      "name": "GDPR Compliance Validator",
+      "description": "Validates data handling practices against GDPR requirements",
+      "category": "Compliance",
+      "package": "@domainsmith/gdpr-validator",
+      "version": "1.5.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "ccpa-compliance-checker",
+      "name": "CCPA/CPRA Compliance Checker",
+      "description": "Validates practices against California Consumer Privacy Act requirements",
+      "category": "Compliance",
+      "package": "@domainsmith/ccpa-checker",
+      "version": "1.2.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "dpia-generator",
+      "name": "DPIA Framework Generator",
+      "description": "Generates Data Protection Impact Assessment frameworks and templates",
+      "category": "Privacy",
+      "package": "@domainsmith/dpia-generator",
+      "version": "1.0.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "siem-connector",
+      "name": "SIEM Platform Connector",
+      "description": "Connects to SIEM platforms for log analysis and threat detection",
+      "category": "Security",
+      "package": "@domainsmith/siem-connector",
+      "version": "2.0.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "siemType": "splunk",
+        "apiEndpoint": "",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "sentinel-one-integration",
+      "name": "SentinelOne EDR Integration",
+      "description": "Integrates with SentinelOne endpoint detection and response",
+      "category": "Security",
+      "package": "@domainsmith/sentinelone",
+      "version": "1.3.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "apiEndpoint": "https://api.sentinelone.net",
+        "siteId": "",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "virus-total-scanner",
+      "name": "VirusTotal File Scanner",
+      "description": "Scans files and URLs against VirusTotal's threat intelligence database",
+      "category": "Security",
+      "package": "@domainsmith/virustotal",
+      "version": "1.1.0",
+      "installed": false,
+      "configRequired": true,
+      "config": {
+        "apiKey": "",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "crowdstrike-falcon",
+      "name": "CrowdStrike Falcon Integration",
+      "description": "Integrates with CrowdStrike Falcon endpoint protection platform",
+      "category": "Security",
+      "package": "@domainsmith/crowdstrike",
+      "version": "2.0.0",
+      "installed": false,
+      "configRequired": true,
+      "config": {
+        "clientId": "",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "terraform-validator",
+      "name": "Terraform Configuration Validator",
+      "description": "Validates Terraform infrastructure-as-code configurations",
+      "category": "DevOps",
+      "package": "@domainsmith/terraform-validator",
+      "version": "1.4.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "kubernetes-auditor",
+      "name": "Kubernetes Cluster Auditor",
+      "description": "Audits Kubernetes clusters for security and configuration issues",
+      "category": "DevOps",
+      "package": "@domainsmith/k8s-auditor",
+      "version": "2.1.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "kubeconfigPath": "",
+        "context": ""
+      }
+    },
+    {
+      "id": "github-actions-runner",
+      "name": "GitHub Actions Integration",
+      "description": "Triggers and monitors GitHub Actions workflows",
+      "category": "DevOps",
+      "package": "@domainsmith/github-actions",
+      "version": "1.0.0",
+      "installed": false,
+      "configRequired": true,
+      "config": {
+        "repoUrl": "",
+        "requiresCredentials": true
+      }
+    },
+    {
+      "id": "slack-notifier",
+      "name": "Slack Notification Sender",
+      "description": "Sends notifications and alerts to Slack channels",
+      "category": "Communication",
+      "package": "@domainsmith/slack-notifier",
+      "version": "1.2.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "webhookUrl": "",
+        "defaultChannel": ""
+      }
+    },
+    {
+      "id": "email-sender",
+      "name": "Email Notification Service",
+      "description": "Sends email notifications for agent events and reports",
+      "category": "Communication",
+      "package": "@domainsmith/email-sender",
+      "version": "1.5.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "smtpHost": "",
+        "smtpPort": 587,
+        "requiresCredentials": true
+      }
     }
   ],
   "promptPreview": {
