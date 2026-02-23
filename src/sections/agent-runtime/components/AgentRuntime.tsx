@@ -91,14 +91,19 @@ function AgentListItem({ agent, isSelected, onClick }: AgentListItemProps) {
       </div>
 
       <div className="flex items-center gap-3 mt-3 text-xs">
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md
-          bg-amber-100 dark:bg-amber-900/70 text-amber-800 dark:text-amber-200
-          border border-amber-200 dark:border-amber-700">
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-          {agent.source.schemaName}
-        </span>
+        {/* First domain badge */}
+        {agent.domains.length > 0 && (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md
+            bg-violet-100 dark:bg-violet-900/70 text-violet-800 dark:text-violet-200
+            border border-violet-200 dark:border-violet-700">
+            {agent.domains[0]}
+            {agent.domains.length > 1 && (
+              <span className="text-violet-600/70 dark:text-violet-300/70">
+                +{agent.domains.length - 1}
+              </span>
+            )}
+          </span>
+        )}
         <span className="text-slate-500 dark:text-slate-400">
           {agent.lastUsedAt ? formatTimestamp(agent.lastUsedAt) : 'not used'}
         </span>
@@ -266,10 +271,16 @@ export function AgentRuntime({
                   <span>Created {formatTimestamp(selectedAgent.createdAt)}</span>
                   <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                   <span className="inline-flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    {selectedAgent.source.workspaceName} / {selectedAgent.source.schemaName}
+                    {selectedAgent.domains.length > 0 ? (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        {selectedAgent.domains.join(', ')}
+                      </>
+                    ) : (
+                      'No domains'
+                    )}
                   </span>
                 </div>
               </div>

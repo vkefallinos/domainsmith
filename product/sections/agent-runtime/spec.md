@@ -1,22 +1,23 @@
 # Agent Runtime Specification
 
 ## Overview
-A split-pane explorer for browsing, inspecting, and testing deployed agent instances. Users can view agents generated from Agent Builder, inspect their assembled system prompts, and run test conversations to validate agent behavior before production use.
+A two-panel interface where users configure and run agent conversations. The left panel displays runtime fields (marked for configuration at runtime) and enabled tools with their source mappings. The right panel contains the chat interface for testing the agent. Users access this from an agent selection view.
 
 ## User Flows
-- **Browse agents** — Scan the left-pane list to see all available agents with their domain/source and timestamps
-- **Inspect prompt** — Select an agent and expand the collapsible panel to view the full generated system prompt
-- **Test conversation** — Select an agent, type a message in the conversation area, and receive agent responses in real-time
-- **Switch contexts** — Click between agents in the list to load their detail pane and conversation history
+- **Select agent** — From agent list view, click an agent to enter runtime view
+- **Configure runtime fields** — Fill in fields that were marked "configure at runtime" in Agent Builder (shown in left panel)
+- **View tools** — See all enabled tools with their metadata and which field enabled them
+- **Run conversation** — Send messages and receive responses in the chat panel
+- **Back to list** — Return to agent list to select a different agent
 
 ## UI Requirements
-- Split-pane layout with agent list on the left (30-40% width) and detail pane on the right
-- Left pane displays agent name, domain/schema source, and creation/last-used timestamps
-- Right pane contains a chat-style conversation interface with message input
-- A collapsible panel in the detail pane reveals the full generated system prompt
-- Messages display in a conversation view similar to Claude/ChatGPT (user and assistant messages in a single stream)
-- No inline actions in the list — management happens through the detail pane
-- No editing of agent configuration — that's handled in Agent Builder
+- **Agent List View**: Grid/list of available agents with name, description, domain count, and last modified timestamp
+- **Runtime View Layout**: Two-panel design with runtime fields + tools (left, 35-40%) and chat interface (right, 60-65%)
+- **Left Panel**:
+  - Runtime fields section: form fields marked for runtime configuration, editable
+  - Tools section: list of enabled tools showing name, icon, package, version, and source field mapping
+- **Right Panel**: Chat-style conversation interface with message input and response display
+- **Shell Integration**: View renders inside the app shell with navigation header
 
 ## Configuration
 - shell: true
