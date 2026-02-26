@@ -1,16 +1,16 @@
 {
   "_meta": {
     "models": {
-      "Agent": "A deployed agent instance configured from Agent Builder, with domains, form values, runtime fields, and enabled tools.",
-      "RuntimeField": "A field that was marked 'configure at runtime' in Agent Builder, to be filled during agent execution.",
-      "EnabledTool": "A tool enabled for the agent, either automatically from field selections or manually added.",
+      "Agent": "A deployed agent instance configured from Agent Builder, with domains, form values, runtime fields, and enabled tools. Runtime field values enable prompt fragments from the prompt library.",
+      "RuntimeField": "A field that was marked 'configure at runtime' in Agent Builder, to be filled during agent execution. Fields are editable anytime with live updates.",
+      "EnabledTool": "A tool enabled for the agent, either automatically from field selections or manually added. All tools are pre-installed; the installed flag is informational.",
       "Message": "A single message in a conversation thread, sent by either the user or the agent assistant.",
-      "Conversation": "A chat session containing a thread of messages exchanged between a user and an agent."
+      "Conversation": "A chat session containing a thread of messages exchanged between a user and an agent. Agents can have multiple conversations."
     },
     "relationships": [
       "Agent has many RuntimeFields (fields to configure at runtime)",
       "Agent has many EnabledTools (from field selections or manual additions)",
-      "Agent has many Conversations (test sessions)",
+      "Agent has many Conversations (multiple conversations per agent supported)",
       "Conversation has many Messages (the message thread)",
       "EnabledTool has a source (field or manual) and optional sourceField"
     ]
@@ -102,8 +102,7 @@
       ],
       "systemPrompt": "# Security & Privacy Assessor\n\nYou are a specialized advisor for security assessments and GDPR compliance. Your role is to provide guidance on data processing activities, security posture, and compliance requirements.\n\n## Core Capabilities\n- Assess security posture of web applications and infrastructure\n- Validate configurations against common compliance frameworks (ISO, NIST, PCI, SOC 2)\n- Provide GDPR-specific guidance for data processing activities\n- Identify data subject rights and appropriate safeguards",
       "createdAt": "2025-01-15T09:23:00Z",
-      "lastUsedAt": "2025-02-20T14:30:00Z",
-      "status": "ready"
+      "lastUsedAt": "2025-02-20T14:30:00Z"
     },
     {
       "id": "agent_002",
@@ -157,8 +156,7 @@
       ],
       "systemPrompt": "# Cloud Infrastructure Auditor\n\nYou help organizations optimize their cloud infrastructure across AWS, Azure, and GCP. Analyze spending patterns and recommend practical cost-saving measures.\n\n## Analysis Areas\n- Compute instance rightsizing\n- Storage tier optimization\n- Network transfer costs\n- Unused resource identification",
       "createdAt": "2025-02-01T16:00:00Z",
-      "lastUsedAt": "2025-02-19T08:15:00Z",
-      "status": "ready"
+      "lastUsedAt": "2025-02-19T08:15:00Z"
     },
     {
       "id": "agent_003",
@@ -194,8 +192,7 @@
       ],
       "systemPrompt": "# Network Security Analyst\n\nYou are a network security analyst specializing in traffic analysis, threat detection, and incident response.",
       "createdAt": "2025-01-20T11:45:00Z",
-      "lastUsedAt": "2025-02-19T10:20:00Z",
-      "status": "ready"
+      "lastUsedAt": "2025-02-19T10:20:00Z"
     },
     {
       "id": "agent_004",
@@ -211,8 +208,7 @@
       "enabledTools": [],
       "systemPrompt": "# Customer Support Triage Agent\n\nYou classify and route incoming customer support requests to the appropriate team.",
       "createdAt": "2025-02-08T14:15:00Z",
-      "lastUsedAt": null,
-      "status": "ready"
+      "lastUsedAt": null
     },
     {
       "id": "agent_005",
@@ -238,8 +234,7 @@
       ],
       "systemPrompt": "# Incident Response Coordinator\n\nYou guide teams through structured incident response during service outages or degradations.",
       "createdAt": "2025-02-12T13:20:00Z",
-      "lastUsedAt": "2025-02-18T11:00:00Z",
-      "status": "ready"
+      "lastUsedAt": "2025-02-18T11:00:00Z"
     },
     {
       "id": "agent_006",
@@ -264,8 +259,7 @@
       "enabledTools": [],
       "systemPrompt": "# Data Quality Validator\n\nYou identify data quality issues and provide remediation guidance.",
       "createdAt": "2025-02-10T08:00:00Z",
-      "lastUsedAt": null,
-      "status": "ready"
+      "lastUsedAt": null
     }
   ],
   "conversations": [
@@ -291,6 +285,35 @@
       "updatedAt": "2025-02-20T14:30:15Z"
     },
     {
+      "id": "conv_001b",
+      "agentId": "agent_001",
+      "agentName": "Security & Privacy Assessor",
+      "messages": [
+        {
+          "id": "msg_001b_1",
+          "role": "user",
+          "content": "What's the difference between SOC 2 Type 1 and Type 2?",
+          "timestamp": "2025-02-21T09:15:00Z"
+        },
+        {
+          "id": "msg_001b_2",
+          "role": "assistant",
+          "content": "## SOC 2 Type 1 vs Type 2\n\n**Type 1** examines controls at a single point in time. It answers \"Do you have the right controls in place?\"\n\n**Type 2** examines controls over a period (typically 6-12 months). It answers \"Are your controls operating effectively over time?\"\n\nFor most organizations, Type 2 provides greater assurance but requires more evidence collection and monitoring.",
+          "timestamp": "2025-02-21T09:15:20Z"
+        }
+      ],
+      "createdAt": "2025-02-21T09:15:00Z",
+      "updatedAt": "2025-02-21T09:15:20Z"
+    },
+    {
+      "id": "conv_001c",
+      "agentId": "agent_001",
+      "agentName": "Security & Privacy Assessor",
+      "messages": [],
+      "createdAt": "2025-02-22T10:00:00Z",
+      "updatedAt": "2025-02-22T10:00:00Z"
+    },
+    {
       "id": "conv_002",
       "agentId": "agent_002",
       "agentName": "Cloud Infrastructure Auditor",
@@ -310,6 +333,14 @@
       ],
       "createdAt": "2025-02-19T08:15:00Z",
       "updatedAt": "2025-02-19T08:15:30Z"
+    },
+    {
+      "id": "conv_002b",
+      "agentId": "agent_002",
+      "agentName": "Cloud Infrastructure Auditor",
+      "messages": [],
+      "createdAt": "2025-02-21T16:30:00Z",
+      "updatedAt": "2025-02-21T16:30:00Z"
     },
     {
       "id": "conv_003",

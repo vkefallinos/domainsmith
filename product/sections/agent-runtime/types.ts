@@ -6,11 +6,6 @@
  */
 
 /**
- * Status of an agent instance
- */
-export type AgentStatus = "ready" | "starting" | "stopping" | "error";
-
-/**
  * Role of a message sender
  */
 export type MessageRole = "user" | "assistant";
@@ -86,14 +81,12 @@ export interface Agent {
   runtimeFields: RuntimeField[];
   /** Tools enabled for this agent (from field selections + manual) */
   enabledTools: EnabledTool[];
-  /** The full assembled system prompt used by this agent */
+  /** The full assembled system prompt used by this agent (runtime field values enable prompt fragments) */
   systemPrompt: string;
   /** ISO timestamp when this agent was created */
   createdAt: string;
   /** ISO timestamp when this agent was last used for a conversation */
   lastUsedAt: string | null;
-  /** Current status of the agent */
-  status: AgentStatus;
 }
 
 /**
@@ -146,8 +139,10 @@ export interface AgentListProps {
 export interface AgentRuntimeProps {
   /** Currently selected agent */
   agent: Agent | null;
-  /** Active conversation for the selected agent */
-  conversation: Conversation | null;
+  /** All conversations for the selected agent */
+  conversations: Conversation[];
+  /** Currently active conversation ID */
+  activeConversationId: string | null;
   /** Whether a new message is currently being sent */
   isLoading?: boolean;
 }
@@ -172,14 +167,22 @@ export interface RuntimePanelProps {
 export interface ChatPanelProps {
   /** The agent being chatted with */
   agent: Agent;
-  /** Current conversation messages */
-  conversation: Conversation | null;
+  /** All conversations for this agent */
+  conversations: Conversation[];
+  /** Currently active conversation */
+  activeConversation: Conversation | null;
   /** Whether a message is being sent */
   isLoading?: boolean;
+  /** Whether streaming a response */
+  isStreaming?: boolean;
   /** Called when a new message is sent to the agent */
   onSendMessage?: (content: string) => void;
-  /** Called when the conversation is cleared */
-  onClearConversation?: () => void;
+  /** Called when switching to a different conversation */
+  onSelectConversation?: (conversationId: string) => void;
+  /** Called when creating a new conversation */
+  onCreateConversation?: () => void;
+  /** Called when deleting a conversation */
+  onDeleteConversation?: (conversationId: string) => void;
 }
 
 /**
@@ -202,6 +205,10 @@ export interface AgentRuntimeScreenProps extends AgentRuntimeProps {
   onBackToList: () => void;
   /** Called when the tools section is toggled */
   onToggleTools: () => void;
-  /** Called when a conversation is cleared */
-  onClearConversation: () => void;
+  /** Called when switching to a different conversation */
+  onSelectConversation: (conversationId: string) => void;
+  /** Called when creating a new conversation */
+  onCreateConversation: () => void;
+  /** Called when deleting a conversation */
+  onDeleteConversation: (conversationId: string) => void;
 }
