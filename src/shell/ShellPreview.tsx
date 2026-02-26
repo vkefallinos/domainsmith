@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { AppShell, type NavigationItem } from './components'
 import {
   LayoutDashboard,
@@ -8,14 +9,15 @@ import {
 } from 'lucide-react'
 
 export default function ShellPreview() {
+  const navigate = useNavigate()
   const navigationItems: NavigationItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, isActive: true },
-    { label: 'Prompt Library', href: '/prompts', icon: FileText },
-    { label: 'Agent Builder', href: '/builder', icon: Bot },
-    { label: 'Agent Runtime', href: '/runtime', icon: Play },
-    { label: 'Workspaces', href: '/workspaces', icon: Users },
+    { label: 'Prompt Library', href: '/sections/prompt-library/screen-designs/PromptLibraryView/fullscreen', icon: FileText },
+    { label: 'Agent Builder', href: '/sections/agent-builder/screen-designs/AgentBuilderView/fullscreen', icon: Bot },
+    { label: 'Agent Runtime', href: '/sections/agent-runtime/screen-designs/AgentRuntime/fullscreen', icon: Play },
+    { label: 'Workspaces', href: '/sections/workspaces/screen-designs/Workspaces/fullscreen', icon: Users },
   ]
-
+  console.log('ShellPreview navigationItems:', navigationItems) // Debug log
   const user = {
     name: 'Alex Morgan',
     avatarUrl: undefined,
@@ -25,7 +27,7 @@ export default function ShellPreview() {
     <AppShell
       navigationItems={navigationItems}
       user={user}
-      onNavigate={(href) => console.log('Navigate to:', href)}
+      onNavigate={(href) => navigate(href)}
       onLogout={() => console.log('Logout')}
     >
       <div className="p-8">
