@@ -1,24 +1,22 @@
 {
   "_meta": {
     "models": {
-      "Domain": "An available domain/expertise area that can be selected when building an agent. Each domain has a schema that defines the form fields for configuration and may enable specific tools when selected.",
-      "SchemaField": "A single form field definition within a domain's schema, defining the type, label, validation rules, default value, and tools that become available when this field has a value.",
-      "AgentConfig": "A saved agent configuration containing the selected domains, filled form values, enabled tools, and optional empty fields for runtime configuration.",
+      "Domain": "An available domain/expertise area that can be selected when building an agent. Each domain has a schema that defines the form fields for configuration.",
+      "SchemaField": "A single form field definition within a domain's schema, defining the type, label, validation rules, default value, and whether it can be configured at runtime.",
+      "AgentConfig": "A saved agent configuration containing the selected domains, filled form values, manually enabled tools, and optional empty fields for runtime configuration.",
       "AgentTemplate": "A saved agent configuration that can be reused as a starting point for new agents.",
-      "Tool": "A function-calling capability that can be enabled for an agent, either automatically from field selections or manually from the tool library.",
+      "Tool": "A function-calling capability that can be manually enabled for an agent from the tool library.",
       "ToolLibrary": "A collection of available tools that can be searched, configured, and added to an agent.",
-      "EnabledToolMapping": "Shows which tools are enabled and which form field or manual selection caused them to be enabled.",
+      "EnabledToolMapping": "Shows which tools are manually enabled for the agent.",
       "PromptPreview": "A live-generated preview of the system prompt assembled from the selected domains and form values."
     },
     "relationships": [
       "Domain has many SchemaFields (defined by its schema)",
-      "SchemaField may have many Tools that become available when the field is filled",
       "AgentConfig references many Domains (multi-selection)",
       "AgentConfig has many form field values corresponding to the schemas of selected domains",
-      "AgentConfig has many EnabledTools (from field mappings and manual selections)",
+      "AgentConfig has many EnabledTools (all manually added)",
       "AgentConfig may have EmptyFields that are enabled for runtime configuration",
       "Tool belongs to one ToolPackage",
-      "EnabledToolMapping maps Tools to the SchemaField or manual selection that enabled them",
       "PromptPreview is generated from AgentConfig by combining domain templates with form values"
     ]
   },
@@ -38,8 +36,7 @@
             "label": "Assessment Scope",
             "placeholder": "Describe the systems, networks, or assets to be assessed...",
             "required": true,
-            "default": "",
-            "enablesTools": ["nmap-scanner", "ssl-analyzer"]
+            "default": ""
           },
           {
             "id": "complianceStandards",
@@ -47,8 +44,7 @@
             "label": "Compliance Standards",
             "options": ["ISO 27001", "NIST CSF", "PCI DSS", "SOC 2", "GDPR", "HIPAA"],
             "required": false,
-            "default": [],
-            "enablesTools": ["compliance-checker"]
+            "default": []
           },
           {
             "id": "severityThreshold",
@@ -64,8 +60,7 @@
             "label": "Report Format",
             "options": ["Executive Summary", "Technical Detail", "Both"],
             "required": false,
-            "default": "Both",
-            "enablesTools": ["report-generator"]
+            "default": "Both"
           }
         ]
       },
@@ -86,8 +81,7 @@
             "label": "Primary Cloud Provider",
             "options": ["AWS", "Azure", "Google Cloud", "Multi-cloud"],
             "required": true,
-            "default": "AWS",
-            "enablesTools": ["aws-sdk", "azure-cli", "gcloud-sdk"]
+            "default": "AWS"
           },
           {
             "id": "architectureType",
@@ -102,8 +96,7 @@
             "type": "toggle",
             "label": "Enable Cost Optimization Guidance",
             "required": false,
-            "default": true,
-            "enablesTools": ["cost-analyzer"]
+            "default": true
           },
           {
             "id": "scalingRequirements",
@@ -133,8 +126,7 @@
             "label": "Applicable Jurisdictions",
             "options": ["EU (GDPR)", "California (CCPA/CPRA)", "UK (UK GDPR)", "Canada (PIPEDA)", "Australia (Privacy Act)"],
             "required": true,
-            "default": ["EU (GDPR)"],
-            "enablesTools": ["gdpr-validator", "ccpa-compliance-checker"]
+            "default": ["EU (GDPR)"]
           },
           {
             "id": "dataCategories",
@@ -149,8 +141,7 @@
             "type": "toggle",
             "label": "Include DPIA Framework",
             "required": false,
-            "default": false,
-            "enablesTools": ["dpia-generator"]
+            "default": false
           },
           {
             "id": "dataSubjectRights",
@@ -304,38 +295,35 @@
       "enabledTools": [
         {
           "toolId": "nmap-scanner",
-          "source": "field",
-          "sourceField": "scope"
+          "source": "manual"
         },
         {
           "toolId": "ssl-analyzer",
-          "source": "field",
-          "sourceField": "scope"
+          "source": "manual"
         },
         {
           "toolId": "compliance-checker",
-          "source": "field",
-          "sourceField": "complianceStandards"
+          "source": "manual",
+          "config": {
+            "frameworks": ["SOC 2", "GDPR", "ISO 27001"],
+            "strictMode": false
+          }
         },
         {
           "toolId": "report-generator",
-          "source": "field",
-          "sourceField": "reportFormat"
+          "source": "manual"
         },
         {
           "toolId": "gdpr-validator",
-          "source": "field",
-          "sourceField": "jurisdictions"
+          "source": "manual"
         },
         {
           "toolId": "ccpa-compliance-checker",
-          "source": "field",
-          "sourceField": "jurisdictions"
+          "source": "manual"
         },
         {
           "toolId": "dpia-generator",
-          "source": "field",
-          "sourceField": "includeDPIA"
+          "source": "manual"
         },
         {
           "toolId": "sentinel-one-integration",
@@ -367,13 +355,15 @@
       "enabledTools": [
         {
           "toolId": "aws-sdk",
-          "source": "field",
-          "sourceField": "primaryProvider"
+          "source": "manual",
+          "config": {
+            "region": "us-east-1",
+            "requiresCredentials": true
+          }
         },
         {
           "toolId": "cost-analyzer",
-          "source": "field",
-          "sourceField": "costOptimization"
+          "source": "manual"
         }
       ],
       "emptyFieldsForRuntime": ["scalingRequirements"]
@@ -398,19 +388,18 @@
       "enabledTools": [
         {
           "toolId": "nmap-scanner",
-          "source": "field",
-          "sourceField": "scope"
+          "source": "manual"
         },
         {
           "toolId": "report-generator",
-          "source": "field",
-          "sourceField": "reportFormat"
+          "source": "manual"
         },
         {
           "toolId": "siem-connector",
           "source": "manual",
           "config": {
             "siemType": "splunk",
+            "apiEndpoint": "https://splunk.example.com:8089",
             "configured": true
           }
         }
@@ -452,18 +441,15 @@
       "enabledTools": [
         {
           "toolId": "gdpr-validator",
-          "source": "field",
-          "sourceField": "jurisdictions"
+          "source": "manual"
         },
         {
           "toolId": "ccpa-compliance-checker",
-          "source": "field",
-          "sourceField": "jurisdictions"
+          "source": "manual"
         },
         {
           "toolId": "dpia-generator",
-          "source": "field",
-          "sourceField": "includeDPIA"
+          "source": "manual"
         }
       ],
       "emptyFieldsForRuntime": []
@@ -487,13 +473,11 @@
       "enabledTools": [
         {
           "toolId": "nmap-scanner",
-          "source": "field",
-          "sourceField": "scope"
+          "source": "manual"
         },
         {
           "toolId": "report-generator",
-          "source": "field",
-          "sourceField": "reportFormat"
+          "source": "manual"
         }
       ],
       "emptyFieldsForRuntime": []

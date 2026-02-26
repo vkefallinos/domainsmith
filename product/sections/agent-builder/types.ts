@@ -13,9 +13,9 @@
 export type SchemaFieldType = 'text' | 'textarea' | 'select' | 'multiselect' | 'toggle';
 
 /**
- * The source that enabled a tool - either from a field selection or manually added
+ * The source that enabled a tool - always manual after removing auto-enable
  */
-export type ToolSource = 'field' | 'manual';
+export type ToolSource = 'manual';
 
 /**
  * The configuration status of a tool
@@ -111,8 +111,8 @@ export interface SchemaField {
   default: string | string[] | boolean;
   /** Options for select/multiselect fields */
   options?: string[];
-  /** IDs of tools that become available when this field has a value */
-  enablesTools?: string[];
+  /** Whether this field can be set to runtime configuration mode */
+  runtimeOptional?: boolean;
 }
 
 /**
@@ -162,10 +162,8 @@ export interface Tool {
 export interface EnabledTool {
   /** ID of the enabled tool */
   toolId: string;
-  /** How the tool was enabled - from field selection or manual */
+  /** How the tool was enabled - always manual now */
   source: ToolSource;
-  /** If source is 'field', the field ID that enabled this tool */
-  sourceField?: string;
   /** Tool configuration if customized */
   config?: Record<string, unknown>;
 }
@@ -176,10 +174,8 @@ export interface EnabledTool {
 export interface EnabledToolMapping {
   /** The tool reference */
   tool: Tool;
-  /** How the tool was enabled */
+  /** How the tool was enabled - always manual */
   source: ToolSource;
-  /** If from a field, which field */
-  sourceField?: string;
   /** Current configuration status */
   status: ToolConfigStatus;
 }
@@ -288,8 +284,6 @@ export interface AgentBuilderCallbacks {
   onGeneratePreview: () => void;
   /** Called to save the current agent configuration as a template */
   onSaveAsTemplate: (name: string, description: string) => void;
-  /** Called to deploy the agent directly to runtime */
-  onDeployToRuntime: () => void;
   /** Called to load an existing agent for editing */
   onLoadAgent: (agentId: string) => void;
   /** Called to delete a saved agent configuration */
