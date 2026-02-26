@@ -30,6 +30,7 @@ export function AppShell({
     { label: 'Agent Builder', href: '/sections/agent-builder/screen-designs/AgentBuilderView/fullscreen', icon: Bot },
     { label: 'Flow Builder', href: '/sections/flow-builder/screen-designs/FlowBuilderView/fullscreen', icon: Bot },
     { label: 'Agent Runtime', href: '/sections/agent-runtime/screen-designs/AgentRuntime/fullscreen', icon: Play },
+    { label: 'Tool Library', href: '/sections/tool-library/screen-designs/ToolLibraryView/fullscreen', icon: FileText },
     { label: 'Workspaces', href: '/sections/workspaces/screen-designs/Workspaces/fullscreen', icon: Users },
   ]
   return (

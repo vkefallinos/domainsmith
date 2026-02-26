@@ -1,4 +1,4 @@
-import type { Task, TaskType } from '@/../product/sections/flow-builder/types'
+import type { Task, TaskType, TaskConfig } from '@/../product/sections/flow-builder/types'
 
 interface TaskCardProps {
   task: Task
@@ -10,11 +10,9 @@ interface TaskCardProps {
   onDuplicate?: () => void
 }
 
-const TASK_TYPE_CONFIG: Record<TaskType, { label: string; icon: string; color: string }> = {
-  'schema-output': { label: 'Schema', icon: '{ }', color: 'violet' },
-  'tool-calling': { label: 'Tool', icon: '/)', color: 'amber' },
-  'data-transformation': { label: 'Transform', icon: '⇄', color: 'emerald' },
-  'llm-prompt': { label: 'LLM', icon: '"', color: 'sky' },
+const TASK_TYPE_CONFIG: Record<TaskType, { label: string; icon: string; color: string; passesData: boolean }> = {
+  'updateFlowOutput': { label: 'Update Output', icon: '↗', color: 'violet', passesData: true },
+  'executeTask': { label: 'Execute', icon: '⚡', color: 'amber', passesData: false },
 }
 
 function formatDate(isoString: string | null): string {
@@ -78,7 +76,7 @@ export function TaskCard({ task, isExpanded, isDraggable, onClick, onEdit, onDel
 
             {/* Task info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
                   {task.name}
                 </h3>
@@ -89,6 +87,14 @@ export function TaskCard({ task, isExpanded, isDraggable, onClick, onEdit, onDel
                 `}>
                   {config.label}
                 </span>
+                {config.passesData && (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M7 17L17 7M7 7h10v10" />
+                    </svg>
+                    Passes Data
+                  </span>
+                )}
                 {!isValid && (
                   <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
                     Invalid
@@ -150,31 +156,47 @@ export function TaskCard({ task, isExpanded, isDraggable, onClick, onEdit, onDel
         </div>
       </div>
 
-      {/* Connector line to below */}
-      <div className="absolute -bottom-4 left-6 w-px h-4 bg-gradient-to-b from-slate-300 via-slate-300 to-transparent dark:from-slate-700 dark:via-slate-700" />
+      {/* Connector line to below - only show if this task passes data to next */}
+      {config.passesData && (
+        <div className="absolute -bottom-4 left-6 w-px h-4 bg-gradient-to-b from-violet-400 via-violet-400 to-transparent dark:from-violet-600 dark:via-violet-600" />
+      )}
     </div>
   )
 }
 
 function TaskConfigPreview({ task }: { task: Task }) {
-  switch (task.type) {
-    case 'schema-output': {
-      const schema = (task.config as any).outputSchema
-      return (
-        <div className="space-y-3">
+  const config = task.config as TaskConfig
+
+  const hasOutputSchema = config.outputSchema !== undefined
+  const hasFieldUpdates = config.fieldUpdates && config.fieldUpdates.length > 0
+  const hasArrayPushes = config.arrayPushes && config.arrayPushes.length > 0
+  const hasTools = config.enabledTools && config.enabledTools.length > 0
+  const hasInstructions = config.taskInstructions && config.taskInstructions.length > 0
+  const hasModel = config.model !== undefined
+
+  return (
+    <div className="space-y-4">
+      {/* Output Schema */}
+      {hasOutputSchema && (
+        <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
             <svg className="w-4 h-4 text-violet-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <path d="M14 2v6h6" />
             </svg>
             Output Schema
+            {task.type === 'updateFlowOutput' && (
+              <span className="px-1.5 py-0.5 text-xs rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                Passed to next task
+              </span>
+            )}
           </div>
           <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3 font-mono text-sm">
             <div className="text-violet-600 dark:text-violet-400">{`{`}</div>
-            {schema.properties && Object.entries(schema.properties).map(([key, value]: [string, any]) => (
+            {config.outputSchema?.properties && Object.entries(config.outputSchema.properties).map(([key, value]: [string, any]) => (
               <div key={key} className="ml-4 text-slate-700 dark:text-slate-300">
                 <span className="text-sky-600 dark:text-sky-400">{key}</span>
-                {schema.required?.includes(key) && <span className="text-amber-500">*</span>}
+                {config.outputSchema?.required?.includes(key) && <span className="text-amber-500">*</span>}
                 <span className="text-slate-500">: </span>
                 <span className="text-emerald-600 dark:text-emerald-400">{value.type}</span>
                 {value.enum && <span className="text-slate-500 ml-2">enum: [{value.enum.join(', ')}]</span>}
@@ -183,87 +205,115 @@ function TaskConfigPreview({ task }: { task: Task }) {
             <div className="text-violet-600 dark:text-violet-400">{`}`}</div>
           </div>
         </div>
-      )
-    }
-    case 'tool-calling': {
-      const config = task.config as any
-      return (
-        <div className="space-y-3">
+      )}
+
+      {/* Field Updates */}
+      {hasFieldUpdates && (
+        <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
             <svg className="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
-            Tool: {config.toolName}
+            Field Updates ({config.fieldUpdates!.length})
           </div>
-          <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3">
-            <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">Parameters:</div>
-            <div className="font-mono text-sm text-slate-700 dark:text-slate-300">
-              {Object.entries(config.parameters).map(([key, value]) => (
-                <div key={key} className="truncate">
-                  <span className="text-sky-600 dark:text-sky-400">{key}</span>
-                  <span className="text-slate-500">: </span>
-                  <span className="text-slate-600 dark:text-slate-400">{typeof value === 'string' ? value : JSON.stringify(value)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )
-    }
-    case 'data-transformation': {
-      const config = task.config as any
-      return (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l-4-4M17 20l4-4" />
-            </svg>
-            Transformation Rules ({config.transformationRules?.length || 0})
-          </div>
-          <div className="space-y-2">
-            {config.transformationRules?.map((rule: any, i: number) => (
-              <div key={i} className="bg-slate-50 dark:bg-slate-950 rounded-lg p-2 text-sm">
-                <span className="text-sky-600 dark:text-sky-400">{rule.outputField}</span>
-                <span className="text-slate-500"> = </span>
-                <span className="text-emerald-600 dark:text-emerald-400">{rule.transform}</span>
-                {rule.expression && (
-                  <div className="ml-2 text-xs text-slate-500 font-mono truncate">{rule.expression}</div>
-                )}
+          <div className="space-y-1">
+            {config.fieldUpdates!.map((update, i) => (
+              <div key={i} className="bg-slate-50 dark:bg-slate-950 rounded-lg p-2 text-sm flex items-center gap-2">
+                <span className="text-sky-600 dark:text-sky-400 font-mono">{update.field}</span>
+                <span className="text-slate-500">=</span>
+                <span className="text-slate-700 dark:text-slate-300 truncate">{String(update.value)}</span>
               </div>
             ))}
           </div>
         </div>
-      )
-    }
-    case 'llm-prompt': {
-      const config = task.config as any
-      return (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <svg className="w-4 h-4 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              LLM Prompt
-            </div>
-            <span className="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-              {config.model}
-            </span>
+      )}
+
+      {/* Array Pushes */}
+      {hasArrayPushes && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Array Pushes ({config.arrayPushes!.length})
           </div>
-          <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3 max-h-32 overflow-y-auto">
-            <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap line-clamp-4">
-              {config.promptTemplate}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Temperature:</span>
-            <div className="w-20 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full bg-sky-500 rounded-full" style={{ width: `${config.temperature * 100}%` }} />
-            </div>
-            <span>{config.temperature}</span>
+          <div className="space-y-1">
+            {config.arrayPushes!.map((push, i) => (
+              <div key={i} className="bg-slate-50 dark:bg-slate-950 rounded-lg p-2 text-sm flex items-center gap-2">
+                <span className="text-sky-600 dark:text-sky-400 font-mono">{push.arrayField}</span>
+                <span className="text-slate-500">.push()</span>
+                <span className="text-slate-700 dark:text-slate-300 truncate">{String(push.items)}</span>
+              </div>
+            ))}
           </div>
         </div>
-      )
-    }
-  }
+      )}
+
+      {/* Enabled Tools */}
+      {hasTools && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <svg className="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+            </svg>
+            Enabled Tools ({config.enabledTools!.length})
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {config.enabledTools!.map((tool, i) => (
+              <span key={i} className="px-2 py-1 text-xs rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-mono">
+                {tool}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Task Instructions */}
+      {hasInstructions && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <svg className="w-4 h-4 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Task Instructions
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3 max-h-32 overflow-y-auto">
+            <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+              {config.taskInstructions}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Model Settings */}
+      {hasModel && (
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <path d="M8 21h8M12 17v4" />
+            </svg>
+            <span className="font-mono">{config.model}</span>
+          </div>
+          {config.temperature !== undefined && (
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+              <span>Temperature:</span>
+              <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-full bg-sky-500 rounded-full" style={{ width: `${config.temperature * 100}%` }} />
+              </div>
+              <span className="text-xs">{config.temperature}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* No configuration */}
+      {!hasOutputSchema && !hasFieldUpdates && !hasArrayPushes && !hasTools && !hasInstructions && !hasModel && (
+        <div className="text-sm text-slate-500 dark:text-slate-400 italic">
+          No configuration set
+        </div>
+      )}
+    </div>
+  )
 }

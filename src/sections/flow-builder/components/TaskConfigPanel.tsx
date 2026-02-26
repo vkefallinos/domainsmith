@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Task, TaskType, TaskConfig, JSONSchema, TransformationRule } from '@/../product/sections/flow-builder/types'
+import type { Task, TaskType, TaskConfig } from '@/../product/sections/flow-builder/types'
 
 interface TaskConfigPanelProps {
   task: Task | null
@@ -9,21 +9,93 @@ interface TaskConfigPanelProps {
   onSave: (config: TaskConfig) => void
 }
 
-const TASK_TYPES: { type: TaskType; label: string; description: string }[] = [
-  { type: 'schema-output', label: 'Schema Output', description: 'Define structured output with JSON Schema' },
-  { type: 'tool-calling', label: 'Tool Calling', description: 'Invoke a tool from the Tool Library' },
-  { type: 'data-transformation', label: 'Data Transformation', description: 'Transform and map data between tasks' },
-  { type: 'llm-prompt', label: 'LLM Prompt', description: 'Generate text using a language model' },
+const TASK_TYPES: { type: TaskType; label: string; description: string; passesData: boolean }[] = [
+  {
+    type: 'updateFlowOutput',
+    label: 'Update Flow Output',
+    description: 'Update flow output and pass structured data to the next task',
+    passesData: true
+  },
+  {
+    type: 'executeTask',
+    label: 'Execute Task',
+    description: 'Execute operations without passing data to the next task',
+    passesData: false
+  },
 ]
 
 export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave }: TaskConfigPanelProps) {
-  const [selectedType, setSelectedType] = useState<TaskType>(task?.type || 'schema-output')
+  const [selectedType, setSelectedType] = useState<TaskType>(task?.type || 'updateFlowOutput')
   const [taskName, setTaskName] = useState(task?.name || '')
   const [taskDescription, setTaskDescription] = useState(task?.description || '')
+
+  // Config states
+  const [outputSchema, setOutputSchema] = useState(
+    task?.config?.outputSchema ? JSON.stringify(task.config.outputSchema, null, 2) : ''
+  )
+  const [fieldUpdates, setFieldUpdates] = useState(
+    task?.config?.fieldUpdates?.map(f => `${f.field}=${f.value}`).join('\n') || ''
+  )
+  const [arrayPushes, setArrayPushes] = useState(
+    task?.config?.arrayPushes?.map(p => `${p.arrayField}=${JSON.stringify(p.items)}`).join('\n') || ''
+  )
+  const [enabledTools, setEnabledTools] = useState<string[]>(task?.config?.enabledTools || [])
+  const [taskInstructions, setTaskInstructions] = useState(task?.config?.taskInstructions || '')
+  const [model, setModel] = useState(task?.config?.model || 'claude-3-5-sonnet')
+  const [temperature, setTemperature] = useState(task?.config?.temperature ?? 0.7)
 
   if (!isOpen) return null
 
   const isEditMode = task !== null
+  const taskConfig = TASK_TYPES.find(t => t.type === selectedType)
+
+  const handleSave = () => {
+    const config: TaskConfig = {}
+
+    if (outputSchema.trim()) {
+      try {
+        config.outputSchema = JSON.parse(outputSchema)
+      } catch (e) {
+        // Invalid JSON - in real app would show error
+      }
+    }
+
+    if (fieldUpdates.trim()) {
+      config.fieldUpdates = fieldUpdates.split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          const [field, ...valueParts] = line.split('=')
+          return { field: field.trim(), value: valueParts.join('=').trim() }
+        })
+    }
+
+    if (arrayPushes.trim()) {
+      config.arrayPushes = arrayPushes.split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          const [field, ...valueParts] = line.split('=')
+          const valueStr = valueParts.join('=')
+          try {
+            return { arrayField: field.trim(), items: JSON.parse(valueStr) }
+          } catch {
+            return { arrayField: field.trim(), items: valueStr.trim() }
+          }
+        })
+    }
+
+    if (enabledTools.length > 0) {
+      config.enabledTools = enabledTools
+    }
+
+    if (taskInstructions.trim()) {
+      config.taskInstructions = taskInstructions.trim()
+    }
+
+    config.model = model
+    config.temperature = temperature
+
+    onSave(config)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -63,8 +135,8 @@ export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave 
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
                 Task Type
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                {TASK_TYPES.map(({ type, label, description }) => (
+              <div className="grid grid-cols-1 gap-3">
+                {TASK_TYPES.map(({ type, label, description, passesData }) => (
                   <button
                     key={type}
                     onClick={() => setSelectedType(type)}
@@ -76,8 +148,20 @@ export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave 
                       }
                     `}
                   >
-                    <div className="font-semibold text-slate-900 dark:text-slate-100">{label}</div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">{label}</div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</div>
+                      </div>
+                      {passesData && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M7 17L17 7M7 7h10v10" />
+                          </svg>
+                          Passes Data
+                        </span>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -112,12 +196,152 @@ export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave 
             </div>
           </div>
 
-          {/* Type-specific configuration */}
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
-            {selectedType === 'schema-output' && <SchemaOutputForm initialConfig={task?.config} />}
-            {selectedType === 'tool-calling' && <ToolCallingForm initialConfig={task?.config} availableTools={availableTools} />}
-            {selectedType === 'data-transformation' && <DataTransformationForm initialConfig={task?.config} />}
-            {selectedType === 'llm-prompt' && <LLMPromptForm initialConfig={task?.config} />}
+          {/* Task Configuration */}
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-6 space-y-6">
+            {/* Output Schema */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Output Schema {selectedType === 'updateFlowOutput' && (
+                  <span className="text-emerald-600 dark:text-emerald-400 text-xs ml-1">(Passed to next task)</span>
+                )}
+              </label>
+              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
+                <textarea
+                  value={outputSchema}
+                  onChange={(e) => setOutputSchema(e.target.value)}
+                  rows={6}
+                  className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
+                  placeholder='{\n  "type": "object",\n  "properties": {\n    "output": { "type": "string" }\n  }\n}'
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Define JSON Schema for structured output (optional)
+              </p>
+            </div>
+
+            {/* Field Updates */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Field Updates
+              </label>
+              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
+                <textarea
+                  value={fieldUpdates}
+                  onChange={(e) => setFieldUpdates(e.target.value)}
+                  rows={3}
+                  className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
+                  placeholder="fieldName=value&#10;anotherField={{dynamicValue}}"
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Add or update fields in flow output (one per line: field=value)
+              </p>
+            </div>
+
+            {/* Array Pushes */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Array Pushes
+              </label>
+              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
+                <textarea
+                  value={arrayPushes}
+                  onChange={(e) => setArrayPushes(e.target.value)}
+                  rows={3}
+                  className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
+                  placeholder='arrayField=["item1", "item2"]&#10;anotherArray=singleValue'
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Push items to array fields (one per line: field=items)
+              </p>
+            </div>
+
+            {/* Enabled Tools */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Enabled Tools
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {availableTools.map((tool) => (
+                  <button
+                    key={tool.id}
+                    onClick={() => {
+                      setEnabledTools(prev =>
+                        prev.includes(tool.id)
+                          ? prev.filter(id => id !== tool.id)
+                          : [...prev, tool.id]
+                      )
+                    }}
+                    className={`
+                      p-3 rounded-lg text-left text-sm transition-all
+                      ${enabledTools.includes(tool.id)
+                        ? 'bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-500'
+                        : 'bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                      }
+                    `}
+                  >
+                    <div className="font-medium text-slate-900 dark:text-slate-100 truncate">{tool.name}</div>
+                    <div className="text-xs text-slate-500 truncate">{tool.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Task Instructions */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Task Instructions
+              </label>
+              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
+                <textarea
+                  value={taskInstructions}
+                  onChange={(e) => setTaskInstructions(e.target.value)}
+                  rows={4}
+                  className="w-full text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
+                  placeholder="Describe what this task should do..."
+                />
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Natural language instructions for task execution
+              </p>
+            </div>
+
+            {/* Model Settings */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Model
+                </label>
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                  <option value="claude-3-opus">Claude 3 Opus</option>
+                  <option value="claude-3-haiku">Claude 3 Haiku</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Temperature: {temperature}
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={temperature}
+                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                  className="w-full mt-3 accent-violet-500"
+                />
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Precise</span>
+                  <span>Creative</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -130,135 +354,11 @@ export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave 
             Cancel
           </button>
           <button
-            onClick={() => {
-              // In a real implementation, this would build the config from form state
-              onSave({} as TaskConfig)
-            }}
+            onClick={handleSave}
             className="px-5 py-2.5 rounded-lg font-medium bg-violet-500 text-white hover:bg-violet-600 transition-colors shadow-lg shadow-violet-500/25"
           >
             {isEditMode ? 'Save Changes' : 'Add Task'}
           </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function SchemaOutputForm({ initialConfig }: { initialConfig?: any }) {
-  return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Output Schema</h3>
-      <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-        <textarea
-          defaultValue={initialConfig ? JSON.stringify((initialConfig as any).outputSchema, null, 2) : '{\n  "type": "object",\n  "properties": {\n    "output": { "type": "string" }\n  }\n}'}
-          rows={8}
-          className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-          placeholder="Define JSON Schema for output..."
-        />
-      </div>
-      <p className="text-xs text-slate-500">
-        Define the structure of data this task will output using JSON Schema format.
-      </p>
-    </div>
-  )
-}
-
-function ToolCallingForm({ initialConfig, availableTools }: { initialConfig?: any; availableTools: Array<{ id: string; name: string; description: string }> }) {
-  return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Tool Selection</h3>
-      <select
-        defaultValue={initialConfig?.toolId || ''}
-        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
-      >
-        <option value="">Select a tool...</option>
-        {availableTools.map((tool) => (
-          <option key={tool.id} value={tool.id}>
-            {tool.name}
-          </option>
-        ))}
-      </select>
-      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 pt-2">Parameters</h3>
-      <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-        <textarea
-          defaultValue={initialConfig ? JSON.stringify((initialConfig as any).parameters, null, 2) : '{\n  "parameter": "value"\n}'}
-          rows={6}
-          className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-          placeholder="Define tool parameters as JSON..."
-        />
-      </div>
-    </div>
-  )
-}
-
-function DataTransformationForm({ initialConfig }: { initialConfig?: any }) {
-  return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Transformation Rules</h3>
-      <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-        <textarea
-          defaultValue={initialConfig ? JSON.stringify((initialConfig as any).transformationRules, null, 2) : '[\n  {\n    "outputField": "result",\n    "transform": "expression",\n    "expression": "input * 2"\n  }\n]'}
-          rows={8}
-          className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-          placeholder="Define transformation rules as JSON array..."
-        />
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">mapping</span>
-        <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">bucket</span>
-        <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">expression</span>
-      </div>
-    </div>
-  )
-}
-
-function LLMPromptForm({ initialConfig }: { initialConfig?: any }) {
-  const config = initialConfig || { model: 'claude-3-5-sonnet', temperature: 0.7 }
-
-  return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Prompt Template</h3>
-      <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-        <textarea
-          defaultValue={config?.promptTemplate || ''}
-          rows={6}
-          className="w-full text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-          placeholder="Enter your prompt template... Use {{variable}} for dynamic values."
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Model
-          </label>
-          <select
-            defaultValue={config?.model || 'claude-3-5-sonnet'}
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
-          >
-            <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
-            <option value="claude-3-opus">Claude 3 Opus</option>
-            <option value="claude-3-haiku">Claude 3 Haiku</option>
-            <option value="gpt-4">GPT-4</option>
-            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Temperature: {config?.temperature || 0.7}
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            defaultValue={config?.temperature || 0.7}
-            className="w-full mt-3 accent-violet-500"
-          />
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>Precise</span>
-            <span>Creative</span>
-          </div>
         </div>
       </div>
     </div>

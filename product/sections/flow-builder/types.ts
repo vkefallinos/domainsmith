@@ -8,8 +8,10 @@
 
 /**
  * Type of task that defines what operation it performs
+ * - updateFlowOutput: Partially updates flow output data and passes structured output to next task
+ * - executeTask: Same as updateFlowOutput but does NOT pass structured output to next task
  */
-export type TaskType = "schema-output" | "tool-calling" | "data-transformation" | "llm-prompt";
+export type TaskType = "updateFlowOutput" | "executeTask";
 
 /**
  * Status of a flow or task
@@ -109,50 +111,68 @@ export interface Task {
 /**
  * Union type for task-specific configurations based on task type
  */
-export type TaskConfig =
-  | SchemaOutputConfig
-  | ToolCallingConfig
-  | DataTransformationConfig
-  | LLMPromptConfig;
+export type TaskConfig = FlowTaskConfig;
 
 /**
- * Configuration for schema-output type tasks
+ * Configuration for flow task types (updateFlowOutput and executeTask)
  */
-export interface SchemaOutputConfig {
+export interface FlowTaskConfig {
   /** JSON Schema definition for expected output structure */
-  outputSchema: JSONSchema;
-}
+  outputSchema?: JSONSchema;
 
-/**
- * Configuration for tool-calling type tasks
- */
-export interface ToolCallingConfig {
-  /** Identifier of the tool to call */
-  toolId: string;
-  /** Human-readable name of the tool */
-  toolName: string;
-  /** Parameters to pass to the tool (may contain template variables) */
-  parameters: Record<string, unknown>;
-}
+  /** Field updates to apply to flow output */
+  fieldUpdates?: FieldUpdate[];
 
-/**
- * Configuration for data-transformation type tasks
- */
-export interface DataTransformationConfig {
-  /** Array of transformation rules to apply */
-  transformationRules: TransformationRule[];
-}
+  /** Array push operations - add items to array fields */
+  arrayPushes?: ArrayPushOperation[];
 
-/**
- * Configuration for llm-prompt type tasks
- */
-export interface LLMPromptConfig {
-  /** Template for the prompt (may contain variable placeholders) */
-  promptTemplate: string;
+  /** Prompt fragments to enable with specific field values */
+  promptFragmentFields?: PromptFragmentField[];
+
+  /** Tools to enable for this task */
+  enabledTools?: string[];
+
+  /** Task-specific instructions */
+  taskInstructions?: string;
+
   /** Model identifier to use for generation */
-  model: string;
+  model?: string;
+
   /** Temperature setting for generation (0-1) */
-  temperature: number;
+  temperature?: number;
+}
+
+/**
+ * A field update operation
+ */
+export interface FieldUpdate {
+  /** Target field path (supports dot notation for nested fields) */
+  field: string;
+
+  /** Value to set (can use template variables like {{previousTask.fieldName}}) */
+  value: string | number | boolean | null;
+}
+
+/**
+ * An array push operation
+ */
+export interface ArrayPushOperation {
+  /** Target array field path (supports dot notation) */
+  arrayField: string;
+
+  /** Item(s) to push (can use template variables) */
+  items: string | number | boolean | null | unknown[];
+}
+
+/**
+ * A prompt fragment field configuration
+ */
+export interface PromptFragmentField {
+  /** Fragment identifier */
+  fragmentId: string;
+
+  /** Field values that enable this fragment */
+  fieldValues: Record<string, string | number | boolean>;
 }
 
 /**
@@ -175,41 +195,6 @@ export interface JSONSchema {
   maximum?: number;
   /** Item type for array schemas */
   items?: JSONSchema;
-}
-
-/**
- * A transformation rule for data-transformation tasks
- */
-export interface TransformationRule {
-  /** Source field name (for transformations that read input) */
-  inputField?: string;
-  /** Target field name (for transformations that write output) */
-  outputField: string;
-  /** Type of transformation to apply */
-  transform: TransformType;
-  /** Mapping for "mapping" transform type */
-  mapping?: Record<string, string | number>;
-  /** Buckets for "bucket" transform type */
-  buckets?: TransformBucket[];
-  /** Expression string for "expression" transform type */
-  expression?: string;
-}
-
-/**
- * Types of data transformations
- */
-export type TransformType = "mapping" | "bucket" | "expression";
-
-/**
- * A bucket definition for bucket-based transformations
- */
-export interface TransformBucket {
-  /** Maximum value for this bucket */
-  max?: number;
-  /** Default value if no bucket matches */
-  default?: number | string;
-  /** Output value for this bucket */
-  value: string | number;
 }
 
 /**

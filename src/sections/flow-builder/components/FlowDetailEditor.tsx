@@ -290,7 +290,7 @@ export function FlowDetailEditor({
           } else {
             onAddTask?.({
               flowId: flow.id,
-              type: 'schema-output',
+              type: 'updateFlowOutput',
               order: tasks.length + 1,
               name: 'New Task',
               description: '',
