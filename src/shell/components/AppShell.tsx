@@ -10,16 +10,28 @@ export interface AppShellProps {
   onNavigate?: (href: string) => void
   onLogout?: () => void
 }
-
+import {
+  LayoutDashboard,
+  FileText,
+  Bot,
+  Play,
+  Users
+} from 'lucide-react'
 export function AppShell({
   children,
-  navigationItems,
   user,
   onNavigate,
   onLogout,
 }: AppShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
+    const navigationItems: NavigationItem[] = [
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, isActive: true },
+    { label: 'Prompt Library', href: '/sections/prompt-library/screen-designs/PromptLibraryView/fullscreen', icon: FileText },
+    { label: 'Agent Builder', href: '/sections/agent-builder/screen-designs/AgentBuilderView/fullscreen', icon: Bot },
+    { label: 'Flow Builder', href: '/sections/flow-builder/screen-designs/FlowBuilderView/fullscreen', icon: Bot },
+    { label: 'Agent Runtime', href: '/sections/agent-runtime/screen-designs/AgentRuntime/fullscreen', icon: Play },
+    { label: 'Workspaces', href: '/sections/workspaces/screen-designs/Workspaces/fullscreen', icon: Users },
+  ]
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Header Bar */}

@@ -19,7 +19,7 @@ export function MainNav({ items, isCollapsed = false, onNavigate, onCloseMobile 
     onNavigate?.(href)
     onCloseMobile?.()
   }
-
+  console.log('Rendering MainNav with items:', items)
   return (
     <nav className="flex flex-col gap-1">
       {items.map((item) => {
@@ -29,16 +29,17 @@ export function MainNav({ items, isCollapsed = false, onNavigate, onCloseMobile 
           : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 border-l-4 border-transparent'
 
         return (
-          <button
+          <a
             key={item.href}
-            onClick={() => handleClick(item.href)}
+            href={item.href}
+            // onClick={() => handleClick(item.href)}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-r-lg transition-all duration-150 ${activeClass}`}
           >
             <Icon className="w-5 h-5 flex-shrink-0" />
             {!isCollapsed && (
               <span className="font-medium text-sm">{item.label}</span>
             )}
-          </button>
+          </a>
         )
       })}
     </nav>
