@@ -131,6 +131,8 @@ export interface AgentListProps {
   selectedAgentId?: string | null;
   /** Loading state */
   isLoading?: boolean;
+  /** Called when an agent is selected */
+  onSelectAgent?: (agentId: string) => void;
 }
 
 /**

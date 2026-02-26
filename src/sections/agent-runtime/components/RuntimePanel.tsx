@@ -1,4 +1,5 @@
 import type { Agent, RuntimePanelProps } from '@/../product/sections/agent-runtime/types'
+import { useState } from 'react'
 
 // Runtime field input component
 interface RuntimeFieldInputProps {
@@ -17,7 +18,7 @@ function RuntimeFieldInput({ field, value, onChange }: RuntimeFieldInputProps) {
             placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
             value={value as string}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700
+            className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700
               bg-white dark:bg-slate-900
               text-sm text-slate-900 dark:text-slate-100
               placeholder:text-slate-400 dark:placeholder:text-slate-500
@@ -33,7 +34,7 @@ function RuntimeFieldInput({ field, value, onChange }: RuntimeFieldInputProps) {
             value={value as string}
             onChange={(e) => onChange(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700
+            className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700
               bg-white dark:bg-slate-900
               text-sm text-slate-900 dark:text-slate-100
               placeholder:text-slate-400 dark:placeholder:text-slate-500
@@ -47,7 +48,7 @@ function RuntimeFieldInput({ field, value, onChange }: RuntimeFieldInputProps) {
           <select
             value={value as string}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700
+            className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700
               bg-white dark:bg-slate-900
               text-sm text-slate-900 dark:text-slate-100
               focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent
@@ -85,7 +86,7 @@ function RuntimeFieldInput({ field, value, onChange }: RuntimeFieldInputProps) {
           >
             <span
               className={`
-                absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white
+                absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm
                 transition-transform duration-200
                 ${value ? 'translate-x-5' : 'translate-x-0'}
               `}
@@ -96,8 +97,8 @@ function RuntimeFieldInput({ field, value, onChange }: RuntimeFieldInputProps) {
   }
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center justify-between mb-1.5">
+    <div className="mb-4 last:mb-0">
+      <div className="flex items-center justify-between mb-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {field.label}
         </label>
@@ -136,7 +137,7 @@ function MultiSelectInput({ options, value, onChange, placeholder }: MultiSelect
         {value.map((selected) => (
           <span
             key={selected}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
               bg-violet-100 dark:bg-violet-900/50
               text-violet-700 dark:text-violet-300
               text-sm border border-violet-200 dark:border-violet-800"
@@ -145,7 +146,7 @@ function MultiSelectInput({ options, value, onChange, placeholder }: MultiSelect
             <button
               type="button"
               onClick={() => toggleOption(selected)}
-              className="hover:text-violet-900 dark:hover:text-violet-100"
+              className="hover:text-violet-900 dark:hover:text-violet-100 transition-colors"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -157,7 +158,7 @@ function MultiSelectInput({ options, value, onChange, placeholder }: MultiSelect
       <select
         value=""
         onChange={(e) => e.target.value && toggleOption(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700
+        className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700
           bg-white dark:bg-slate-900
           text-sm text-slate-900 dark:text-slate-100
           focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent
@@ -183,17 +184,19 @@ interface EnabledToolItemProps {
 
 function EnabledToolItem({ tool }: EnabledToolItemProps) {
   return (
-    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50
+    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50
       border border-slate-200 dark:border-slate-700
       hover:border-slate-300 dark:hover:border-slate-600
-      transition-colors">
+      transition-colors group">
       <div className="flex items-start gap-3">
         {/* Icon */}
-        <span className="text-xl flex-shrink-0">{tool.icon}</span>
+        <span className="text-xl flex-shrink-0 group-hover:scale-110 transition-transform">
+          {tool.icon}
+        </span>
 
         {/* Info */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
               {tool.name}
             </h4>
@@ -221,7 +224,7 @@ function EnabledToolItem({ tool }: EnabledToolItemProps) {
           </div>
 
           {/* Package info */}
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
             {tool.package}@{tool.version}
           </p>
 
@@ -232,7 +235,7 @@ function EnabledToolItem({ tool }: EnabledToolItemProps) {
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
-                <span>Enabled by field: {tool.sourceField}</span>
+                <span>Enabled by field: <span className="font-medium">{tool.sourceField}</span></span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -253,9 +256,11 @@ function EnabledToolItem({ tool }: EnabledToolItemProps) {
 export function RuntimePanel({
   agent,
   runtimeFieldValues = {},
-  isToolsExpanded = true,
+  isToolsExpanded = false,
   onRuntimeFieldChange
 }: RuntimePanelProps) {
+  const [toolsExpanded, setToolsExpanded] = useState(isToolsExpanded)
+
   // Group tools by source
   const fieldTools = agent.enabledTools.filter((t) => t.source === 'field')
   const manualTools = agent.enabledTools.filter((t) => t.source === 'manual')
@@ -268,13 +273,26 @@ export function RuntimePanel({
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* Agent Header */}
-      <div className="flex-shrink-0 p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+      <div className="flex-shrink-0 p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <h2 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
           {agent.name}
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
           {agent.description}
         </p>
+        {/* Domains */}
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          {agent.domains.map((domain) => (
+            <span
+              key={domain}
+              className="px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/50
+                text-violet-700 dark:text-violet-300 text-xs font-medium
+                border border-violet-200 dark:border-violet-800"
+            >
+              {domain}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Scrollable Content */}
@@ -289,11 +307,11 @@ export function RuntimePanel({
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Runtime Fields
               </h3>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
                 {agent.runtimeFields.length}
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
               {agent.runtimeFields.map((field) => (
                 <RuntimeFieldInput
                   key={field.id}
@@ -303,13 +321,19 @@ export function RuntimePanel({
                 />
               ))}
             </div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 px-1">
+              Changes take effect immediately in the active conversation
+            </p>
           </section>
         )}
 
         {/* Tools Section */}
         {agent.enabledTools.length > 0 && (
           <section>
-            <div className="flex items-center gap-2 mb-3">
+            <button
+              onClick={() => setToolsExpanded(!toolsExpanded)}
+              className="flex items-center gap-2 w-full mb-3 group"
+            >
               <svg className="w-4 h-4 text-violet-500 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -317,17 +341,27 @@ export function RuntimePanel({
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Enabled Tools
               </h3>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
                 {agent.enabledTools.length}
               </span>
-            </div>
+              <svg
+                className={`w-4 h-4 text-slate-400 dark:text-slate-500 ml-auto transition-transform ${
+                  toolsExpanded ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-            {isToolsExpanded && (
-              <div className="space-y-2">
+            {toolsExpanded && (
+              <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
                 {/* Field-enabled tools */}
                 {fieldTools.length > 0 && (
                   <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 px-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 px-1 font-medium">
                       Auto-enabled from fields
                     </p>
                     <div className="space-y-2">
@@ -340,8 +374,8 @@ export function RuntimePanel({
 
                 {/* Manually added tools */}
                 {manualTools.length > 0 && (
-                  <div className={fieldTools.length > 0 ? 'mt-4' : ''}>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 px-1">
+                  <div className={fieldTools.length > 0 ? 'mt-4 pt-4 border-t border-slate-200 dark:border-slate-700' : ''}>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 px-1 font-medium">
                       Manually added
                     </p>
                     <div className="space-y-2">
@@ -358,9 +392,18 @@ export function RuntimePanel({
 
         {/* No fields or tools */}
         {agent.runtimeFields.length === 0 && agent.enabledTools.length === 0 && (
-          <div className="text-center py-8">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-amber-100
+              dark:from-violet-900/30 dark:to-amber-900/30 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-violet-500 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              This agent has no runtime configuration. Ready to chat!
+              This agent has no runtime configuration.
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              Ready to chat!
             </p>
           </div>
         )}

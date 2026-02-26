@@ -6,31 +6,46 @@ import { ChatPanel } from './ChatPanel'
 export interface AgentRuntimeViewProps {
   /** The agent being configured/run */
   agent: Agent | null
-  /** Active conversation for the selected agent */
-  conversation: Conversation | null
+  /** All conversations for the selected agent */
+  conversations: Conversation[]
+  /** Currently active conversation ID */
+  activeConversationId: string | null
   /** Whether a message is being sent */
   isLoading?: boolean
+  /** Whether streaming a response */
+  isStreaming?: boolean
   /** Callback when returning to agent list */
   onBackToList?: () => void
   /** Callback when runtime field value changes */
   onRuntimeFieldChange?: (fieldId: string, value: string | string[] | boolean) => void
   /** Callback when sending a message */
   onSendMessage?: (content: string) => void
-  /** Callback when clearing conversation */
-  onClearConversation?: () => void
+  /** Callback when switching to a different conversation */
+  onSelectConversation?: (conversationId: string) => void
+  /** Callback when creating a new conversation */
+  onCreateConversation?: () => void
+  /** Callback when deleting a conversation */
+  onDeleteConversation?: (conversationId: string) => void
 }
 
 export function AgentRuntimeView({
   agent,
-  conversation,
+  conversations,
+  activeConversationId,
   isLoading = false,
+  isStreaming = false,
   onBackToList,
   onRuntimeFieldChange,
   onSendMessage,
-  onClearConversation
+  onSelectConversation,
+  onCreateConversation,
+  onDeleteConversation
 }: AgentRuntimeViewProps) {
   const [runtimeFieldValues, setRuntimeFieldValues] = useState<Record<string, string | string[] | boolean>>({})
-  const [isToolsExpanded, setIsToolsExpanded] = useState(true)
+  const [isToolsExpanded, setIsToolsExpanded] = useState(false)
+
+  // Find active conversation
+  const activeConversation = conversations.find((c) => c.id === activeConversationId) || null
 
   // Handle runtime field value change
   const handleFieldChange = useCallback((fieldId: string, value: string | string[] | boolean) => {
@@ -43,10 +58,20 @@ export function AgentRuntimeView({
     onSendMessage?.(content)
   }, [onSendMessage])
 
-  // Handle clear conversation
-  const handleClearConversation = useCallback(() => {
-    onClearConversation?.()
-  }, [onClearConversation])
+  // Handle conversation selection
+  const handleSelectConversation = useCallback((conversationId: string) => {
+    onSelectConversation?.(conversationId)
+  }, [onSelectConversation])
+
+  // Handle create conversation
+  const handleCreateConversation = useCallback(() => {
+    onCreateConversation?.()
+  }, [onCreateConversation])
+
+  // Handle delete conversation
+  const handleDeleteConversation = useCallback((conversationId: string) => {
+    onDeleteConversation?.(conversationId)
+  }, [onDeleteConversation])
 
   // Handle back to list
   const handleBackToList = useCallback(() => {
@@ -57,10 +82,21 @@ export function AgentRuntimeView({
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="text-center">
-          <p className="text-slate-500 dark:text-slate-400">No agent selected</p>
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-100 to-amber-100
+            dark:from-violet-900/30 dark:to-amber-900/30 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-violet-500 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+            No agent selected
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            Select an agent to configure and run conversations
+          </p>
           <button
             onClick={handleBackToList}
-            className="mt-4 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
           >
             Back to Agent List
           </button>
@@ -88,9 +124,9 @@ export function AgentRuntimeView({
           <button
             onClick={handleBackToList}
             className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400
-              hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+              hover:text-slate-900 dark:hover:text-slate-100 transition-colors group"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Agents
@@ -100,10 +136,14 @@ export function AgentRuntimeView({
         {/* Chat Panel */}
         <ChatPanel
           agent={agent}
-          conversation={conversation}
+          conversations={conversations}
+          activeConversation={activeConversation}
           isLoading={isLoading}
+          isStreaming={isStreaming}
           onSendMessage={handleSendMessage}
-          onClearConversation={handleClearConversation}
+          onSelectConversation={handleSelectConversation}
+          onCreateConversation={handleCreateConversation}
+          onDeleteConversation={handleDeleteConversation}
         />
       </div>
     </div>

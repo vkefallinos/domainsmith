@@ -1,4 +1,5 @@
 import type { Agent, Conversation, Message, ChatPanelProps } from '@/../product/sections/agent-runtime/types'
+import { useState, useRef, useEffect } from 'react'
 
 // Format timestamp for display
 function formatTime(isoString: string): string {
@@ -8,16 +9,30 @@ function formatTime(isoString: string): string {
   })
 }
 
+// Format date for conversation list
+function formatConversationDate(isoString: string): string {
+  const date = new Date(isoString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' })
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 // Message bubble component
 interface MessageBubbleProps {
   message: Message
+  isStreaming?: boolean
 }
 
-function MessageBubble({ message }: MessageBubbleProps) {
+function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
   const isUser = message.role === 'user'
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
       <div className={`
         max-w-[85%] rounded-2xl px-4 py-3
         ${isUser
@@ -27,12 +42,17 @@ function MessageBubble({ message }: MessageBubbleProps) {
       `}>
         <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
           {message.content}
+          {isStreaming && (
+            <span className="inline-block w-1 h-4 bg-violet-400 ml-1 animate-pulse" />
+          )}
         </p>
-        <span className={`text-[10px] mt-1 block ${
-          isUser ? 'text-violet-200' : 'text-slate-400 dark:text-slate-500'
-        }`}>
-          {formatTime(message.timestamp)}
-        </span>
+        {!isStreaming && (
+          <span className={`text-[10px] mt-1 block ${
+            isUser ? 'text-violet-200' : 'text-slate-400 dark:text-slate-500'
+          }`}>
+            {formatTime(message.timestamp)}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -73,77 +93,131 @@ function EmptyConversationState({ agentName }: { agentName: string }) {
   )
 }
 
+// Conversation item for the switcher
+interface ConversationItemProps {
+  conversation: Conversation
+  isActive: boolean
+  onClick: () => void
+  onDelete: () => void
+}
+
+function ConversationItem({ conversation, isActive, onClick, onDelete }: ConversationItemProps) {
+  const lastMessage = conversation.messages[conversation.messages.length - 1]
+  const messageCount = conversation.messages.length
+
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        w-full text-left p-3 rounded-lg transition-all
+        ${isActive
+          ? 'bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800'
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
+        }
+      `}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+              {formatConversationDate(conversation.createdAt)}
+            </span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              {messageCount} message{messageCount !== 1 ? 's' : ''}
+            </span>
+          </div>
+          {lastMessage && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-1">
+              {lastMessage.role === 'user' ? 'You: ' : ''}{lastMessage.content}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </button>
+  )
+}
+
 // Message input component
 interface MessageInputProps {
   agentName: string
   onSend: (content: string) => void
   isLoading?: boolean
-  onClear?: () => void
+  onCreateConversation?: () => void
 }
 
-function MessageInput({ agentName, onSend, isLoading = false, onClear }: MessageInputProps) {
+function MessageInput({ agentName, onSend, isLoading = false, onCreateConversation }: MessageInputProps) {
+  const [value, setValue] = useState('')
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      const target = e.currentTarget
-      if (target.value.trim() && !isLoading) {
-        onSend(target.value)
-        target.value = ''
+      if (value.trim() && !isLoading) {
+        onSend(value)
+        setValue('')
       }
     }
   }
 
   const handleSendClick = () => {
-    const textarea = document.querySelector('textarea[data-input-id="chat-input"]') as HTMLTextAreaElement
-    if (textarea?.value.trim() && !isLoading) {
-      onSend(textarea.value)
-      textarea.value = ''
+    if (value.trim() && !isLoading) {
+      onSend(value)
+      setValue('')
     }
   }
 
   return (
     <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-800 px-6 py-4 bg-white dark:bg-slate-950">
-      {/* Clear button when there are messages */}
-      {onClear && (
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={onClear}
-            className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300
-              flex items-center gap-1 transition-colors"
-          >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Clear conversation
-          </button>
-        </div>
-      )}
-
       <div className="flex items-end gap-3">
         <div className="flex-1 relative">
           <textarea
-            data-input-id="chat-input"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
             placeholder={`Message ${agentName}...`}
             rows={1}
             className="w-full resize-none rounded-xl border border-slate-200 dark:border-slate-700
-              bg-slate-50 dark:bg-slate-900 px-4 py-3 pr-12
+              bg-slate-50 dark:bg-slate-900 px-4 py-3 pr-24
               text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500
               focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent
               transition-all"
             disabled={isLoading}
             onKeyDown={handleKeyDown}
           />
-          <button
-            onClick={handleSendClick}
-            className="absolute right-2 bottom-2 p-1.5 rounded-lg
-              bg-violet-600 hover:bg-violet-700 text-white
-              transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isLoading}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </button>
+          <div className="absolute right-2 bottom-2 flex items-center gap-1">
+            {onCreateConversation && (
+              <button
+                onClick={onCreateConversation}
+                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700
+                  text-slate-600 dark:text-slate-400 transition-colors"
+                title="New conversation"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={handleSendClick}
+              className="p-1.5 rounded-lg
+                bg-violet-600 hover:bg-violet-700 text-white
+                transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || !value.trim()}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
@@ -156,44 +230,156 @@ function MessageInput({ agentName, onSend, isLoading = false, onClear }: Message
 // Main Chat Panel component
 export function ChatPanel({
   agent,
-  conversation,
+  conversations,
+  activeConversation,
   isLoading = false,
+  isStreaming = false,
   onSendMessage,
+  onSelectConversation,
+  onCreateConversation,
+  onDeleteConversation,
   onClearConversation
 }: ChatPanelProps) {
-  const messages = conversation?.messages || []
+  const [showConversationList, setShowConversationList] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const messages = activeConversation?.messages || []
   const hasMessages = messages.length > 0
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
+
+  // Handle conversation selection
+  const handleSelectConversation = (conversationId: string) => {
+    onSelectConversation?.(conversationId)
+    setShowConversationList(false)
+  }
+
+  // Handle conversation deletion
+  const handleDeleteConversation = (conversationId: string) => {
+    onDeleteConversation?.(conversationId)
+  }
+
+  // Handle create new conversation
+  const handleCreateConversation = () => {
+    onCreateConversation?.()
+    setShowConversationList(false)
+  }
+
+  // Handle send message
+  const handleSendMessage = (content: string) => {
+    onSendMessage?.(content)
+  }
+
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-950 overflow-hidden">
+    <div className="h-full flex flex-col bg-white dark:bg-slate-950 overflow-hidden relative">
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">
               {agent.name}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
               {agent.description}
             </p>
           </div>
-          {/* Domain badges */}
+
+          {/* Conversation Switcher */}
           <div className="flex items-center gap-2">
-            {agent.domains.slice(0, 2).map((domain) => (
-              <span
-                key={domain}
-                className="px-2 py-1 rounded-md bg-violet-50 dark:bg-violet-950/50
-                  text-violet-700 dark:text-violet-300
-                  text-xs font-medium border border-violet-200 dark:border-violet-800"
+            {/* Domain badges */}
+            <div className="flex items-center gap-2">
+              {agent.domains.slice(0, 2).map((domain) => (
+                <span
+                  key={domain}
+                  className="px-2 py-1 rounded-md bg-violet-50 dark:bg-violet-950/50
+                    text-violet-700 dark:text-violet-300
+                    text-xs font-medium border border-violet-200 dark:border-violet-800"
+                >
+                  {domain}
+                </span>
+              ))}
+              {agent.domains.length > 2 && (
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  +{agent.domains.length - 2}
+                </span>
+              )}
+            </div>
+
+            {/* Conversations dropdown button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowConversationList(!showConversationList)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg
+                  bg-slate-100 dark:bg-slate-800
+                  hover:bg-slate-200 dark:hover:bg-slate-700
+                  text-slate-700 dark:text-slate-300
+                  text-sm transition-colors"
               >
-                {domain}
-              </span>
-            ))}
-            {agent.domains.length > 2 && (
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                +{agent.domains.length - 2}
-              </span>
-            )}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span>Conversations</span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs">
+                  {conversations.length}
+                </span>
+                <svg
+                  className={`w-3 h-3 transition-transform ${showConversationList ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Dropdown menu */}
+              {showConversationList && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowConversationList(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-slate-900
+                    rounded-xl border border-slate-200 dark:border-slate-700
+                    shadow-lg z-20 max-h-80 overflow-hidden flex flex-col">
+                    <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+                      <button
+                        onClick={handleCreateConversation}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2
+                          rounded-lg bg-violet-600 hover:bg-violet-700
+                          text-white text-sm font-medium transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        New Conversation
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                      {conversations.length === 0 ? (
+                        <div className="text-center py-4 text-sm text-slate-500 dark:text-slate-400">
+                          No conversations yet
+                        </div>
+                      ) : (
+                        conversations.map((conv) => (
+                          <div key={conv.id} className="group">
+                            <ConversationItem
+                              conversation={conv}
+                              isActive={activeConversation?.id === conv.id}
+                              onClick={() => handleSelectConversation(conv.id)}
+                              onDelete={() => handleDeleteConversation(conv.id)}
+                            />
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -204,10 +390,16 @@ export function ChatPanel({
           <EmptyConversationState agentName={agent.name} />
         ) : (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+            {messages.map((message, idx) => (
+              <div key={message.id}>
+                <MessageBubble
+                  message={message}
+                  isStreaming={isStreaming && idx === messages.length - 1}
+                />
+              </div>
             ))}
-            {isLoading && <LoadingIndicator />}
+            {isLoading && !isStreaming && <LoadingIndicator />}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
@@ -215,9 +407,9 @@ export function ChatPanel({
       {/* Input Area */}
       <MessageInput
         agentName={agent.name}
-        onSend={(content) => onSendMessage?.(content)}
+        onSend={handleSendMessage}
         isLoading={isLoading}
-        onClear={hasMessages ? onClearConversation : undefined}
+        onCreateConversation={conversations.length > 0 ? handleCreateConversation : undefined}
       />
     </div>
   )

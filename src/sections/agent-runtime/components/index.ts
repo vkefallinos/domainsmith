@@ -1,14 +1,16 @@
 // Agent Runtime Components
+
+// Agent List View
 export { AgentList } from './AgentList'
-export type { AgentListProps } from './AgentList'
+export type { AgentListProps } from '@/../product/sections/agent-runtime/types'
 
-export { RuntimePanel } from './RuntimePanel'
-
-export { ChatPanel } from './ChatPanel'
-
+// Runtime View (combined)
 export { AgentRuntimeView } from './AgentRuntimeView'
 export type { AgentRuntimeViewProps } from './AgentRuntimeView'
 
-// Legacy export - use AgentRuntimeView instead
-export { AgentRuntime } from './AgentRuntime'
-export type { AgentRuntimeProps } from './AgentRuntime'
+// Sub-components (can be used independently)
+export { RuntimePanel } from './RuntimePanel'
+export type { RuntimePanelProps } from '@/../product/sections/agent-runtime/types'
+
+export { ChatPanel } from './ChatPanel'
+export type { ChatPanelProps } from '@/../product/sections/agent-runtime/types'

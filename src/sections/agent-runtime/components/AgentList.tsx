@@ -19,27 +19,6 @@ function formatTimestamp(isoString: string | null): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// Status indicator component
-interface StatusBadgeProps {
-  status: Agent['status']
-}
-
-function StatusBadge({ status }: StatusBadgeProps) {
-  const config = {
-    ready: { color: 'bg-emerald-500', label: 'Ready' },
-    starting: { color: 'bg-amber-500', label: 'Starting...' },
-    stopping: { color: 'bg-amber-500', label: 'Stopping...' },
-    error: { color: 'bg-rose-500', label: 'Error' }
-  }[status] || { color: 'bg-slate-400', label: status }
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className={`w-1.5 h-1.5 rounded-full ${config.color}`} />
-      <span className="text-xs text-slate-500 dark:text-slate-400">{config.label}</span>
-    </div>
-  )
-}
-
 // Agent card component
 interface AgentCardProps {
   agent: Agent
@@ -53,17 +32,14 @@ function AgentCard({ agent, onClick }: AgentCardProps) {
       className="w-full text-left p-5 rounded-2xl bg-white dark:bg-slate-900
         border border-slate-200 dark:border-slate-800
         hover:border-violet-300 dark:hover:border-violet-700
-        hover:shadow-md hover:shadow-violet-500/5
+        hover:shadow-md hover:shadow-violet-500/5 hover:-translate-y-0.5
         transition-all duration-200 group"
     >
-      {/* Header: Name + Status */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors truncate">
-            {agent.name}
-          </h3>
-        </div>
-        <StatusBadge status={agent.status} />
+      {/* Header: Name */}
+      <div className="mb-3">
+        <h3 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors truncate">
+          {agent.name}
+        </h3>
       </div>
 
       {/* Description */}
@@ -77,7 +53,7 @@ function AgentCard({ agent, onClick }: AgentCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-slate-500 dark:text-slate-400">Domains:</span>
           <div className="flex items-center gap-1">
-            {agent.domains.slice(0, 2).map((domain, idx) => (
+            {agent.domains.slice(0, 2).map((domain) => (
               <span
                 key={domain}
                 className="px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/50
@@ -107,7 +83,7 @@ function AgentCard({ agent, onClick }: AgentCardProps) {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{agent.runtimeFields.length} field{agent.runtimeFields.length > 1 ? 's' : ''} to configure at runtime</span>
+            <span>{agent.runtimeFields.length} field{agent.runtimeFields.length > 1 ? 's' : ''} to configure</span>
           </div>
         </div>
       )}
@@ -179,7 +155,7 @@ export function AgentList({
               Select an agent to configure and run conversations
             </p>
           </div>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
             {agents.length} agent{agents.length !== 1 ? 's' : ''} available
           </span>
         </div>
@@ -189,9 +165,9 @@ export function AgentList({
       <div className="max-w-6xl mx-auto">
         {isLoading ? (
           <div className="flex items-center justify-center p-12">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-              <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-              <span>Loading agents...</span>
+            <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+              <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm">Loading agents...</span>
             </div>
           </div>
         ) : agents.length === 0 ? (
@@ -202,7 +178,7 @@ export function AgentList({
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                onClick={() => onSelectAgent(agent.id)}
+                onClick={() => onSelectAgent?.(agent.id)}
               />
             ))}
           </div>
