@@ -11,6 +11,7 @@ A multi-view control panel where users configure specialized agents by selecting
 - **Manage attached flows** — View all flows attached to the agent with their slash commands → enable/disable commands → edit command configuration → detach flows
 - **Save agent template** — Configure agent → enter template name and description → save → appears in saved templates list for future reuse
 - **Enable fields for runtime configuration** — Click "Runtime" toggle on any field → field becomes non-editable placeholder showing "Configured at Runtime" → field will be filled later in Agent Runtime
+- **Enable all domain fields for runtime** — Click "All Runtime" button in domain header (visible when domain is expanded) → all fields in that domain switch to runtime mode → individually deselect fields by clicking "Edit Now" on specific fields
 - **Pre-fill fields with values** — Fill in form fields normally → values are saved with the agent configuration
 
 ## UI Requirements
@@ -20,6 +21,7 @@ A multi-view control panel where users configure specialized agents by selecting
 - **Add Slash Command Button**: Opens flow selector modal to select existing flow, then configure command trigger
 - **Slash Command Validation**: Command IDs must be lowercase letters, numbers, and hyphens only (regex: `^[a-z0-9-]+$`), must be unique within an agent, duplicates show validation error. No reserved commands. System matches against agent's attached commands at runtime (no global registry)
 - **Field Runtime Toggle**: Every field has a "Runtime" toggle button that switches the field between "pre-fill now" mode and "configure at runtime" mode
+- **All Runtime Button**: When a domain is expanded, an "All Runtime" button appears in the domain header next to the expand/collapse icon. Clicking enables runtime mode for all fields in that domain at once. Uses amber styling to match runtime theme, shows clock icon, and includes tooltip "Enable all fields in this domain for runtime configuration"
 - **Runtime Field Display**: When runtime mode is active, field shows as amber-dashed placeholder with "Configured at Runtime" message, not editable in the builder
 - **Normal Field Display**: When runtime mode is off, field is editable and can be pre-filled with values
 - **Field Type Controls**: `select` = dropdown menu (single selection), `multiselect` = dropdown with checkbox multi-select or tag-based input with autocomplete, `textarea` = 4 rows minimum resizable by user, `toggle` = switch component (not checkbox), `text` = single-line text input

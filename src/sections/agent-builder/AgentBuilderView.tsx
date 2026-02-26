@@ -6,9 +6,23 @@ import { ToolLibraryModal } from './components/ToolLibraryModal'
 import { FlowBuilderModal } from './components/FlowBuilderModal'
 import type { FormFieldValue, AttachedFlow } from '@/../product/sections/agent-builder/types'
 
+/**
+ * Preview wrapper for Agent Builder Form Builder view
+ *
+ * This is a DESIGN ONLY component for visualization in Design OS.
+ * It imports sample data and feeds it to the props-based component.
+ *
+ * For production use, import AgentFormBuilder directly from components/
+ * and pass your own data via props.
+ */
 export default function AgentBuilderPreview() {
   const [view, setView] = useState<'builder' | 'templates'>('builder')
-  const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>(['domain-cybersecurity', 'domain-data-privacy'])
+
+  // Initial state with sample data
+  const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>([
+    'domain-cybersecurity',
+    'domain-data-privacy',
+  ])
   const [formValues, setFormValues] = useState<Record<string, FormFieldValue>>({
     scope: 'Customer-facing web application and underlying database infrastructure',
     complianceStandards: ['SOC 2', 'GDPR', 'ISO 27001'],
@@ -17,10 +31,10 @@ export default function AgentBuilderPreview() {
     jurisdictions: ['EU (GDPR)', 'California (CCPA/CPRA)'],
     dataCategories: 'User names, email addresses, payment information, and usage analytics',
     includeDPIA: true,
-    dataSubjectRights: ['Right to Erasure', 'Right to Access']
+    dataSubjectRights: ['Right to Erasure', 'Right to Access'],
   })
   const [enabledTools, setEnabledTools] = useState(data.savedAgentConfigs[0].enabledTools || [])
-  const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>(['scalingRequirements']) // Example: one field set to runtime
+  const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>([])
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
 
@@ -38,25 +52,40 @@ export default function AgentBuilderPreview() {
         description: 'Run customer onboarding analysis',
         flowId: 'flow_001',
         flowName: 'Customer Onboarding Analysis',
-        enabled: true
-      }
-    }
+        enabled: true,
+      },
+    },
   ])
 
   // Available flows for attaching
   const availableFlows = [
-    { id: 'flow_002', name: 'Document Processing Pipeline', description: 'Extracts and classifies document text', taskCount: 3 },
-    { id: 'flow_003', name: 'Support Ticket Triage', description: 'Categorizes and prioritizes support tickets', taskCount: 5 },
-    { id: 'flow_007', name: 'Meeting Notes Summary', description: 'Summarizes meeting transcripts', taskCount: 4 }
+    {
+      id: 'flow_002',
+      name: 'Document Processing Pipeline',
+      description: 'Extracts and classifies document text',
+      taskCount: 3,
+    },
+    {
+      id: 'flow_003',
+      name: 'Support Ticket Triage',
+      description: 'Categorizes and prioritizes support tickets',
+      taskCount: 5,
+    },
+    {
+      id: 'flow_007',
+      name: 'Meeting Notes Summary',
+      description: 'Summarizes meeting transcripts',
+      taskCount: 4,
+    },
   ]
 
-  // Callback handlers
+  // Domain handlers
   const handleDomainsChange = useCallback((domainIds: string[]) => {
     setSelectedDomainIds(domainIds)
-    // Reset runtime fields when domains change
     setEmptyFieldsForRuntime([])
   }, [])
 
+  // Field handlers
   const handleFieldValueChange = useCallback((fieldId: string, value: FormFieldValue) => {
     setFormValues(prev => ({ ...prev, [fieldId]: value }))
   }, [])
@@ -69,14 +98,7 @@ export default function AgentBuilderPreview() {
     setEmptyFieldsForRuntime(prev => prev.filter(id => id !== fieldId))
   }, [])
 
-  const handleEnableField = useCallback((fieldId: string) => {
-    setEmptyFieldsForRuntime(prev => [...prev, fieldId])
-  }, [])
-
-  const handleDisableField = useCallback((fieldId: string) => {
-    setEmptyFieldsForRuntime(prev => prev.filter(id => id !== fieldId))
-  }, [])
-
+  // Tool handlers
   const handleOpenToolLibrary = useCallback(() => {
     setToolLibraryOpen(true)
   }, [])
@@ -100,6 +122,7 @@ export default function AgentBuilderPreview() {
     console.log('Configure tool:', toolId, config)
   }, [])
 
+  // Agent actions
   const handleGeneratePreview = useCallback(() => {
     console.log('Generate preview')
   }, [])
@@ -108,8 +131,12 @@ export default function AgentBuilderPreview() {
     console.log('Save as template:', name, description)
   }, [])
 
-  const handleDeployToRuntime = useCallback(() => {
-    console.log('Deploy to runtime')
+  const handleNewAgent = useCallback(() => {
+    setSelectedDomainIds([])
+    setFormValues({})
+    setEnabledTools([])
+    setEmptyFieldsForRuntime([])
+    setView('builder')
   }, [])
 
   const handleLoadAgent = useCallback((agentId: string) => {
@@ -124,23 +151,15 @@ export default function AgentBuilderPreview() {
     }
   }, [])
 
-  const handleDuplicateAgent = useCallback((agentId: string) => {
-    console.log('Duplicate agent:', agentId)
-  }, [])
-
   const handleDeleteAgent = useCallback((agentId: string) => {
     console.log('Delete agent:', agentId)
   }, [])
 
-  const handleNewAgent = useCallback(() => {
-    setSelectedDomainIds([])
-    setFormValues({})
-    setEnabledTools([])
-    setEmptyFieldsForRuntime([])
-    setView('builder')
+  const handleDuplicateAgent = useCallback((agentId: string) => {
+    console.log('Duplicate agent:', agentId)
   }, [])
 
-  // Flow builder handlers
+  // Flow handlers
   const handleOpenFlowBuilder = useCallback(() => {
     setFlowBuilderOpen(true)
   }, [])
@@ -149,29 +168,32 @@ export default function AgentBuilderPreview() {
     setFlowBuilderOpen(false)
   }, [])
 
-  const handleAttachFlow = useCallback((flowId: string, commandId: string, name: string, description: string) => {
-    const flow = availableFlows.find(f => f.id === flowId)
-    if (!flow) return
+  const handleAttachFlow = useCallback(
+    (flowId: string, commandId: string, name: string, description: string) => {
+      const flow = availableFlows.find(f => f.id === flowId)
+      if (!flow) return
 
-    const newAttachedFlow: AttachedFlow = {
-      flowId,
-      flowName: flow.name,
-      flowDescription: flow.description,
-      taskCount: flow.taskCount,
-      slashCommand: {
-        id: `sc_${Date.now()}`,
-        commandId,
-        name,
-        description,
+      const newAttachedFlow: AttachedFlow = {
         flowId,
         flowName: flow.name,
-        enabled: true
+        flowDescription: flow.description,
+        taskCount: flow.taskCount,
+        slashCommand: {
+          id: `sc_${Date.now()}`,
+          commandId,
+          name,
+          description,
+          flowId,
+          flowName: flow.name,
+          enabled: true,
+        },
       }
-    }
 
-    setAttachedFlows(prev => [...prev, newAttachedFlow])
-    console.log('Attach flow:', flowId, 'as command:', commandId)
-  }, [availableFlows])
+      setAttachedFlows(prev => [...prev, newAttachedFlow])
+      console.log('Attach flow:', flowId, 'as command:', commandId)
+    },
+    [availableFlows]
+  )
 
   const handleDetachFlow = useCallback((slashCommandId: string) => {
     setAttachedFlows(prev => prev.filter(af => af.slashCommand.id !== slashCommandId))
@@ -179,23 +201,24 @@ export default function AgentBuilderPreview() {
   }, [])
 
   const handleToggleSlashCommand = useCallback((slashCommandId: string, enabled: boolean) => {
-    setAttachedFlows(prev => prev.map(af => {
-      if (af.slashCommand.id === slashCommandId) {
-        return {
-          ...af,
-          slashCommand: { ...af.slashCommand, enabled }
+    setAttachedFlows(prev =>
+      prev.map(af => {
+        if (af.slashCommand.id === slashCommandId) {
+          return { ...af, slashCommand: { ...af.slashCommand, enabled } }
         }
-      }
-      return af
-    }))
+        return af
+      })
+    )
     console.log('Toggle command:', slashCommandId, 'enabled:', enabled)
   }, [])
 
-  const handleEditSlashCommand = useCallback((slashCommandId: string, commandId: string, name: string, description: string) => {
-    console.log('Edit command:', slashCommandId, commandId, name, description)
-  }, [])
+  const handleEditSlashCommand = useCallback(
+    (slashCommandId: string, commandId: string, name: string, description: string) => {
+      console.log('Edit command:', slashCommandId, commandId, name, description)
+    },
+    []
+  )
 
-  // Generate prompt preview
   const promptPreview = data.promptPreview
 
   const builderProps = {
@@ -205,7 +228,6 @@ export default function AgentBuilderPreview() {
     selectedDomainIds,
     formValues,
     enabledTools,
-    enabledFields: emptyFieldsForRuntime, // Same as runtime fields for now
     emptyFieldsForRuntime,
     attachedFlows,
     availableFlows,
@@ -216,8 +238,6 @@ export default function AgentBuilderPreview() {
     loadedAgentId: 'preview-agent',
     onDomainsChange: handleDomainsChange,
     onFieldValueChange: handleFieldValueChange,
-    onEnableField: handleEnableField,
-    onDisableField: handleDisableField,
     onEnableFieldForRuntime: handleEnableFieldForRuntime,
     onDisableFieldForRuntime: handleDisableFieldForRuntime,
     onOpenToolLibrary: handleOpenToolLibrary,
@@ -227,24 +247,30 @@ export default function AgentBuilderPreview() {
     onConfigureTool: handleConfigureTool,
     onGeneratePreview: handleGeneratePreview,
     onSaveAsTemplate: handleSaveAsTemplate,
-    onDeployToRuntime: handleDeployToRuntime,
-    onLoadAgent: handleLoadAgent,
-    onDeleteAgent: handleDeleteAgent,
-    onDuplicateAgent: handleDuplicateAgent,
     onNewAgent: handleNewAgent,
     onOpenFlowBuilder: handleOpenFlowBuilder,
     onCloseFlowBuilder: handleCloseFlowBuilder,
     onAttachFlow: handleAttachFlow,
     onDetachFlow: handleDetachFlow,
     onToggleSlashCommand: handleToggleSlashCommand,
-    onEditSlashCommand: handleEditSlashCommand
+    onEditSlashCommand: handleEditSlashCommand,
+  }
+
+  const templatesProps = {
+    domains: data.domains,
+    toolLibrary: data.toolLibrary,
+    savedAgentConfigs: data.savedAgentConfigs,
+    onLoadAgent: handleLoadAgent,
+    onDuplicateAgent: handleDuplicateAgent,
+    onDeleteAgent: handleDeleteAgent,
+    onNewAgent: handleNewAgent,
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-100 dark:bg-slate-950">
+    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       {/* View Toggle */}
-      <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4">
-        <div className="flex items-center gap-1">
+      <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-1 px-4">
           <button
             onClick={() => setView('builder')}
             className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
@@ -253,7 +279,7 @@ export default function AgentBuilderPreview() {
                 : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
             }`}
           >
-            Agent Builder
+            Form Builder
           </button>
           <button
             onClick={() => setView('templates')}
@@ -273,15 +299,7 @@ export default function AgentBuilderPreview() {
         {view === 'builder' ? (
           <AgentFormBuilder {...builderProps} />
         ) : (
-          <SavedTemplatesList
-            domains={data.domains}
-            toolLibrary={data.toolLibrary}
-            savedAgentConfigs={data.savedAgentConfigs}
-            onLoadAgent={handleLoadAgent}
-            onDuplicateAgent={handleDuplicateAgent}
-            onDeleteAgent={handleDeleteAgent}
-            onNewAgent={handleNewAgent}
-          />
+          <SavedTemplatesList {...templatesProps} />
         )}
       </div>
 
