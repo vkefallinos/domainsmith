@@ -1,14 +1,14 @@
 import data from '@/../product/sections/agent-builder/data.json'
 import { useState, useCallback } from 'react'
 import { AgentFormBuilder } from './components/AgentFormBuilder'
-import { SavedTemplatesList } from './components/SavedTemplatesList'
+import { SavedAgentsList } from './components/SavedAgentsList'
 import { ToolLibraryModal } from './components/ToolLibraryModal'
 import { FlowBuilderModal } from './components/FlowBuilderModal'
 import type { FormFieldValue, AttachedFlow } from '@/../product/sections/agent-builder/types'
 import { useNavigate } from 'react-router-dom'
 
 /**
- * Preview wrapper for Agent Builder Form Builder view
+ * Preview wrapper for Agent Builder view
  *
  * This is a DESIGN ONLY component for visualization in Design OS.
  * It imports sample data and feeds it to the props-based component.
@@ -17,12 +17,13 @@ import { useNavigate } from 'react-router-dom'
  * and pass your own data via props.
  */
 export default function AgentBuilderPreview() {
-  const [view, setView] = useState<'builder' | 'templates'>('builder')
+  const [view, setView] = useState<'builder' | 'agents'>('builder')
 
   // Initial state with sample data - using the first saved agent config
   const firstAgent = data.savedAgentConfigs[0]
   const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>(firstAgent.selectedDomains)
   const [formValues, setFormValues] = useState<Record<string, FormFieldValue>>(firstAgent.formValues)
+  const [mainInstruction, setMainInstruction] = useState<string>(firstAgent.mainInstruction || '')
   const [enabledTools, setEnabledTools] = useState(data.savedAgentConfigs[0].enabledTools || [])
   const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>(firstAgent.emptyFieldsForRuntime || [])
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
@@ -55,6 +56,10 @@ export default function AgentBuilderPreview() {
     setEmptyFieldsForRuntime(prev => prev.filter(id => id !== fieldId))
   }, [])
 
+  const handleMainInstructionChange = useCallback((instruction: string) => {
+    setMainInstruction(instruction)
+  }, [])
+
   // Tool handlers
   const handleOpenToolLibrary = useCallback(() => {
     setToolLibraryOpen(true)
@@ -84,16 +89,18 @@ export default function AgentBuilderPreview() {
     console.log('Generate preview')
   }, [])
 
-  const handleSaveAsTemplate = useCallback((name: string, description: string) => {
-    console.log('Save as template:', name, description)
+  const handleSaveAgent = useCallback((name: string, description: string) => {
+    console.log('Save agent:', name, description)
   }, [])
 
   const handleNewAgent = useCallback(() => {
     setSelectedDomainIds([])
     setFormValues({})
+    setMainInstruction('')
     setEnabledTools([])
     setEmptyFieldsForRuntime([])
-    setView('builder')
+    setAttachedFlows([])
+    setView('agents')
   }, [])
 
   const handleLoadAgent = useCallback((agentId: string) => {
@@ -102,6 +109,7 @@ export default function AgentBuilderPreview() {
     if (agent) {
       setSelectedDomainIds(agent.selectedDomains)
       setFormValues(agent.formValues)
+      setMainInstruction(agent.mainInstruction || '')
       setEnabledTools(agent.enabledTools)
       setEmptyFieldsForRuntime(agent.emptyFieldsForRuntime)
       setView('builder')
@@ -189,6 +197,7 @@ export default function AgentBuilderPreview() {
     emptyFieldsForRuntime,
     attachedFlows,
     availableFlows,
+    mainInstruction,
     promptPreview,
     validationErrors: {},
     toolLibraryOpen,
@@ -198,13 +207,14 @@ export default function AgentBuilderPreview() {
     onFieldValueChange: handleFieldValueChange,
     onEnableFieldForRuntime: handleEnableFieldForRuntime,
     onDisableFieldForRuntime: handleDisableFieldForRuntime,
+    onMainInstructionChange: handleMainInstructionChange,
     onOpenToolLibrary: handleOpenToolLibrary,
     onCloseToolLibrary: handleCloseToolLibrary,
     onAddTool: handleAddTool,
     onRemoveTool: handleRemoveTool,
     onConfigureTool: handleConfigureTool,
     onGeneratePreview: handleGeneratePreview,
-    onSaveAsTemplate: handleSaveAsTemplate,
+    onSaveAgent: handleSaveAgent,
     onNewAgent: handleNewAgent,
     onOpenFlowBuilder: handleOpenFlowBuilder,
     onCloseFlowBuilder: handleCloseFlowBuilder,
@@ -214,7 +224,7 @@ export default function AgentBuilderPreview() {
     onEditSlashCommand: handleEditSlashCommand,
   }
 
-  const templatesProps = {
+  const agentsProps = {
     domains: data.domains,
     toolLibrary: data.toolLibrary,
     savedAgentConfigs: data.savedAgentConfigs,
@@ -237,17 +247,17 @@ export default function AgentBuilderPreview() {
                 : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
             }`}
           >
-            Form Builder
+            Agent Builder
           </button>
           <button
-            onClick={() => setView('templates')}
+            onClick={() => setView('agents')}
             className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              view === 'templates'
+              view === 'agents'
                 ? 'text-violet-600 dark:text-violet-400 border-violet-600'
                 : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
             }`}
           >
-            Saved Templates ({data.savedAgentConfigs.length})
+            Saved Agents ({data.savedAgentConfigs.length})
           </button>
         </div>
       </div>
@@ -257,7 +267,7 @@ export default function AgentBuilderPreview() {
         {view === 'builder' ? (
           <AgentFormBuilder {...builderProps} />
         ) : (
-          <SavedTemplatesList {...templatesProps} />
+          <SavedAgentsList {...agentsProps} />
         )}
       </div>
 

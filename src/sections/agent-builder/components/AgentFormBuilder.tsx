@@ -17,7 +17,7 @@ import { FormField } from './FormField'
 import { ToolsPanel } from './ToolsPanel'
 import { CommandsPanel } from './CommandsPanel'
 import { PromptPreviewPanel } from './PromptPreviewPanel'
-import { SaveTemplateModal } from './SaveTemplateModal'
+import { SaveAgentModal } from './SaveAgentModal'
 
 /**
  * Recursively extract all SchemaFields from a SchemaNode tree
@@ -86,6 +86,7 @@ function SchemaNodeRenderer({ node, ...props }: SchemaNodeRendererProps) {
  * AgentFormBuilder - A multi-view control panel for configuring specialized agents
  *
  * Features:
+ * - Main instruction textarea for custom agent instructions (markdown)
  * - Domain selection sidebar with expertise areas
  * - Auto-generated form fields grouped by domain
  * - Runtime field configuration mode
@@ -105,6 +106,7 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     emptyFieldsForRuntime = [],
     attachedFlows = [],
     availableFlows = [],
+    mainInstruction = '',
     promptPreview,
     validationErrors = {},
     toolLibraryOpen = false,
@@ -114,13 +116,14 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     onFieldValueChange,
     onEnableFieldForRuntime,
     onDisableFieldForRuntime,
+    onMainInstructionChange,
     onOpenToolLibrary,
     onCloseToolLibrary,
     onAddTool,
     onRemoveTool,
     onConfigureTool,
     onGeneratePreview,
-    onSaveAsTemplate,
+    onSaveAgent,
     onNewAgent,
     onOpenFlowBuilder,
     onCloseFlowBuilder,
@@ -232,26 +235,16 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     [isRuntimeEnabled, onEnableFieldForRuntime, onFieldValueChange]
   )
 
-  // Handle save template
-  const handleSaveTemplate = useCallback(
+  // Handle save agent
+  const handleSaveAgent = useCallback(
     (name: string, description: string) => {
-      onSaveAsTemplate(name, description)
+      onSaveAgent(name, description)
       setSaveModalOpen(false)
     },
-    [onSaveAsTemplate]
+    [onSaveAgent]
   )
 
   const hasSelection = selectedDomains.length > 0
-  const allFields = selectedDomains.flatMap(d => getDomainFields(d))
-  const totalFields = allFields.length
-  const filledFields = allFields.filter(
-    field => {
-      const value = formValues[field.variableName]
-      return value !== '' && value !== null && value !== undefined &&
-             (!Array.isArray(value) || value.length > 0)
-    }
-  ).length
-  const completionProgress = totalFields > 0 ? (filledFields / totalFields) * 100 : 0
 
   return (
     <div className="h-full flex bg-slate-50 dark:bg-slate-950">
@@ -262,7 +255,7 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
         onDomainsChange={onDomainsChange}
       />
 
-      {/* Center Panel - Form Builder */}
+      {/* Center Panel - Agent Builder */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-8">
           {/* Header */}
@@ -274,7 +267,7 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   {hasSelection
-                    ? `Building with ${selectedDomains.length} domain${selectedDomains.length > 1 ? 's' : ''} · ${totalFields} field${totalFields > 1 ? 's' : ''}`
+                    ? `Building with ${selectedDomains.length} domain${selectedDomains.length > 1 ? 's' : ''}`
                     : 'Select domains to begin building your agent'}
                 </p>
               </div>
@@ -293,20 +286,39 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                   </svg>
-                  Save Template
+                  Save Agent
                 </button>
               </div>
             </div>
+          </div>
 
-            {/* Progress Bar */}
-            {hasSelection && (
-              <div className="relative h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-violet-500 to-violet-600 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${completionProgress}%` }}
-                />
-              </div>
-            )}
+          {/* Main Instruction Section */}
+          <div className="mb-8">
+            <label className="block mb-3">
+              <span className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Main Instructions</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">(optional)</span>
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
+                Write custom instructions for your agent in markdown. These will be prepended to the domain-specific prompts.
+              </span>
+            </label>
+            <textarea
+              value={mainInstruction}
+              onChange={(e) => onMainInstructionChange?.(e.target.value)}
+              placeholder={`# Your Agent Instructions
+
+You are a specialized assistant. Write your custom instructions here in markdown format.
+
+## Guidelines
+- Be specific about the agent's role
+- Define any special behaviors
+- Include examples if helpful
+
+These instructions will appear at the top of your agent's system prompt.`}
+              rows={6}
+              className="w-full px-4 py-3 text-sm text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl resize-y focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono leading-relaxed"
+            />
           </div>
 
           {/* Empty State */}
@@ -488,11 +500,11 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
         </div>
       </aside>
 
-      {/* Save Template Modal */}
-      <SaveTemplateModal
+      {/* Save Agent Modal */}
+      <SaveAgentModal
         isOpen={saveModalOpen}
         onClose={() => setSaveModalOpen(false)}
-        onSave={handleSaveTemplate}
+        onSave={handleSaveAgent}
       />
     </div>
   )

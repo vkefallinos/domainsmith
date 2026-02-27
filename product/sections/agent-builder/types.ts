@@ -245,7 +245,7 @@ export interface EnabledToolMapping {
 }
 
 /**
- * A saved agent configuration (template)
+ * A saved agent configuration
  */
 export interface AgentConfig {
   /** Unique identifier */
@@ -254,6 +254,8 @@ export interface AgentConfig {
   name: string;
   /** Description of the agent's purpose */
   description: string;
+  /** Main agent instructions in markdown (custom prompt prepended to domain prompts) */
+  mainInstruction?: string;
   /** IDs of selected domains */
   selectedDomains: string[];
   /** Form field values for all selected domains */
@@ -294,7 +296,7 @@ export interface AgentBuilderProps {
   domains: Domain[];
   /** All available tools in the tool library */
   toolLibrary: Tool[];
-  /** Previously saved agent configurations (templates) */
+  /** Previously saved agent configurations */
   savedAgentConfigs: AgentConfig[];
   /** Currently selected domain IDs */
   selectedDomainIds?: string[];
@@ -310,6 +312,8 @@ export interface AgentBuilderProps {
   availableFlows?: Array<{ id: string; name: string; description: string; taskCount: number }>;
   /** Currently loaded agent config (for editing) */
   loadedAgentId?: string | null;
+  /** Main agent instructions in markdown (custom prompt prepended to domain prompts) */
+  mainInstruction?: string;
   /** Live prompt preview */
   promptPreview?: PromptPreview;
   /** Loading state */
@@ -334,6 +338,8 @@ export interface AgentBuilderCallbacks {
   onEnableFieldForRuntime: (fieldId: string) => void;
   /** Called when a field's runtime mode is toggled off (field becomes editable) */
   onDisableFieldForRuntime: (fieldId: string) => void;
+  /** Called when the main instruction markdown changes */
+  onMainInstructionChange: (instruction: string) => void;
   /** Called to open the tool library modal */
   onOpenToolLibrary: () => void;
   /** Called to close the tool library modal */
@@ -346,13 +352,13 @@ export interface AgentBuilderCallbacks {
   onConfigureTool: (toolId: string, config: Record<string, unknown>) => void;
   /** Called to regenerate the prompt preview */
   onGeneratePreview: () => void;
-  /** Called to save the current agent configuration as a template */
-  onSaveAsTemplate: (name: string, description: string) => void;
+  /** Called to save the current agent configuration */
+  onSaveAgent: (name: string, description: string) => void;
   /** Called to load an existing agent for editing */
   onLoadAgent: (agentId: string) => void;
   /** Called to delete a saved agent configuration */
   onDeleteAgent: (agentId: string) => void;
-  /** Called to duplicate an agent template */
+  /** Called to duplicate an agent */
   onDuplicateAgent: (agentId: string) => void;
   /** Called to create a new agent (clear form) */
   onNewAgent: () => void;

@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
 
-interface SaveTemplateModalProps {
+interface SaveAgentModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (name: string, description: string) => void
 }
 
-export function SaveTemplateModal({ isOpen, onClose, onSave }: SaveTemplateModalProps) {
+export function SaveAgentModal({ isOpen, onClose, onSave }: SaveAgentModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
 
@@ -64,10 +64,10 @@ export function SaveTemplateModal({ isOpen, onClose, onSave }: SaveTemplateModal
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Save as Template
+                  Save Agent
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Save this configuration for future reuse
+                  Save this agent configuration for future reuse
                 </p>
               </div>
             </div>
@@ -84,10 +84,10 @@ export function SaveTemplateModal({ isOpen, onClose, onSave }: SaveTemplateModal
 
         {/* Form */}
         <div className="p-6 space-y-4">
-          {/* Template name */}
+          {/* Agent name */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-              Template Name <span className="text-red-500">*</span>
+              Agent Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -118,7 +118,7 @@ export function SaveTemplateModal({ isOpen, onClose, onSave }: SaveTemplateModal
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Saved templates can be loaded from the Saved Templates view
+            Saved agents can be loaded from the Saved Agents view
           </p>
         </div>
 
@@ -138,7 +138,7 @@ export function SaveTemplateModal({ isOpen, onClose, onSave }: SaveTemplateModal
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
             </svg>
-            Save Template
+            Save Agent
           </button>
         </div>
       </div>
