@@ -5,6 +5,7 @@ import { SavedTemplatesList } from './components/SavedTemplatesList'
 import { ToolLibraryModal } from './components/ToolLibraryModal'
 import { FlowBuilderModal } from './components/FlowBuilderModal'
 import type { FormFieldValue, AttachedFlow } from '@/../product/sections/agent-builder/types'
+import { useNavigate } from 'react-router-dom'
 
 /**
  * Preview wrapper for Agent Builder Form Builder view
@@ -32,24 +33,7 @@ export default function AgentBuilderPreview() {
 
   // Available flows for attaching
   const availableFlows = [
-    {
-      id: 'flow_002',
-      name: 'Document Processing Pipeline',
-      description: 'Extracts and classifies document text',
-      taskCount: 3,
-    },
-    {
-      id: 'flow_003',
-      name: 'Support Ticket Triage',
-      description: 'Categorizes and prioritizes support tickets',
-      taskCount: 5,
-    },
-    {
-      id: 'flow_007',
-      name: 'Meeting Notes Summary',
-      description: 'Summarizes meeting transcripts',
-      taskCount: 4,
-    },
+
   ]
 
   // Domain handlers
@@ -184,9 +168,10 @@ export default function AgentBuilderPreview() {
     )
     console.log('Toggle command:', slashCommandId, 'enabled:', enabled)
   }, [])
-
+  const navigate = useNavigate()
   const handleEditSlashCommand = useCallback(
     (slashCommandId: string, commandId: string, name: string, description: string) => {
+      window.location.href = '/sections/flow-builder/screen-designs/FlowBuilderView/fullscreen'
       console.log('Edit command:', slashCommandId, commandId, name, description)
     },
     []

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Task, TaskType, TaskConfig, PromptFragmentField } from '@/../product/sections/flow-builder/types'
 
 interface TaskConfigPanelProps {
@@ -7,7 +7,7 @@ interface TaskConfigPanelProps {
   availablePromptFragments?: Array<{ id: string; name: string; description: string }>
   isOpen: boolean
   onClose: () => void
-  onSave: (config: TaskConfig) => void
+  onSave: (updates: { name: string; description: string; type: TaskType; config: TaskConfig }) => void
 }
 
 const TASK_TYPES: { type: TaskType; label: string; description: string; passesData: boolean }[] = [
@@ -47,6 +47,36 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
   const [taskInstructions, setTaskInstructions] = useState(task?.config?.taskInstructions || '')
   const [model, setModel] = useState(task?.config?.model || 'claude-3-5-sonnet')
   const [temperature, setTemperature] = useState(task?.config?.temperature ?? 0.7)
+
+  // Sync form state with task prop when it changes (e.g., when editing different tasks)
+  useEffect(() => {
+    if (task) {
+      setSelectedType(task.type)
+      setTaskName(task.name)
+      setTaskDescription(task.description)
+      setOutputSchema(task.config?.outputSchema ? JSON.stringify(task.config.outputSchema, null, 2) : '')
+      setTargetFieldName(task.config?.targetFieldName || '')
+      setIsPushable(task.config?.isPushable ?? false)
+      setPromptFragmentFields(task.config?.promptFragmentFields || [])
+      setEnabledTools(task.config?.enabledTools || [])
+      setTaskInstructions(task.config?.taskInstructions || '')
+      setModel(task.config?.model || 'claude-3-5-sonnet')
+      setTemperature(task.config?.temperature ?? 0.7)
+    } else {
+      // Reset for new task
+      setSelectedType('updateFlowOutput')
+      setTaskName('')
+      setTaskDescription('')
+      setOutputSchema('')
+      setTargetFieldName('')
+      setIsPushable(false)
+      setPromptFragmentFields([])
+      setEnabledTools([])
+      setTaskInstructions('')
+      setModel('claude-3-5-sonnet')
+      setTemperature(0.7)
+    }
+  }, [task?.id, isOpen])
 
   if (!isOpen) return null
 
@@ -95,7 +125,12 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
       config.taskInstructions = taskInstructions.trim()
     }
 
-    onSave({ ...config, type: selectedType })
+    onSave({
+      name: taskName.trim() || 'New Task',
+      description: taskDescription.trim(),
+      type: selectedType,
+      config,
+    })
   }
 
   return (

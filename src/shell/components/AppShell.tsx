@@ -1,7 +1,15 @@
 import { Menu } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { MainNav, type NavigationItem } from './MainNav'
 import { UserMenu } from './UserMenu'
+import {
+  LayoutDashboard,
+  FileText,
+  Bot,
+  Play,
+  Users
+} from 'lucide-react'
 
 export interface AppShellProps {
   children: React.ReactNode
@@ -10,13 +18,17 @@ export interface AppShellProps {
   onNavigate?: (href: string) => void
   onLogout?: () => void
 }
-import {
-  LayoutDashboard,
-  FileText,
-  Bot,
-  Play,
-  Users
-} from 'lucide-react'
+
+const baseNavigationItems: Omit<NavigationItem, 'isActive'>[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Prompt Library', href: '/sections/prompt-library/screen-designs/PromptLibraryView/fullscreen', icon: FileText },
+  { label: 'Agent Builder', href: '/sections/agent-builder/screen-designs/AgentBuilderView/fullscreen', icon: Bot },
+  { label: 'Flow Builder', href: '/sections/flow-builder/screen-designs/FlowBuilderView/fullscreen', icon: Bot },
+  { label: 'Agent Runtime', href: '/sections/agent-runtime/screen-designs/AgentRuntime/fullscreen', icon: Play },
+  { label: 'Tool Library', href: '/sections/tool-library/screen-designs/ToolLibraryView/fullscreen', icon: FileText },
+  { label: 'Workspaces', href: '/sections/workspaces/screen-designs/Workspaces/fullscreen', icon: Users },
+]
+
 export function AppShell({
   children,
   user,
@@ -24,15 +36,14 @@ export function AppShell({
   onLogout,
 }: AppShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-    const navigationItems: NavigationItem[] = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, isActive: true },
-    { label: 'Prompt Library', href: '/sections/prompt-library/screen-designs/PromptLibraryView/fullscreen', icon: FileText },
-    { label: 'Agent Builder', href: '/sections/agent-builder/screen-designs/AgentBuilderView/fullscreen', icon: Bot },
-    { label: 'Flow Builder', href: '/sections/flow-builder/screen-designs/FlowBuilderView/fullscreen', icon: Bot },
-    { label: 'Agent Runtime', href: '/sections/agent-runtime/screen-designs/AgentRuntime/fullscreen', icon: Play },
-    { label: 'Tool Library', href: '/sections/tool-library/screen-designs/ToolLibraryView/fullscreen', icon: FileText },
-    { label: 'Workspaces', href: '/sections/workspaces/screen-designs/Workspaces/fullscreen', icon: Users },
-  ]
+  const location = useLocation()
+
+  const navigationItems: NavigationItem[] = useMemo(() => {
+    return baseNavigationItems.map(item => ({
+      ...item,
+      isActive: location.pathname === item.href
+    }))
+  }, [location.pathname])
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Header Bar */}

@@ -17,11 +17,7 @@ interface FlowDetailEditorProps {
 }
 
 const AVAILABLE_TOOLS = [
-  { id: 'clearbit_company_api', name: 'Clearbit Company API', description: 'Enrich company data' },
-  { id: 'linkedin_profile_fetch', name: 'LinkedIn Profile Fetch', description: 'Get professional profiles' },
-  { id: 'document_store_insert', name: 'Document Store Insert', description: 'Store processed documents' },
-  { id: 'support_history_lookup', name: 'Support History Lookup', description: 'Retrieve customer interactions' },
-  { id: 'erp_po_validation', name: 'ERP PO Validation', description: 'Validate against purchase orders' },
+ 
 ]
 
 export function FlowDetailEditor({
@@ -294,16 +290,16 @@ export function FlowDetailEditor({
           setIsConfigPanelOpen(false)
           setEditingTaskId(null)
         }}
-        onSave={(config) => {
+        onSave={({ name, description, type, config }) => {
           if (editingTaskId) {
-            onUpdateTask?.(editingTaskId, { config })
+            onUpdateTask?.(editingTaskId, { name, description, config })
           } else {
             onAddTask?.({
               flowId: flow.id,
-              type: 'updateFlowOutput',
+              type,
               order: tasks.length + 1,
-              name: 'New Task',
-              description: '',
+              name,
+              description,
               config,
               status: 'pending',
             })

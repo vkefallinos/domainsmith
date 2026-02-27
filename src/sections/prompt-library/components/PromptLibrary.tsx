@@ -882,9 +882,9 @@ function WysiwygEditor({ content, onChange, onSave, unsavedChanges, isLoading = 
   ]
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
       {/* Toolbar */}
-      <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+      <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-1">
           {formatButtons.map((btn) => (
             <button
@@ -916,14 +916,58 @@ function WysiwygEditor({ content, onChange, onSave, unsavedChanges, isLoading = 
       </div>
 
       {/* Editor/Preview Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Text Editor */}
-        <div className={`flex-1 overflow-y-auto p-6 ${showPreview ? 'hidden' : ''}`}>
+        <div className={`flex-1 overflow-hidden min-h-0 ${showPreview ? 'hidden' : ''}`}>
+          <style>{`
+            .editor-scroll::-webkit-scrollbar {
+              width: 10px;
+            }
+            .editor-scroll::-webkit-scrollbar-track {
+              background: rgb(248 250 252);
+            }
+            .editor-scroll::-webkit-scrollbar-thumb {
+              background: rgb(203 213 225);
+              border-radius: 5px;
+              border: 2px solid rgb(248 250 252);
+            }
+            .editor-scroll::-webkit-scrollbar-thumb:hover {
+              background: rgb(148 163 184);
+            }
+            .dark .editor-scroll::-webkit-scrollbar-track {
+              background: rgb(15 23 42);
+            }
+            .dark .editor-scroll::-webkit-scrollbar-thumb {
+              background: rgb(51 65 85);
+              border: 2px solid rgb(15 23 42);
+            }
+            .dark .editor-scroll::-webkit-scrollbar-thumb:hover {
+              background: rgb(71 85 105);
+            }
+          `}</style>
           <textarea
             ref={textareaRef}
             value={content}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full h-full resize-none outline-none font-mono text-sm leading-relaxed bg-transparent dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-600"
+            onKeyDown={(e) => {
+              // Handle Ctrl/Cmd + S for save
+              if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault()
+                onSave()
+              }
+              // Handle Tab for indentation
+              if (e.key === 'Tab') {
+                e.preventDefault()
+                const start = textareaRef.current?.selectionStart || 0
+                const end = textareaRef.current?.selectionEnd || 0
+                const newValue = content.substring(0, start) + '  ' + content.substring(end)
+                onChange(newValue)
+                setTimeout(() => {
+                  textareaRef.current?.setSelectionRange(start + 2, start + 2)
+                }, 0)
+              }
+            }}
+            className="editor-scroll w-full h-full resize-none outline-none font-mono text-sm leading-relaxed bg-transparent dark:text-slate-200 placeholder-slate-300 dark:placeholder-slate-600 p-6 overflow-y-auto overflow-x-hidden"
             placeholder="Start writing your prompt fragment..."
             spellCheck={false}
           />
@@ -931,7 +975,28 @@ function WysiwygEditor({ content, onChange, onSave, unsavedChanges, isLoading = 
 
         {/* Preview */}
         {showPreview && (
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+            <style>{`
+              .preview-scroll::-webkit-scrollbar {
+                width: 8px;
+              }
+              .preview-scroll::-webkit-scrollbar-track {
+                background: transparent;
+              }
+              .preview-scroll::-webkit-scrollbar-thumb {
+                background: rgb(203 213 225);
+                border-radius: 4px;
+              }
+              .preview-scroll::-webkit-scrollbar-thumb:hover {
+                background: rgb(148 163 184);
+              }
+              .dark .preview-scroll::-webkit-scrollbar-thumb {
+                background: rgb(51 65 85);
+              }
+              .dark .preview-scroll::-webkit-scrollbar-thumb:hover {
+                background: rgb(71 85 105);
+              }
+            `}</style>
             <div
               className="prose prose-slate dark:prose-invert max-w-none prose-sm"
               dangerouslySetInnerHTML={{
@@ -1315,13 +1380,13 @@ export function PromptLibrary({
   }, [fileSystem])
 
   return (
-    <div className="flex h-full bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* ========== FILE TREE SIDEBAR ========== */}
-      <aside className="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+      <aside className="w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden flex-shrink-0">
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 text-sm">
               <span className="w-2 h-2 rounded-full bg-violet-500" />
               Prompt Library
             </h2>
@@ -1344,38 +1409,38 @@ export function PromptLibrary({
           </div>
 
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <div className="relative mb-2.5">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search files..."
-              className="w-full pl-9 pr-3 py-2 text-sm bg-slate-100 dark:bg-slate-800 border-0 rounded-lg focus:ring-2 focus:ring-violet-500 dark:text-slate-200 placeholder-slate-400"
+              className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800 border-0 rounded-lg focus:ring-2 focus:ring-violet-500 dark:text-slate-200 placeholder-slate-400"
             />
           </div>
 
           {/* Expand/Collapse All */}
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-1.5">
             <button
               onClick={onExpandAll}
-              className="flex-1 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
+              className="flex-1 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
             >
               <ChevronDown className="w-3 h-3" />
-              Expand All
+              Expand
             </button>
             <button
               onClick={onCollapseAll}
-              className="flex-1 px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
+              className="flex-1 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
             >
               <ChevronRight className="w-3 h-3" />
-              Collapse All
+              Collapse
             </button>
           </div>
         </div>
 
         {/* Tree */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 scroll-smooth">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 scroll-smooth min-h-0">
           <style>{`
             .tree-scroll::-webkit-scrollbar {
               width: 6px;
@@ -1420,7 +1485,7 @@ export function PromptLibrary({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+        <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
           <div className="flex items-center justify-between">
             <span>{totalItems} items</span>
             {unsavedChanges && (
@@ -1434,17 +1499,17 @@ export function PromptLibrary({
       </aside>
 
       {/* ========== EDITOR PANEL ========== */}
-      <main className="flex-1 flex flex-col bg-white dark:bg-slate-900">
+      <main className="flex-1 flex flex-col bg-white dark:bg-slate-900 min-h-0 overflow-hidden">
         {/* Editor Header */}
-        <div className="h-16 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 bg-slate-50/50 dark:bg-slate-800/50">
+        <div className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 bg-slate-50/50 dark:bg-slate-800/50 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             {selectedFile ? (
               <>
-                <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600">
-                  <FileText className="w-4 h-4 text-white" />
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600">
+                  <FileText className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate text-sm">
                     {selectedFile.frontmatter?.title || selectedFile.name}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -1452,24 +1517,24 @@ export function PromptLibrary({
                   </p>
                 </div>
                 {unsavedChanges && (
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                     Unsaved
                   </span>
                 )}
               </>
             ) : (
-              <div className="text-slate-400">No file selected</div>
+              <div className="text-slate-400 text-sm">No file selected</div>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Toggle Metadata Panel */}
             {selectedFile && (
               <button
                 onClick={() => setShowMetadata(!showMetadata)}
                 className={`
-                  p-2 rounded-lg transition-all flex items-center gap-2
+                  p-1.5 rounded-lg transition-all flex items-center gap-1.5
                   ${showMetadata
                     ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
                     : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400'
@@ -1477,8 +1542,8 @@ export function PromptLibrary({
                 `}
                 title="Toggle metadata panel"
               >
-                <PanelLeft className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm font-medium">Metadata</span>
+                <PanelLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline text-xs font-medium">Metadata</span>
               </button>
             )}
 
@@ -1486,7 +1551,7 @@ export function PromptLibrary({
             <button
               onClick={handleToggleToolSidebar}
               className={`
-                p-2 rounded-lg transition-all flex items-center gap-2
+                p-1.5 rounded-lg transition-all flex items-center gap-1.5
                 ${toolSidebarOpen
                   ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                   : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400'
@@ -1494,10 +1559,10 @@ export function PromptLibrary({
               `}
               title="Configure tools"
             >
-              <Wrench className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-medium">Tools</span>
+              <Wrench className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-xs font-medium">Tools</span>
               {localConfiguredTools.filter(t => t.enabled).length > 0 && (
-                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
                   {localConfiguredTools.filter(t => t.enabled).length}
                 </span>
               )}
@@ -1508,7 +1573,7 @@ export function PromptLibrary({
                 onClick={handleSave}
                 disabled={!unsavedChanges || isLoading}
                 className={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                  flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
                   ${unsavedChanges
                     ? 'bg-violet-500 text-white hover:bg-violet-600 shadow-sm hover:shadow-md shadow-violet-500/25'
                     : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -1516,9 +1581,9 @@ export function PromptLibrary({
                 `}
               >
                 {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Save className="w-4 h-4" />
+                  <Save className="w-3.5 h-3.5" />
                 )}
                 Save
               </button>
@@ -1528,8 +1593,8 @@ export function PromptLibrary({
 
         {/* Error Banner */}
         {error && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="mx-4 mt-3 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-xl flex items-start gap-3 flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-medium text-red-800 dark:text-red-300">Error</p>
               <p className="text-sm text-red-600 dark:text-red-400">{error.message || error}</p>
@@ -1538,16 +1603,37 @@ export function PromptLibrary({
               onClick={onDismissError}
               className="text-red-400 hover:text-red-600"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
         {/* Main Content Area */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Metadata Panel */}
           {showMetadata && selectedFile && (
-            <aside className="w-72 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto bg-slate-50/30 dark:bg-slate-800/30">
+            <aside className="w-72 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto bg-slate-50/30 dark:bg-slate-800/30 min-h-0">
+              <style>{`
+                .metadata-scroll::-webkit-scrollbar {
+                  width: 6px;
+                }
+                .metadata-scroll::-webkit-scrollbar-track {
+                  background: transparent;
+                }
+                .metadata-scroll::-webkit-scrollbar-thumb {
+                  background: rgb(203 213 225);
+                  border-radius: 3px;
+                }
+                .metadata-scroll::-webkit-scrollbar-thumb:hover {
+                  background: rgb(148 163 184);
+                }
+                .dark .metadata-scroll::-webkit-scrollbar-thumb {
+                  background: rgb(51 65 85);
+                }
+                .dark .metadata-scroll::-webkit-scrollbar-thumb:hover {
+                  background: rgb(71 85 105);
+                }
+              `}</style>
               <MetadataPanel
                 frontmatter={localFrontmatter}
                 onChange={handleFrontmatterChange}
@@ -1558,7 +1644,7 @@ export function PromptLibrary({
           )}
 
           {/* Editor Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             {selectedFile ? (
               <WysiwygEditor
                 content={editorContent}
