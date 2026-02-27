@@ -241,12 +241,14 @@ export interface TaskConfigPanelProps {
   task: Task | null;
   /** Available tools that can be called */
   availableTools: Array<{ id: string; name: string; description: string }>;
+  /** Available prompt fragments that can be added */
+  availablePromptFragments?: Array<{ id: string; name: string; description: string }>;
   /** Whether the panel is open */
   isOpen: boolean;
   /** Callback when the panel is closed */
   onClose: () => void;
-  /** Callback when configuration is saved */
-  onSave: (config: TaskConfig) => void;
+  /** Callback when configuration is saved - includes name, description, type, and config */
+  onSave: (updates: { name: string; description: string; type: TaskType; config: TaskConfig }) => void;
 }
 
 /**
