@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { Task, TaskType, TaskConfig, PromptFragmentField } from '@/../product/sections/flow-builder/types'
+import type { Task, TaskType, TaskConfig, PromptFragmentField, JSONSchema } from '@/../product/sections/flow-builder/types'
+import { JsonSchemaEditor } from './JsonSchemaEditor'
 
 interface TaskConfigPanelProps {
   task: Task | null
@@ -31,8 +32,8 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
   const [taskDescription, setTaskDescription] = useState(task?.description || '')
 
   // Config states for updateFlowOutput
-  const [outputSchema, setOutputSchema] = useState(
-    task?.config?.outputSchema ? JSON.stringify(task.config.outputSchema, null, 2) : ''
+  const [outputSchema, setOutputSchema] = useState<JSONSchema | null>(
+    task?.config?.outputSchema || null
   )
   const [targetFieldName, setTargetFieldName] = useState(task?.config?.targetFieldName || '')
   const [isPushable, setIsPushable] = useState(task?.config?.isPushable ?? false)
@@ -54,7 +55,7 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
       setSelectedType(task.type)
       setTaskName(task.name)
       setTaskDescription(task.description)
-      setOutputSchema(task.config?.outputSchema ? JSON.stringify(task.config.outputSchema, null, 2) : '')
+      setOutputSchema(task.config?.outputSchema || null)
       setTargetFieldName(task.config?.targetFieldName || '')
       setIsPushable(task.config?.isPushable ?? false)
       setPromptFragmentFields(task.config?.promptFragmentFields || [])
@@ -67,7 +68,7 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
       setSelectedType('updateFlowOutput')
       setTaskName('')
       setTaskDescription('')
-      setOutputSchema('')
+      setOutputSchema(null)
       setTargetFieldName('')
       setIsPushable(false)
       setPromptFragmentFields([])
@@ -101,12 +102,8 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
         config.isPushable = true
       }
 
-      if (outputSchema.trim()) {
-        try {
-          config.outputSchema = JSON.parse(outputSchema)
-        } catch (e) {
-          // Invalid JSON - in real app would show error
-        }
+      if (outputSchema) {
+        config.outputSchema = outputSchema
       }
     }
 
@@ -283,15 +280,10 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Output Schema
                   </label>
-                  <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-                    <textarea
-                      value={outputSchema}
-                      onChange={(e) => setOutputSchema(e.target.value)}
-                      rows={6}
-                      className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-                      placeholder='{\n  "type": "object",\n  "properties": {\n    "summary": { "type": "string" },\n    "score": { "type": "number" }\n  }\n}'
-                    />
-                  </div>
+                  <JsonSchemaEditor
+                    value={outputSchema}
+                    onChange={setOutputSchema}
+                  />
                   <p className="text-xs text-slate-500 mt-2">
                     JSON Schema definition for the LLM's structured output (optional)
                   </p>
