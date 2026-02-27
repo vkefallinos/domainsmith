@@ -2,16 +2,16 @@
   "_meta": {
     "models": {
       "FileSystemNode": "A node in the prompt library file tree, representing directories or prompt fragment files.",
-      "Directory": "A folder of educational prompt fragments with optional metadata configuration.",
-      "PromptFragment": "A markdown prompt fragment for educational AI assistance.",
-      "DirectoryConfig": "Metadata configuration in a directory's config.json file.",
-      "PromptFrontmatter": "YAML frontmatter metadata from a prompt fragment's markdown file."
+      "Directory": "A folder of prompt fragments. When renderAs='section', contains nested fields. When renderAs='field', child files are selectable options.",
+      "PromptFragment": "A markdown file representing a selectable option within its parent directory field.",
+      "DirectoryConfig": "Metadata configuration in a directory's config.json file controlling how it renders in Agent Builder forms."
     },
     "relationships": [
       "FileSystemNode is a union type of Directory and PromptFragment",
       "Directory contains children which are FileSystemNodes",
-      "Directory has an optional DirectoryConfig for metadata",
-      "PromptFragment contains markdown content with optional frontmatter"
+      "Directory has a DirectoryConfig for metadata and field rendering behavior",
+      "PromptFragment content is inserted into template when that option is selected",
+      "Top-level directories in Prompt Library become Domains in Agent Builder"
     ]
   },
   "fileSystem": {
@@ -21,217 +21,1492 @@
     "path": "/",
     "children": [
       {
-        "id": "dir-lesson-planning",
-        "name": "lesson-planning",
+        "id": "dir-classroom",
+        "name": "classroom",
         "type": "directory",
-        "path": "/lesson-planning",
+        "path": "/classroom",
         "config": {
-          "label": "Lesson Planning",
-          "description": "Prompt fragments for lesson plan development and standards alignment",
-          "icon": "book",
-          "color": "#3b82f6"
+          "label": "Classroom Management",
+          "description": "Classroom characteristics, student demographics, and learning environment configuration",
+          "icon": "users",
+          "color": "#3b82f6",
+          "renderAs": "section"
         },
         "children": [
           {
-            "id": "dir-lesson-basics",
-            "name": "basics",
+            "id": "dir-grade-level",
+            "name": "grade-level",
             "type": "directory",
-            "path": "/lesson-planning/basics",
+            "path": "/classroom/grade-level",
             "config": {
-              "label": "Lesson Planning Fundamentals",
-              "description": "Core lesson planning components and structures"
+              "label": "Grade Level",
+              "description": "The grade level of the class",
+              "fieldType": "select",
+              "required": true,
+              "default": "5th-grade",
+              "variableName": "gradeLevel",
+              "renderAs": "field"
             },
             "children": [
               {
-                "id": "frag-lesson-structure",
-                "name": "lesson-structure.md",
+                "id": "frag-kindergarten",
+                "name": "kindergarten.md",
                 "type": "file",
-                "path": "/lesson-planning/basics/lesson-structure.md",
+                "path": "/classroom/grade-level/kindergarten.md",
                 "frontmatter": {
-                  "title": "Effective Lesson Structure",
-                  "category": "planning",
-                  "tags": ["lesson", "structure", "components"],
-                  "author": "curriculum-lead",
-                  "created": "2024-01-15",
-                  "modified": "2024-02-01"
+                  "title": "Kindergarten",
+                  "order": 0
                 },
-                "content": "# Effective Lesson Structure\n\nYou are an expert lesson designer. When creating lesson plans, include these essential components:\n\n## Components\n\n**1. Learning Objectives**\n- Specific, measurable, aligned to standards\n- Written in student-friendly language\n- Assesses during the lesson\n\n**2. Essential Questions**\n- Open-ended questions that frame the learning\n- Connect to broader concepts and real-world applications\n\n**3. Assessment Plan**\n- Formative checks throughout\n- Summative assessment at end\n- Criteria for success clearly defined\n\n**4. Lesson Sequence**\n- Opening/Hook (5-10 minutes)\n- Direct Instruction (10-15 minutes)\n- Guided Practice (10-15 minutes)\n- Independent Practice (15-20 minutes)\n- Closure (5 minutes)\n\n## Timing Guidelines\nAdjust timing based on grade level and class length. Elementary: shorter segments, more transitions. Secondary: longer focus blocks."
+                "content": "Kindergarten"
               },
               {
-                "id": "frag-standards-alignment",
-                "name": "standards-alignment.md",
+                "id": "frag-1st-grade",
+                "name": "1st-grade.md",
                 "type": "file",
-                "path": "/lesson-planning/basics/standards-alignment.md",
+                "path": "/classroom/grade-level/1st-grade.md",
                 "frontmatter": {
-                  "title": "Standards Alignment Guide",
-                  "category": "planning",
-                  "tags": ["standards", "alignment", "common-core"]
+                  "title": "1st Grade",
+                  "order": 1
                 },
-                "content": "# Standards Alignment Guide\n\nYou are a curriculum specialist. When aligning lessons to standards:\n\n## Alignment Process\n\n1. **Identify Relevant Standards**\n   - Select grade-level standards\n   - Prioritize major over supporting standards\n   - Consider prerequisite skills\n\n2. **Deconstruct Standards**\n   - Break into component skills\n   - Identify cognitive demand (DOK level)\n   - Determine evidence of mastery\n\n3. **Create Learning Targets**\n   - Convert standards to student-friendly \"I can\" statements\n   - Ensure targets are observable and measurable\n\n## Common Framework Reference\n\n**CCSS Math**: Clusters progress across grade levels, build conceptual understanding\n\n**CCSS ELA**: Balance literature and informational text, integrate reading/writing/speaking/listening\n\n**NGSS**: Performance expectations blend practices, crosscutting concepts, and disciplinary core ideas"
+                "content": "1st Grade"
+              },
+              {
+                "id": "frag-2nd-grade",
+                "name": "2nd-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/2nd-grade.md",
+                "frontmatter": {
+                  "title": "2nd Grade",
+                  "order": 2
+                },
+                "content": "2nd Grade"
+              },
+              {
+                "id": "frag-3rd-grade",
+                "name": "3rd-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/3rd-grade.md",
+                "frontmatter": {
+                  "title": "3rd Grade",
+                  "order": 3
+                },
+                "content": "3rd Grade"
+              },
+              {
+                "id": "frag-4th-grade",
+                "name": "4th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/4th-grade.md",
+                "frontmatter": {
+                  "title": "4th Grade",
+                  "order": 4
+                },
+                "content": "4th Grade"
+              },
+              {
+                "id": "frag-5th-grade",
+                "name": "5th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/5th-grade.md",
+                "frontmatter": {
+                  "title": "5th Grade",
+                  "order": 5
+                },
+                "content": "5th Grade"
+              },
+              {
+                "id": "frag-6th-grade",
+                "name": "6th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/6th-grade.md",
+                "frontmatter": {
+                  "title": "6th Grade",
+                  "order": 6
+                },
+                "content": "6th Grade"
+              },
+              {
+                "id": "frag-7th-grade",
+                "name": "7th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/7th-grade.md",
+                "frontmatter": {
+                  "title": "7th Grade",
+                  "order": 7
+                },
+                "content": "7th Grade"
+              },
+              {
+                "id": "frag-8th-grade",
+                "name": "8th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/8th-grade.md",
+                "frontmatter": {
+                  "title": "8th Grade",
+                  "order": 8
+                },
+                "content": "8th Grade"
+              },
+              {
+                "id": "frag-9th-grade",
+                "name": "9th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/9th-grade.md",
+                "frontmatter": {
+                  "title": "9th Grade",
+                  "order": 9
+                },
+                "content": "9th Grade"
+              },
+              {
+                "id": "frag-10th-grade",
+                "name": "10th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/10th-grade.md",
+                "frontmatter": {
+                  "title": "10th Grade",
+                  "order": 10
+                },
+                "content": "10th Grade"
+              },
+              {
+                "id": "frag-11th-grade",
+                "name": "11th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/11th-grade.md",
+                "frontmatter": {
+                  "title": "11th Grade",
+                  "order": 11
+                },
+                "content": "11th Grade"
+              },
+              {
+                "id": "frag-12th-grade",
+                "name": "12th-grade.md",
+                "type": "file",
+                "path": "/classroom/grade-level/12th-grade.md",
+                "frontmatter": {
+                  "title": "12th Grade",
+                  "order": 12
+                },
+                "content": "12th Grade"
               }
             ]
           },
           {
-            "id": "dir-differentiation",
-            "name": "differentiation",
+            "id": "dir-class-size",
+            "name": "class-size",
             "type": "directory",
-            "path": "/lesson-planning/differentiation",
+            "path": "/classroom/class-size",
             "config": {
-              "label": "Differentiation Strategies",
-              "description": "Meeting diverse learner needs in lesson planning"
+              "label": "Class Size",
+              "description": "Number of students in the class",
+              "fieldType": "select",
+              "required": true,
+              "default": "medium",
+              "variableName": "classSize",
+              "renderAs": "field"
             },
             "children": [
               {
-                "id": "frag-tomlinson-model",
-                "name": "tomlinson-differentiation.md",
+                "id": "frag-small",
+                "name": "small.md",
                 "type": "file",
-                "path": "/lesson-planning/differentiation/tomlinson-differentiation.md",
+                "path": "/classroom/class-size/small.md",
                 "frontmatter": {
-                  "title": "Tomlinson Differentiation Model",
-                  "category": "differentiation",
-                  "tags": ["differentiation", "tomlinson", "diverse-learners"]
+                  "title": "Small (1-15 students)",
+                  "description": "Ideal for personalized attention",
+                  "order": 0
                 },
-                "content": "# Tomlinson Differentiation Model\n\nYou are a specialist in differentiated instruction. Use Tomlinson's four categories:\n\n## 1. Differentiate Content\n- What students learn\n- Varied reading levels\n- Multiple representations (visual, auditory, kinesthetic)\n- Flexible grouping based on readiness\n- Tiered assignments\n\n## 2. Differentiate Process\n- How students make sense of ideas\n- Learning stations or rotations\n- Choice boards or menus\n- Scaffolding tools (graphic organizers, sentence frames)\n- Varied pacing options\n\n## 3. Differentiate Product\n- How students demonstrate learning\n- Multiple options for showing mastery\n- Varied complexity levels\n- Individual vs. group products\n- Real-world application options\n\n## 4. Differentiate Environment\n- Physical and social setting\n- Quiet spaces vs. collaboration areas\n- Flexible seating options\n- Clear routines and procedures\n- Supportive classroom culture"
+                "content": "Small (1-15 students)"
+              },
+              {
+                "id": "frag-medium",
+                "name": "medium.md",
+                "type": "file",
+                "path": "/classroom/class-size/medium.md",
+                "frontmatter": {
+                  "title": "Medium (16-25 students)",
+                  "description": "Standard class size",
+                  "order": 1
+                },
+                "content": "Medium (16-25 students)"
+              },
+              {
+                "id": "frag-large",
+                "name": "large.md",
+                "type": "file",
+                "path": "/classroom/class-size/large.md",
+                "frontmatter": {
+                  "title": "Large (26-35 students)",
+                  "description": "Requires additional management strategies",
+                  "order": 2
+                },
+                "content": "Large (26-35 students)"
+              },
+              {
+                "id": "frag-very-large",
+                "name": "very-large.md",
+                "type": "file",
+                "path": "/classroom/class-size/very-large.md",
+                "frontmatter": {
+                  "title": "Very Large (36+ students)",
+                  "description": "Requires significant classroom management focus",
+                  "order": 3
+                },
+                "content": "Very Large (36+ students)"
+              }
+            ]
+          },
+          {
+            "id": "dir-student-needs",
+            "name": "student-needs",
+            "type": "directory",
+            "path": "/classroom/student-needs",
+            "config": {
+              "label": "Student Support Needs",
+              "description": "Special populations and support requirements in the class",
+              "fieldType": "multiselect",
+              "required": false,
+              "default": [],
+              "variableName": "studentNeeds",
+              "hint": "Select all that apply to your student population",
+              "renderAs": "field"
+            },
+            "children": [
+              {
+                "id": "frag-ell",
+                "name": "english-language-learners.md",
+                "type": "file",
+                "path": "/classroom/student-needs/english-language-learners.md",
+                "frontmatter": {
+                  "title": "English Language Learners",
+                  "description": "Students who are developing English proficiency",
+                  "order": 0
+                },
+                "content": "English Language Learners"
+              },
+              {
+                "id": "frag-special-ed",
+                "name": "special-education.md",
+                "type": "file",
+                "path": "/classroom/student-needs/special-education.md",
+                "frontmatter": {
+                  "title": "Special Education",
+                  "description": "Students with IEPs or specialized learning plans",
+                  "order": 1
+                },
+                "content": "Special Education"
+              },
+              {
+                "id": "frag-gifted",
+                "name": "gifted-talented.md",
+                "type": "file",
+                "path": "/classroom/student-needs/gifted-talented.md",
+                "frontmatter": {
+                  "title": "Gifted & Talented",
+                  "description": "Students requiring enrichment and acceleration",
+                  "order": 2
+                },
+                "content": "Gifted & Talented"
+              },
+              {
+                "id": "frag-reading-intervention",
+                "name": "reading-intervention.md",
+                "type": "file",
+                "path": "/classroom/student-needs/reading-intervention.md",
+                "frontmatter": {
+                  "title": "Reading Intervention",
+                  "description": "Students receiving additional reading support",
+                  "order": 3
+                },
+                "content": "Reading Intervention"
+              },
+              {
+                "id": "frag-math-intervention",
+                "name": "math-intervention.md",
+                "type": "file",
+                "path": "/classroom/student-needs/math-intervention.md",
+                "frontmatter": {
+                  "title": "Math Intervention",
+                  "description": "Students receiving additional math support",
+                  "order": 4
+                },
+                "content": "Math Intervention"
+              },
+              {
+                "id": "frag-behavioral",
+                "name": "behavioral-support.md",
+                "type": "file",
+                "path": "/classroom/student-needs/behavioral-support.md",
+                "frontmatter": {
+                  "title": "Behavioral Support",
+                  "description": "Students with behavioral or social-emotional needs",
+                  "order": 5
+                },
+                "content": "Behavioral Support"
+              }
+            ]
+          },
+          {
+            "id": "dir-learning-model",
+            "name": "learning-model",
+            "type": "directory",
+            "path": "/classroom/learning-model",
+            "config": {
+              "label": "Learning Model",
+              "description": "Primary instructional delivery model",
+              "fieldType": "select",
+              "required": true,
+              "default": "in-person",
+              "variableName": "learningModel",
+              "renderAs": "field"
+            },
+            "children": [
+              {
+                "id": "frag-in-person",
+                "name": "in-person.md",
+                "type": "file",
+                "path": "/classroom/learning-model/in-person.md",
+                "frontmatter": {
+                  "title": "In-Person",
+                  "description": "Traditional face-to-face classroom instruction",
+                  "order": 0
+                },
+                "content": "In-Person"
+              },
+              {
+                "id": "frag-hybrid",
+                "name": "hybrid.md",
+                "type": "file",
+                "path": "/classroom/learning-model/hybrid.md",
+                "frontmatter": {
+                  "title": "Hybrid",
+                  "description": "Combination of in-person and remote learning",
+                  "order": 1
+                },
+                "content": "Hybrid"
+              },
+              {
+                "id": "frag-remote",
+                "name": "remote.md",
+                "type": "file",
+                "path": "/classroom/learning-model/remote.md",
+                "frontmatter": {
+                  "title": "Remote/Online",
+                  "description": "Fully virtual instruction",
+                  "order": 2
+                },
+                "content": "Remote/Online"
+              },
+              {
+                "id": "frag-flipped",
+                "name": "flipped-classroom.md",
+                "type": "file",
+                "path": "/classroom/learning-model/flipped-classroom.md",
+                "frontmatter": {
+                  "title": "Flipped Classroom",
+                  "description": "Content delivery at home, practice in class",
+                  "order": 3
+                },
+                "content": "Flipped Classroom"
+              }
+            ]
+          },
+          {
+            "id": "dir-resources",
+            "name": "resources",
+            "type": "directory",
+            "path": "/classroom/resources",
+            "config": {
+              "label": "Available Resources",
+              "description": "Physical and digital resources available in the classroom",
+              "fieldType": "multiselect",
+              "required": false,
+              "default": [],
+              "variableName": "resourcesAvailable",
+              "hint": "Select all resources that are available",
+              "renderAs": "field"
+            },
+            "children": [
+              {
+                "id": "frag-1to1",
+                "name": "1to1-devices.md",
+                "type": "file",
+                "path": "/classroom/resources/1to1-devices.md",
+                "frontmatter": {
+                  "title": "1:1 Devices",
+                  "description": "Each student has their own device",
+                  "order": 0
+                },
+                "content": "1:1 Devices"
+              },
+              {
+                "id": "frag-interactive-whiteboard",
+                "name": "interactive-whiteboard.md",
+                "type": "file",
+                "path": "/classroom/resources/interactive-whiteboard.md",
+                "frontmatter": {
+                  "title": "Interactive Whiteboard",
+                  "description": "Smart board or interactive display",
+                  "order": 1
+                },
+                "content": "Interactive Whiteboard"
+              },
+              {
+                "id": "frag-science-lab",
+                "name": "science-lab.md",
+                "type": "file",
+                "path": "/classroom/resources/science-lab.md",
+                "frontmatter": {
+                  "title": "Science Lab",
+                  "description": "Access to laboratory facilities",
+                  "order": 2
+                },
+                "content": "Science Lab"
+              },
+              {
+                "id": "frag-library",
+                "name": "library-access.md",
+                "type": "file",
+                "path": "/classroom/resources/library-access.md",
+                "frontmatter": {
+                  "title": "Library Access",
+                  "description": "School library available for research and reading",
+                  "order": 3
+                },
+                "content": "Library Access"
+              },
+              {
+                "id": "frag-art-supplies",
+                "name": "art-supplies.md",
+                "type": "file",
+                "path": "/classroom/resources/art-supplies.md",
+                "frontmatter": {
+                  "title": "Art Supplies",
+                  "description": "Basic art materials available",
+                  "order": 4
+                },
+                "content": "Art Supplies"
+              },
+              {
+                "id": "frag-music-room",
+                "name": "music-room.md",
+                "type": "file",
+                "path": "/classroom/resources/music-room.md",
+                "frontmatter": {
+                  "title": "Music Room",
+                  "description": "Access to music facilities and instruments",
+                  "order": 5
+                },
+                "content": "Music Room"
+              },
+              {
+                "id": "frag-gym",
+                "name": "gym-outdoor-space.md",
+                "type": "file",
+                "path": "/classroom/resources/gym-outdoor-space.md",
+                "frontmatter": {
+                  "title": "Gym/Outdoor Space",
+                  "description": "Access to physical activity spaces",
+                  "order": 6
+                },
+                "content": "Gym/Outdoor Space"
               }
             ]
           }
         ]
       },
       {
-        "id": "dir-assessment",
-        "name": "assessment",
+        "id": "dir-teacher",
+        "name": "teacher",
         "type": "directory",
-        "path": "/assessment",
+        "path": "/teacher",
         "config": {
-          "label": "Assessment Design",
-          "description": "Assessment creation, rubrics, and evaluation strategies",
-          "icon": "check-circle",
-          "color": "#8b5cf6"
+          "label": "Teacher Profile",
+          "description": "Teacher experience, specialization, and teaching preferences",
+          "icon": "person",
+          "color": "#8b5cf6",
+          "renderAs": "section"
         },
         "children": [
           {
-            "id": "frag-assessment-types",
-            "name": "assessment-types.md",
-            "type": "file",
-            "path": "/assessment/assessment-types.md",
-            "frontmatter": {
-              "title": "Assessment Types Guide",
-              "category": "assessment",
-              "tags": ["assessment", "formative", "summative"]
+            "id": "dir-experience",
+            "name": "experience",
+            "type": "directory",
+            "path": "/teacher/experience",
+            "config": {
+              "label": "Years of Experience",
+              "description": "Teacher's level of experience",
+              "fieldType": "select",
+              "required": true,
+              "default": "3-5-years",
+              "variableName": "yearsExperience",
+              "renderAs": "field"
             },
-            "content": "# Assessment Types Guide\n\nYou are an assessment expert. Balance assessment types:\n\n## Formative Assessment\n- Purpose: Monitor learning and provide feedback\n- Examples: Exit tickets, Think-Pair-Share, Quick writes, Observations\n- Low-stakes, frequent, informative\n\n## Summative Assessment\n- Purpose: Evaluate learning at a point in time\n- Examples: Unit tests, projects, presentations, portfolios\n- Higher stakes, comprehensive\n\n## Diagnostic Assessment\n- Purpose: Identify prior knowledge and misconceptions\n- Examples: Pre-tests, KWL charts, Concept maps\n- Before instruction begins\n\n## Balanced Assessment System\n- 70% formative, 30% summative recommended\n- Multiple measures over time\n- Varied formats to capture different ways of knowing\n- Include performance tasks for authentic assessment"
+            "children": [
+              {
+                "id": "frag-novice",
+                "name": "0-2-years.md",
+                "type": "file",
+                "path": "/teacher/experience/0-2-years.md",
+                "frontmatter": {
+                  "title": "0-2 years (Novice)",
+                  "description": "Early career teacher building foundational skills",
+                  "order": 0
+                },
+                "content": "0-2 years (Novice)"
+              },
+              {
+                "id": "frag-beginning",
+                "name": "3-5-years.md",
+                "type": "file",
+                "path": "/teacher/experience/3-5-years.md",
+                "frontmatter": {
+                  "title": "3-5 years (Beginning)",
+                  "description": "Developing core competencies",
+                  "order": 1
+                },
+                "content": "3-5 years (Beginning)"
+              },
+              {
+                "id": "frag-experienced",
+                "name": "6-10-years.md",
+                "type": "file",
+                "path": "/teacher/experience/6-10-years.md",
+                "frontmatter": {
+                  "title": "6-10 years (Experienced)",
+                  "description": "Confident with established practices",
+                  "order": 2
+                },
+                "content": "6-10 years (Experienced)"
+              },
+              {
+                "id": "frag-advanced",
+                "name": "11-20-years.md",
+                "type": "file",
+                "path": "/teacher/experience/11-20-years.md",
+                "frontmatter": {
+                  "title": "11-20 years (Advanced)",
+                  "description": "Seasoned educator with deep expertise",
+                  "order": 3
+                },
+                "content": "11-20 years (Advanced)"
+              },
+              {
+                "id": "frag-expert",
+                "name": "20-plus-years.md",
+                "type": "file",
+                "path": "/teacher/experience/20-plus-years.md",
+                "frontmatter": {
+                  "title": "20+ years (Expert)",
+                  "description": "Veteran teacher with extensive experience",
+                  "order": 4
+                },
+                "content": "20+ years (Expert)"
+              }
+            ]
           },
           {
-            "id": "frag-rubric-design",
-            "name": "rubric-design.md",
-            "type": "file",
-            "path": "/assessment/rubric-design.md",
-            "frontmatter": {
-              "title": "Effective Rubric Design",
-              "category": "assessment",
-              "tags": ["rubric", "evaluation", "criteria"]
+            "id": "dir-subject-expertise",
+            "name": "subject-expertise",
+            "type": "directory",
+            "path": "/teacher/subject-expertise",
+            "config": {
+              "label": "Subject Expertise",
+              "description": "Areas of subject matter expertise",
+              "fieldType": "multiselect",
+              "required": true,
+              "default": [],
+              "variableName": "subjectExpertise",
+              "hint": "Select all areas of certification or expertise",
+              "renderAs": "field"
             },
-            "content": "# Effective Rubric Design\n\nYou are a rubric specialist. Create clear, useful rubrics:\n\n## Rubric Components\n\n**Criteria**: measurable dimensions of performance\n- Limit to 4-6 focus areas\n- Distinct from one another\n- Aligned to learning objectives\n\n**Performance Levels**: descriptions of quality\n- Typically 4-6 levels\n- Descriptive, not evaluative language\n- Concrete examples at each level\n\n## Design Principles\n\n1. **Task-Specific**: Rubric matches the specific assignment\n2. **Student-Friendly**: Language students understand\n3. **Reliable**: Different raters would score similarly\n4. **Valid**: Measures what it intends to measure\n\n## Common Scales\n- **4-Point**: Exemplary (4), Proficient (3), Developing (2), Beginning (1)\n- **Mastery**: Exceeds, Meets, Approaching, Below\n- **Holistic**: Overall impression vs. Analytic: criterion-by-criterion"
+            "children": [
+              {
+                "id": "frag-math",
+                "name": "mathematics.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/mathematics.md",
+                "frontmatter": {
+                  "title": "Mathematics",
+                  "order": 0
+                },
+                "content": "Mathematics"
+              },
+              {
+                "id": "frag-ela",
+                "name": "english-language-arts.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/english-language-arts.md",
+                "frontmatter": {
+                  "title": "English Language Arts",
+                  "order": 1
+                },
+                "content": "English Language Arts"
+              },
+              {
+                "id": "frag-science",
+                "name": "science.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/science.md",
+                "frontmatter": {
+                  "title": "Science",
+                  "order": 2
+                },
+                "content": "Science"
+              },
+              {
+                "id": "frag-social-studies",
+                "name": "social-studies.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/social-studies.md",
+                "frontmatter": {
+                  "title": "Social Studies",
+                  "order": 3
+                },
+                "content": "Social Studies"
+              },
+              {
+                "id": "frag-art",
+                "name": "art.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/art.md",
+                "frontmatter": {
+                  "title": "Art",
+                  "order": 4
+                },
+                "content": "Art"
+              },
+              {
+                "id": "frag-music",
+                "name": "music.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/music.md",
+                "frontmatter": {
+                  "title": "Music",
+                  "order": 5
+                },
+                "content": "Music"
+              },
+              {
+                "id": "frag-pe",
+                "name": "physical-education.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/physical-education.md",
+                "frontmatter": {
+                  "title": "Physical Education",
+                  "order": 6
+                },
+                "content": "Physical Education"
+              },
+              {
+                "id": "frag-special-ed",
+                "name": "special-education.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/special-education.md",
+                "frontmatter": {
+                  "title": "Special Education",
+                  "order": 7
+                },
+                "content": "Special Education"
+              },
+              {
+                "id": "frag-esl",
+                "name": "esl-ell.md",
+                "type": "file",
+                "path": "/teacher/subject-expertise/esl-ell.md",
+                "frontmatter": {
+                  "title": "ESL/ELL",
+                  "order": 8
+                },
+                "content": "ESL/ELL"
+              }
+            ]
           },
           {
-            "id": "frag-dok-levels",
-            "name": "depth-of-knowledge.md",
-            "type": "file",
-            "path": "/assessment/depth-of-knowledge.md",
-            "frontmatter": {
-              "title": "Webb's Depth of Knowledge",
-              "category": "assessment",
-              "tags": ["dok", "cognitive-complexity", "rigor"]
+            "id": "dir-teaching-style",
+            "name": "teaching-style",
+            "type": "directory",
+            "path": "/teacher/teaching-style",
+            "config": {
+              "label": "Teaching Style",
+              "description": "Preferred instructional approaches",
+              "fieldType": "multiselect",
+              "required": false,
+              "default": ["direct-instruction"],
+              "variableName": "teachingStyle",
+              "hint": "Select preferred approaches (multiple allowed)",
+              "renderAs": "field"
             },
-            "content": "# Webb's Depth of Knowledge\n\nYou use Webb's DOK framework to ensure cognitive complexity:\n\n## DOK Level 1: Recall and Reproduction\n- Recall facts, terms, concepts\n- Basic procedures\n- One right answer\n- Examples: Identify, Define, List\n\n## DOK Level 2: Skills and Concepts\n- Use learned skills to solve problems\n- Requires some mental processing\n- Multiple steps but familiar\n- Examples: Compare, Classify, Organize\n\n## DOK Level 3: Strategic Thinking\n- Requires reasoning, planning, using evidence\n- More than one possible approach\n- Complexity and abstract thinking\n- Examples: Analyze, Investigate, Formulate\n\n## DOK Level 4: Extended Thinking\n- Complex reasoning over extended time\n- Synthesis across sources/contexts\n- Create, design, propose\n- Examples: Design, Connect, Prove\n\n## Assessment Balance\n- 20% DOK 1\n- 40% DOK 2\n- 30% DOK 3\n- 10% DOK 4"
+            "children": [
+              {
+                "id": "frag-direct",
+                "name": "direct-instruction.md",
+                "type": "file",
+                "path": "/teacher/teaching-style/direct-instruction.md",
+                "frontmatter": {
+                  "title": "Direct Instruction",
+                  "description": "Teacher-led explicit instruction",
+                  "order": 0
+                },
+                "content": "Direct Instruction"
+              },
+              {
+                "id": "frag-inquiry",
+                "name": "inquiry-based.md",
+                "type": "file",
+                "path": "/teacher/teaching-style/inquiry-based.md",
+                "frontmatter": {
+                  "title": "Inquiry-Based",
+                  "description": "Student-led questioning and exploration",
+                  "order": 1
+                },
+                "content": "Inquiry-Based"
+              },
+              {
+                "id": "frag-cooperative",
+                "name": "cooperative-learning.md",
+                "type": "file",
+                "path": "/teacher/teaching-style/cooperative-learning.md",
+                "frontmatter": {
+                  "title": "Cooperative Learning",
+                  "description": "Structured group work strategies",
+                  "order": 2
+                },
+                "content": "Cooperative Learning"
+              },
+              {
+                "id": "frag-pbl",
+                "name": "project-based-learning.md",
+                "type": "file",
+                "path": "/teacher/teaching-style/project-based-learning.md",
+                "frontmatter": {
+                  "title": "Project-Based Learning",
+                  "description": "Learning through projects",
+                  "order": 3
+                },
+                "content": "Project-Based Learning"
+              },
+              {
+                "id": "frag-differentiated",
+                "name": "differentiated-instruction.md",
+                "type": "file",
+                "path": "/teacher/teaching-style/differentiated-instruction.md",
+                "frontmatter": {
+                  "title": "Differentiated Instruction",
+                  "description": "Tailored instruction for diverse needs",
+                  "order": 4
+                },
+                "content": "Differentiated Instruction"
+              },
+              {
+                "id": "frag-gamification",
+                "name": "gamification.md",
+                "type": "file",
+                "path": "/teacher/teaching-style/gamification.md",
+                "frontmatter": {
+                  "title": "Gamification",
+                  "description": "Game-based learning elements",
+                  "order": 5
+                },
+                "content": "Gamification"
+              }
+            ]
+          },
+          {
+            "id": "dir-certifications",
+            "name": "certifications",
+            "type": "directory",
+            "path": "/teacher/certifications",
+            "config": {
+              "label": "Certifications",
+              "description": "Teaching certifications and endorsements",
+              "fieldType": "multiselect",
+              "required": false,
+              "default": [],
+              "variableName": "certifications",
+              "renderAs": "field"
+            },
+            "children": [
+              {
+                "id": "frag-elementary",
+                "name": "general-elementary.md",
+                "type": "file",
+                "path": "/teacher/certifications/general-elementary.md",
+                "frontmatter": {
+                  "title": "General Elementary",
+                  "order": 0
+                },
+                "content": "General Elementary"
+              },
+              {
+                "id": "frag-secondary",
+                "name": "subject-specific-secondary.md",
+                "type": "file",
+                "path": "/teacher/certifications/subject-specific-secondary.md",
+                "frontmatter": {
+                  "title": "Subject-Specific Secondary",
+                  "order": 1
+                },
+                "content": "Subject-Specific Secondary"
+              },
+              {
+                "id": "frag-sp-ed-cert",
+                "name": "special-education.md",
+                "type": "file",
+                "path": "/teacher/certifications/special-education.md",
+                "frontmatter": {
+                  "title": "Special Education",
+                  "order": 2
+                },
+                "content": "Special Education"
+              },
+              {
+                "id": "frag-esl-cert",
+                "name": "esl-ell-endorsement.md",
+                "type": "file",
+                "path": "/teacher/certifications/esl-ell-endorsement.md",
+                "frontmatter": {
+                  "title": "ESL/ELL Endorsement",
+                  "order": 3
+                },
+                "content": "ESL/ELL Endorsement"
+              },
+              {
+                "id": "frag-gifted-cert",
+                "name": "gifted-education.md",
+                "type": "file",
+                "path": "/teacher/certifications/gifted-education.md",
+                "frontmatter": {
+                  "title": "Gifted Education",
+                  "order": 4
+                },
+                "content": "Gifted Education"
+              },
+              {
+                "id": "frag-reading-cert",
+                "name": "reading-specialist.md",
+                "type": "file",
+                "path": "/teacher/certifications/reading-specialist.md",
+                "frontmatter": {
+                  "title": "Reading Specialist",
+                  "order": 5
+                },
+                "content": "Reading Specialist"
+              }
+            ]
+          },
+          {
+            "id": "dir-professional-goals",
+            "name": "professional-goals",
+            "type": "directory",
+            "path": "/teacher/professional-goals",
+            "config": {
+              "label": "Professional Development Goals",
+              "description": "Areas for growth or improvement",
+              "fieldType": "textarea",
+              "required": false,
+              "default": "",
+              "variableName": "professionalGoals",
+              "placeholder": "Describe areas for growth or improvement...",
+              "renderAs": "field"
+            },
+            "children": []
           }
         ]
       },
       {
-        "id": "dir-collaboration",
-        "name": "collaboration",
+        "id": "dir-curriculum",
+        "name": "curriculum",
         "type": "directory",
-        "path": "/collaboration",
+        "path": "/curriculum",
         "config": {
-          "label": "Collaborative Learning",
-          "description": "Group work, team-building, and cooperative learning strategies",
-          "icon": "users",
-          "color": "#10b981"
+          "label": "Curriculum Standards",
+          "description": "Curriculum frameworks, standards alignment, and learning objectives",
+          "icon": "book",
+          "color": "#10b981",
+          "renderAs": "section"
         },
         "children": [
           {
-            "id": "frag-grouping-strategies",
-            "name": "grouping-strategies.md",
-            "type": "file",
-            "path": "/collaboration/grouping-strategies.md",
-            "frontmatter": {
-              "title": "Student Grouping Strategies",
-              "category": "collaboration",
-              "tags": ["grouping", "cooperative-learning", "teams"]
+            "id": "dir-framework",
+            "name": "framework",
+            "type": "directory",
+            "path": "/curriculum/framework",
+            "config": {
+              "label": "Curriculum Framework",
+              "description": "The governing standards framework",
+              "fieldType": "select",
+              "required": true,
+              "default": "common-core",
+              "variableName": "curriculumFramework",
+              "renderAs": "field"
             },
-            "content": "# Student Grouping Strategies\n\nYou are a cooperative learning expert. Consider these grouping approaches:\n\n## Grouping Methods\n\n**Random**: Quick, fair, mixes abilities\n- Draw sticks, numbered heads, playing cards\n\n**Teacher-Selected**: Strategic, considers needs\n- Mixed ability, similar ability, specific combinations\n\n**Student-Choice**: Builds autonomy\n- Interest-based, partner selection\n\n## Group Size Guidelines\n- **Pairs**: Practice, peer tutoring, check-understanding\n- **Trios**: Discussion, troubleshooting, small projects\n- **Groups of 4**: Optimal for collaboration, enough diversity\n- **Groups of 5-6**: Larger projects, role assignments\n\n## Considerations\n- Change groups regularly (every 2-4 weeks)\n- Consider ELL, special ed, behavioral needs\n- Balance voices: assign roles if needed\n- Teach group work norms explicitly"
+            "children": [
+              {
+                "id": "frag-common-core",
+                "name": "common-core.md",
+                "type": "file",
+                "path": "/curriculum/framework/common-core.md",
+                "frontmatter": {
+                  "title": "Common Core State Standards",
+                  "order": 0
+                },
+                "content": "Common Core State Standards"
+              },
+              {
+                "id": "frag-ngss",
+                "name": "ngss.md",
+                "type": "file",
+                "path": "/curriculum/framework/ngss.md",
+                "frontmatter": {
+                  "title": "NGSS",
+                  "description": "Next Generation Science Standards",
+                  "order": 1
+                },
+                "content": "NGSS"
+              },
+              {
+                "id": "frag-teks",
+                "name": "teks.md",
+                "type": "file",
+                "path": "/curriculum/framework/teks.md",
+                "frontmatter": {
+                  "title": "TEKS",
+                  "description": "Texas Essential Knowledge and Skills",
+                  "order": 2
+                },
+                "content": "TEKS"
+              },
+              {
+                "id": "frag-state",
+                "name": "state-specific.md",
+                "type": "file",
+                "path": "/curriculum/framework/state-specific.md",
+                "frontmatter": {
+                  "title": "State Specific",
+                  "order": 3
+                },
+                "content": "State Specific"
+              },
+              {
+                "id": "frag-ib",
+                "name": "international-baccalaureate.md",
+                "type": "file",
+                "path": "/curriculum/framework/international-baccalaureate.md",
+                "frontmatter": {
+                  "title": "International Baccalaureate",
+                  "order": 4
+                },
+                "content": "International Baccalaureate"
+              },
+              {
+                "id": "frag-cambridge",
+                "name": "cambridge-international.md",
+                "type": "file",
+                "path": "/curriculum/framework/cambridge-international.md",
+                "frontmatter": {
+                  "title": "Cambridge International",
+                  "order": 5
+                },
+                "content": "Cambridge International"
+              }
+            ]
           },
           {
-            "id": "frag-sel-integration",
-            "name": "sel-integration.md",
-            "type": "file",
-            "path": "/collaboration/sel-integration.md",
-            "frontmatter": {
-              "title": "SEL Integration",
-              "category": "collaboration",
-              "tags": ["sel", "social-emotional", "teamwork"]
+            "id": "dir-assessment-methods",
+            "name": "assessment-methods",
+            "type": "directory",
+            "path": "/curriculum/assessment-methods",
+            "config": {
+              "label": "Assessment Methods",
+              "description": "Preferred approaches to assessment",
+              "fieldType": "multiselect",
+              "required": false,
+              "default": ["formative", "summative"],
+              "variableName": "assessmentMethods",
+              "renderAs": "field"
             },
-            "content": "# SEL Integration\n\nYou integrate Social-Emotional Learning into collaborative work:\n\n## CASEL Framework\n\n**Self-Awareness**: Recognizing emotions, values, strengths\n- Reflection prompts before/after group work\n- Goal setting for collaboration skills\n\n**Self-Management**: Regulating emotions and behaviors\n- Turn-taking norms\n- Conflict resolution protocols\n- Stress management during group challenges\n\n**Social Awareness**: Understanding others' perspectives\n- Active listening instruction\n- Perspective-taking activities\n- Appreciating diverse contributions\n\n**Relationship Skills**: Communication, teamwork\n- Clear role definitions\n- Constructive feedback language\n- Inclusive participation strategies\n\n**Responsible Decision-Making**: Constructive choices\n- Ethical decision-making frameworks\n- Considering group and individual impact\n\n## Integration Strategies\n- Explicitly teach collaboration skills\n- Debrief social process, not just academic output\n- Use conflicts as learning opportunities"
+            "children": [
+              {
+                "id": "frag-formative",
+                "name": "formative.md",
+                "type": "file",
+                "path": "/curriculum/assessment-methods/formative.md",
+                "frontmatter": {
+                  "title": "Formative Assessment",
+                  "description": "Ongoing assessment for learning",
+                  "order": 0
+                },
+                "content": "Formative Assessment"
+              },
+              {
+                "id": "frag-summative",
+                "name": "summative.md",
+                "type": "file",
+                "path": "/curriculum/assessment-methods/summative.md",
+                "frontmatter": {
+                  "title": "Summative Assessment",
+                  "description": "End-of-unit assessment of learning",
+                  "order": 1
+                },
+                "content": "Summative Assessment"
+              },
+              {
+                "id": "frag-portfolio",
+                "name": "portfolio-based.md",
+                "type": "file",
+                "path": "/curriculum/assessment-methods/portfolio-based.md",
+                "frontmatter": {
+                  "title": "Portfolio-Based",
+                  "description": "Collection of student work over time",
+                  "order": 2
+                },
+                "content": "Portfolio-Based"
+              },
+              {
+                "id": "frag-project-based-assessment",
+                "name": "project-based.md",
+                "type": "file",
+                "path": "/curriculum/assessment-methods/project-based.md",
+                "frontmatter": {
+                  "title": "Project-Based",
+                  "description": "Assessment through project completion",
+                  "order": 3
+                },
+                "content": "Project-Based"
+              },
+              {
+                "id": "frag-standardized",
+                "name": "standardized-testing.md",
+                "type": "file",
+                "path": "/curriculum/assessment-methods/standardized-testing.md",
+                "frontmatter": {
+                  "title": "Standardized Testing",
+                  "description": "Preparation for standardized assessments",
+                  "order": 4
+                },
+                "content": "Standardized Testing"
+              },
+              {
+                "id": "frag-performance",
+                "name": "performance-tasks.md",
+                "type": "file",
+                "path": "/curriculum/assessment-methods/performance-tasks.md",
+                "frontmatter": {
+                  "title": "Performance Tasks",
+                  "description": "Applied skills demonstrations",
+                  "order": 5
+                },
+                "content": "Performance Tasks"
+              }
+            ]
+          },
+          {
+            "id": "dir-pacing-guide",
+            "name": "pacing-guide",
+            "type": "directory",
+            "path": "/curriculum/pacing-guide",
+            "config": {
+              "label": "Include Pacing Guide Considerations",
+              "description": "Factor pacing into recommendations",
+              "fieldType": "toggle",
+              "required": false,
+              "default": true,
+              "variableName": "pacingGuide",
+              "renderAs": "field"
+            },
+            "children": []
+          },
+          {
+            "id": "dir-differentiation-required",
+            "name": "differentiation-required",
+            "type": "directory",
+            "path": "/curriculum/differentiation-required",
+            "config": {
+              "label": "Require Differentiation Strategies",
+              "description": "All recommendations must include differentiation",
+              "fieldType": "toggle",
+              "required": false,
+              "default": true,
+              "variableName": "differentiationRequired",
+              "renderAs": "field"
+            },
+            "children": []
+          },
+          {
+            "id": "dir-unit-focus",
+            "name": "unit-focus",
+            "type": "directory",
+            "path": "/curriculum/unit-focus",
+            "config": {
+              "label": "Current Unit or Topic Focus",
+              "description": "Specific content focus for this lesson/unit",
+              "fieldType": "text",
+              "required": false,
+              "default": "",
+              "variableName": "unitFocus",
+              "placeholder": "e.g., Fractions, Civil Rights Movement, Photosynthesis...",
+              "runtimeOptional": true,
+              "renderAs": "field"
+            },
+            "children": []
           }
         ]
       },
       {
-        "id": "dir-templates",
-        "name": "templates",
+        "id": "dir-subjects",
+        "name": "subjects",
         "type": "directory",
-        "path": "/templates",
+        "path": "/subjects",
         "config": {
-          "label": "Templates",
-          "description": "Reusable educational prompt templates"
+          "label": "Subject Topics",
+          "description": "Topic breakdowns and content areas by subject",
+          "icon": "library",
+          "color": "#f59e0b",
+          "renderAs": "section"
         },
         "children": [
           {
-            "id": "frag-lesson-template",
-            "name": "lesson-plan-template.md",
-            "type": "file",
-            "path": "/templates/lesson-plan-template.md",
-            "frontmatter": {
-              "title": "Lesson Plan Template",
-              "category": "template",
-              "tags": ["template", "lesson-plan"]
+            "id": "dir-primary-subject",
+            "name": "primary-subject",
+            "type": "directory",
+            "path": "/subjects/primary-subject",
+            "config": {
+              "label": "Primary Subject",
+              "description": "Main subject area focus",
+              "fieldType": "select",
+              "required": true,
+              "default": "mathematics",
+              "variableName": "primarySubject",
+              "renderAs": "field"
             },
-            "content": "# Lesson Plan Template\n\nUse this structure when creating lesson plans:\n\n## Overview\n- Grade Level:\n- Subject:\n- Duration:\n- Standards:\n\n## Objectives\n- Learning Target:\n- Essential Question:\n- Success Criteria:\n\n## Materials\n- Needed:\n- Preparation:\n\n## Lesson Sequence\n1. **Opening** (5-10 min)\n   - Hook:\n   - Access prior knowledge:\n\n2. **Instruction** (10-15 min)\n   - Input:\n   - Modeling:\n\n3. **Guided Practice** (10-15 min)\n   - Activities:\n   - Checks for understanding:\n\n4. **Independent Practice** (15-20 min)\n   - Task:\n   - Differentiation:\n\n5. **Closure** (5 min)\n   - Reflection:\n   - Assessment:"
+            "children": [
+              {
+                "id": "frag-math-subject",
+                "name": "mathematics.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/mathematics.md",
+                "frontmatter": {
+                  "title": "Mathematics",
+                  "order": 0
+                },
+                "content": "Mathematics"
+              },
+              {
+                "id": "frag-ela-subject",
+                "name": "english-language-arts.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/english-language-arts.md",
+                "frontmatter": {
+                  "title": "English Language Arts",
+                  "order": 1
+                },
+                "content": "English Language Arts"
+              },
+              {
+                "id": "frag-science-subject",
+                "name": "science.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/science.md",
+                "frontmatter": {
+                  "title": "Science",
+                  "order": 2
+                },
+                "content": "Science"
+              },
+              {
+                "id": "frag-social-studies-subject",
+                "name": "social-studies.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/social-studies.md",
+                "frontmatter": {
+                  "title": "Social Studies",
+                  "order": 3
+                },
+                "content": "Social Studies"
+              },
+              {
+                "id": "frag-art-subject",
+                "name": "art.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/art.md",
+                "frontmatter": {
+                  "title": "Art",
+                  "order": 4
+                },
+                "content": "Art"
+              },
+              {
+                "id": "frag-music-subject",
+                "name": "music.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/music.md",
+                "frontmatter": {
+                  "title": "Music",
+                  "order": 5
+                },
+                "content": "Music"
+              },
+              {
+                "id": "frag-pe-subject",
+                "name": "physical-education.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/physical-education.md",
+                "frontmatter": {
+                  "title": "Physical Education",
+                  "order": 6
+                },
+                "content": "Physical Education"
+              },
+              {
+                "id": "frag-health-subject",
+                "name": "health.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/health.md",
+                "frontmatter": {
+                  "title": "Health",
+                  "order": 7
+                },
+                "content": "Health"
+              },
+              {
+                "id": "frag-cs-subject",
+                "name": "computer-science.md",
+                "type": "file",
+                "path": "/subjects/primary-subject/computer-science.md",
+                "frontmatter": {
+                  "title": "Computer Science",
+                  "order": 8
+                },
+                "content": "Computer Science"
+              }
+            ]
+          },
+          {
+            "id": "dir-topics",
+            "name": "topics",
+            "type": "directory",
+            "path": "/subjects/topics",
+            "config": {
+              "label": "Topics to Cover",
+              "description": "Specific topics within the subject",
+              "fieldType": "multiselect",
+              "required": false,
+              "default": [],
+              "variableName": "topics",
+              "placeholder": "Specific topics will be suggested based on subject",
+              "runtimeOptional": true,
+              "renderAs": "field"
+            },
+            "children": []
+          },
+          {
+            "id": "dir-skill-level",
+            "name": "skill-level",
+            "type": "directory",
+            "path": "/subjects/skill-level",
+            "config": {
+              "label": "Target Skill Level",
+              "description": "Cognitive demand of the content",
+              "fieldType": "select",
+              "required": true,
+              "default": "developing",
+              "variableName": "skillLevel",
+              "renderAs": "field"
+            },
+            "children": [
+              {
+                "id": "frag-intro",
+                "name": "introduction.md",
+                "type": "file",
+                "path": "/subjects/skill-level/introduction.md",
+                "frontmatter": {
+                  "title": "Introduction",
+                  "description": "First exposure to content",
+                  "order": 0
+                },
+                "content": "Introduction"
+              },
+              {
+                "id": "frag-developing",
+                "name": "developing.md",
+                "type": "file",
+                "path": "/subjects/skill-level/developing.md",
+                "frontmatter": {
+                  "title": "Developing",
+                  "description": "Building foundational understanding",
+                  "order": 1
+                },
+                "content": "Developing"
+              },
+              {
+                "id": "frag-proficient",
+                "name": "proficient.md",
+                "type": "file",
+                "path": "/subjects/skill-level/proficient.md",
+                "frontmatter": {
+                  "title": "Proficient",
+                  "description": "Solid understanding with some depth",
+                  "order": 2
+                },
+                "content": "Proficient"
+              },
+              {
+                "id": "frag-advanced",
+                "name": "advanced.md",
+                "type": "file",
+                "path": "/subjects/skill-level/advanced.md",
+                "frontmatter": {
+                  "title": "Advanced",
+                  "description": "Deep, complex understanding",
+                  "order": 3
+                },
+                "content": "Advanced"
+              },
+              {
+                "id": "frag-extension",
+                "name": "extension.md",
+                "type": "file",
+                "path": "/subjects/skill-level/extension.md",
+                "frontmatter": {
+                  "title": "Extension",
+                  "description": "Beyond grade-level expectations",
+                  "order": 4
+                },
+                "content": "Extension"
+              }
+            ]
+          },
+          {
+            "id": "dir-cross-curricular",
+            "name": "cross-curricular",
+            "type": "directory",
+            "path": "/subjects/cross-curricular",
+            "config": {
+              "label": "Cross-Curricular Connections",
+              "description": "Interdisciplinary connections to emphasize",
+              "fieldType": "multiselect",
+              "required": false,
+              "default": [],
+              "variableName": "crossCurricular",
+              "renderAs": "field"
+            },
+            "children": [
+              {
+                "id": "frag-literacy",
+                "name": "literacy.md",
+                "type": "file",
+                "path": "/subjects/cross-curricular/literacy.md",
+                "frontmatter": {
+                  "title": "Literacy",
+                  "description": "Reading and writing integration",
+                  "order": 0
+                },
+                "content": "Literacy"
+              },
+              {
+                "id": "frag-numeracy",
+                "name": "numeracy.md",
+                "type": "file",
+                "path": "/subjects/cross-curricular/numeracy.md",
+                "frontmatter": {
+                  "title": "Numeracy",
+                  "description": "Math skills integration",
+                  "order": 1
+                },
+                "content": "Numeracy"
+              },
+              {
+                "id": "frag-technology",
+                "name": "technology.md",
+                "type": "file",
+                "path": "/subjects/cross-curricular/technology.md",
+                "frontmatter": {
+                  "title": "Technology",
+                  "description": "Digital tools and integration",
+                  "order": 2
+                },
+                "content": "Technology"
+              },
+              {
+                "id": "frag-arts",
+                "name": "arts-integration.md",
+                "type": "file",
+                "path": "/subjects/cross-curricular/arts-integration.md",
+                "frontmatter": {
+                  "title": "Arts Integration",
+                  "description": "Visual and performing arts",
+                  "order": 3
+                },
+                "content": "Arts Integration"
+              },
+              {
+                "id": "frag-real-world",
+                "name": "real-world-applications.md",
+                "type": "file",
+                "path": "/subjects/cross-curricular/real-world-applications.md",
+                "frontmatter": {
+                  "title": "Real-World Applications",
+                  "description": "Authentic, practical contexts",
+                  "order": 4
+                },
+                "content": "Real-World Applications"
+              },
+              {
+                "id": "frag-sel",
+                "name": "social-emotional-learning.md",
+                "type": "file",
+                "path": "/subjects/cross-curricular/social-emotional-learning.md",
+                "frontmatter": {
+                  "title": "Social-Emotional Learning",
+                  "description": "SEL competencies integration",
+                  "order": 5
+                },
+                "content": "Social-Emotional Learning"
+              }
+            ]
+          },
+          {
+            "id": "dir-essential-questions",
+            "name": "essential-questions",
+            "type": "directory",
+            "path": "/subjects/essential-questions",
+            "config": {
+              "label": "Essential Questions to Address",
+              "description": "Big questions students should be able to answer",
+              "fieldType": "textarea",
+              "required": false,
+              "default": "",
+              "variableName": "essentialQuestions",
+              "placeholder": "What big questions should students be able to answer?",
+              "runtimeOptional": true,
+              "renderAs": "field"
+            },
+            "children": []
           }
         ]
       }
     ]
   },
   "selectedFile": {
-    "id": "frag-lesson-structure",
-    "name": "lesson-structure.md",
+    "id": "frag-5th-grade",
+    "name": "5th-grade.md",
     "type": "file",
-    "path": "/lesson-planning/basics/lesson-structure.md",
+    "path": "/classroom/grade-level/5th-grade.md",
     "frontmatter": {
-      "title": "Effective Lesson Structure",
-      "category": "planning",
-      "tags": ["lesson", "structure", "components"],
-      "author": "curriculum-lead",
-      "created": "2024-01-15",
-      "modified": "2024-02-01"
+      "title": "5th Grade",
+      "order": 5
     },
-    "content": "# Effective Lesson Structure\n\nYou are an expert lesson designer. When creating lesson plans, include these essential components:\n\n## Components\n\n**1. Learning Objectives**\n- Specific, measurable, aligned to standards\n- Written in student-friendly language\n- Assesses during the lesson\n\n**2. Essential Questions**\n- Open-ended questions that frame the learning\n- Connect to broader concepts and real-world applications\n\n**3. Assessment Plan**\n- Formative checks throughout\n- Summative assessment at end\n- Criteria for success clearly defined\n\n**4. Lesson Sequence**\n- Opening/Hook (5-10 minutes)\n- Direct Instruction (10-15 minutes)\n- Guided Practice (10-15 minutes)\n- Independent Practice (15-20 minutes)\n- Closure (5 minutes)\n\n## Timing Guidelines\nAdjust timing based on grade level and class length. Elementary: shorter segments, more transitions. Secondary: longer focus blocks."
+    "content": "5th Grade"
   },
   "unsavedChanges": false,
   "expandedFolders": [
-    "/lesson-planning",
-    "/lesson-planning/basics",
-    "/assessment",
-    "/collaboration",
-    "/templates"
+    "/classroom",
+    "/classroom/grade-level",
+    "/teacher",
+    "/curriculum",
+    "/subjects"
   ]
 }

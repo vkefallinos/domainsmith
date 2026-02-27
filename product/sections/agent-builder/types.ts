@@ -2,9 +2,15 @@
  * Agent Builder Section Types
  *
  * Types for the agent builder interface where users configure
- * specialized agents by selecting domains, filling out forms,
+ * specialized agents by selecting domains from the Prompt Library,
+ * filling out auto-generated forms based on the directory structure,
  * enabling tools from the tool library, setting fields to be
  * configured at runtime, and attaching flows with slash commands.
+ *
+ * DOMAINS ARE DERIVED FROM PROMPT LIBRARY DIRECTORY STRUCTURE:
+ * - Top-level directories = domains
+ * - Nested directories = sections or fields
+ * - Files within directories = selectable options
  */
 
 /**
@@ -17,6 +23,96 @@ export type SchemaFieldType = 'text' | 'textarea' | 'select' | 'multiselect' | '
  */
 export type ToolSource = 'manual';
 
+// ============================================================================
+// Domain Schema Types (derived from Prompt Library directory structure)
+// ============================================================================
+
+/**
+ * A field option representing a file in the Prompt Library
+ */
+export interface FieldOption {
+  /** Unique identifier for this option */
+  id: string;
+  /** Display label (derived from filename without extension) */
+  label: string;
+  /** Optional description from frontmatter */
+  description?: string;
+  /** The file path in Prompt Library */
+  filePath: string;
+  /** Content value (markdown content from the file) */
+  value: string;
+  /** Display order */
+  order?: number;
+  /** Whether this option is disabled */
+  disabled?: boolean;
+}
+
+/**
+ * A schema field representing a directory in the Prompt Library
+ */
+export interface SchemaField {
+  /** Type discriminator for fields */
+  type: 'field';
+  /** Type of form control */
+  fieldType: SchemaFieldType;
+  /** Unique identifier for the field (derived from directory path) */
+  id: string;
+  /** Human-readable label */
+  label: string;
+  /** Description of what the field controls */
+  description?: string;
+  /** Placeholder text (for text inputs) */
+  placeholder?: string;
+  /** Whether the field is required */
+  required: boolean;
+  /** Default value */
+  default: string | string[] | boolean;
+  /** Available options (files within the directory) */
+  options: FieldOption[];
+  /** Hint text displayed below the field */
+  hint?: string;
+  /** Variable name used in template generation */
+  variableName: string;
+  /** Whether this field can be set to runtime configuration mode */
+  runtimeOptional?: boolean;
+  /** Source directory path in Prompt Library */
+  directoryPath: string;
+}
+
+/**
+ * A section representing a nested directory in the Prompt Library
+ */
+export interface SchemaSection {
+  /** Type discriminator for sections */
+  type: 'section';
+  /** Unique identifier (derived from directory path) */
+  id: string;
+  /** Section title */
+  label: string;
+  /** Section description */
+  description?: string;
+  /** Icon for UI display */
+  icon?: string;
+  /** Nested fields and subsections */
+  children: SchemaNode[];
+  /** Source directory path in Prompt Library */
+  directoryPath: string;
+}
+
+/**
+ * Union type for schema nodes (fields or sections)
+ */
+export type SchemaNode = SchemaField | SchemaSection;
+
+/**
+ * Schema defining the form structure for a domain
+ * Derived from the nested directory structure in Prompt Library
+ */
+export interface DomainSchema {
+  /** Root node (section or field) */
+  root: SchemaNode;
+}
+
 /**
  * The configuration status of a tool
  */
@@ -25,7 +121,7 @@ export type ToolConfigStatus = 'installed' | 'needs-config' | 'ready';
 /**
  * Tool categories for filtering and organization
  */
-export type ToolCategory = 'Security' | 'Cloud' | 'Compliance' | 'Privacy' | 'DevOps' | 'Communication' | 'Reporting';
+export type ToolCategory = 'Curriculum' | 'Teaching' | 'Assessment' | 'Special Education' | 'Communication' | 'Collaboration' | 'Reporting';
 
 /**
  * A slash command attached to an agent that triggers a flow
@@ -64,61 +160,29 @@ export interface AttachedFlow {
 }
 
 /**
- * An available domain/expertise area that can be selected when building an agent
+ * An available domain/expertise area that can be selected when building an agent.
+ * Domains are derived from top-level directories in the Prompt Library.
  */
 export interface Domain {
-  /** Unique identifier for the domain */
+  /** Unique identifier for the domain (derived from directory path) */
   id: string;
-  /** Human-readable name */
+  /** Human-readable name (from config.label or directory name) */
   name: string;
   /** Description of what the domain covers */
-  description: string;
-  /** Category grouping (e.g., Security, Infrastructure) */
-  category: string;
-  /** Tags for searchability */
-  tags: string[];
-  /** Icon identifier for UI display */
-  icon: string;
-  /** Schema defining form fields for this domain */
+  description?: string;
+  /** Category grouping (from directory config or derived) */
+  category?: string;
+  /** Tags for searchability (from directory config) */
+  tags?: string[];
+  /** Icon identifier for UI display (from directory config) */
+  icon?: string;
+  /** Color for visual distinction (from directory config) */
+  color?: string;
+  /** Schema defining form structure for this domain (derived from nested directories) */
   schema: DomainSchema;
-  /** Template string for generating the system prompt */
-  template: string;
+  /** Source directory path in Prompt Library */
+  directoryPath: string;
 }
-
-/**
- * Schema that defines the form fields for a domain
- */
-export interface DomainSchema {
-  /** Array of field definitions */
-  fields: SchemaField[];
-}
-
-/**
- * A single form field definition within a domain's schema
- */
-export interface SchemaField {
-  /** Unique identifier for the field */
-  id: string;
-  /** Type of form control */
-  type: SchemaFieldType;
-  /** Human-readable label */
-  label: string;
-  /** Placeholder text (for text inputs) */
-  placeholder?: string;
-  /** Whether the field is required */
-  required: boolean;
-  /** Default value */
-  default: string | string[] | boolean;
-  /** Options for select/multiselect fields */
-  options?: string[];
-  /** Whether this field can be set to runtime configuration mode */
-  runtimeOptional?: boolean;
-}
-
-/**
- * Category type derived from domain data
- */
-export type DomainCategory = 'Security' | 'Infrastructure' | 'Compliance' | 'Development';
 
 /**
  * Field values collected from the form - keyed by field ID

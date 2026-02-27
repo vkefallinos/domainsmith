@@ -4,6 +4,16 @@
 export type NodeType = 'directory' | 'file';
 
 /**
+ * Form field types for directory rendering
+ */
+export type FieldType = 'text' | 'textarea' | 'select' | 'multiselect' | 'toggle';
+
+/**
+ * How a directory should be rendered in the Agent Builder form
+ */
+export type RenderAs = 'section' | 'field';
+
+/**
  * Metadata configuration stored in a directory's config.json file
  */
 export interface DirectoryConfig {
@@ -15,16 +25,76 @@ export interface DirectoryConfig {
   icon?: string;
   /** Color for visual distinction in UI */
   color?: string;
+
+  // ===== Field Rendering Configuration =====
+
+  /**
+   * How this directory renders in Agent Builder forms.
+   * - "section": Collapsible container for nested fields (default for directories with children)
+   * - "field": Form input where child files are selectable options
+   */
+  renderAs?: RenderAs;
+
+  /**
+   * Type of form control when renderAs = "field".
+   * - "select": Single choice (radio buttons or dropdown)
+   * - "multiselect": Multiple choices (checkboxes or tag input) - default
+   * - "text": Single-line text input
+   * - "textarea": Multi-line text input
+   * - "toggle": Boolean switch
+   */
+  fieldType?: FieldType;
+
+  /**
+   * Placeholder text for text/textarea fields
+   */
+  placeholder?: string;
+
+  /**
+   * Default value for the field
+   */
+  default?: string | string[] | boolean;
+
+  /**
+   * Whether the field is required (default: false)
+   */
+  required?: boolean;
+
+  /**
+   * Variable name used in template generation (defaults to directory name)
+   */
+  variableName?: string;
+
+  /**
+   * Hint text displayed below the field
+   */
+  hint?: string;
+
   /** Additional custom metadata properties */
   [key: string]: unknown;
 }
 
 /**
- * Frontmatter metadata from a prompt fragment's markdown file
+ * Frontmatter metadata from a prompt fragment's markdown file.
+ * Files serve as selectable options within their parent directory field.
  */
 export interface PromptFrontmatter {
-  /** Human-readable title */
+  /**
+   * Human-readable title for this option (defaults to filename without extension)
+   */
   title?: string;
+  /**
+   * Brief description of this option (shown as hint in selection UI)
+   */
+  description?: string;
+  /**
+   * Display order within parent directory (lower = higher priority)
+   */
+  order?: number;
+  /**
+   * Whether this option is disabled/hidden in selection UI
+   */
+  disabled?: boolean;
   /** Category for organization */
   category?: string;
   /** Tags for filtering and discovery */
@@ -35,19 +105,19 @@ export interface PromptFrontmatter {
   created?: string;
   /** ISO date string of last modification */
   modified?: string;
-  /** Severity or priority level */
-  severity?: 'low' | 'medium' | 'high';
   /** Additional custom properties */
   [key: string]: unknown;
 }
 
 /**
- * A prompt fragment file in the library
+ * A prompt fragment file in the library.
+ * When the parent directory is rendered as a field, files serve as selectable options.
+ * The filename (without .md) is the option label, and content is the value.
  */
 export interface PromptFragment {
   /** Unique identifier for the fragment */
   id: string;
-  /** Filename including extension */
+  /** Filename including extension (the option label without extension) */
   name: string;
   /** Node type discriminator */
   type: 'file';
@@ -55,7 +125,7 @@ export interface PromptFragment {
   path: string;
   /** Optional frontmatter metadata */
   frontmatter?: PromptFrontmatter;
-  /** Markdown content of the prompt */
+  /** Markdown content of the prompt (inserted into template when this option is selected) */
   content: string;
   /** Whether this file has unsaved changes */
   hasUnsavedChanges?: boolean;
