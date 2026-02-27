@@ -5,6 +5,7 @@ import { AgentsDashboard } from './AgentsDashboard'
 import { AgentRuntimeView } from '@/sections/agent-runtime/components'
 import agentRuntimeData from '@/../product/sections/agent-runtime/data.json'
 import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
+import { DUMMY_WORKSPACES, type Workspace } from './WorkspaceSelector'
 
 export interface AppShellProps {
   // User props
@@ -15,6 +16,7 @@ export interface AppShellProps {
   defaultSidebarCollapsed?: boolean
   onSidebarCollapsedChange?: (collapsed: boolean) => void
   // Callbacks for agent actions
+  onNewAgent?: () => void
   onEditAgent?: (agentId: string) => void
   onDeleteAgent?: (agentId: string) => void
 }
@@ -25,6 +27,7 @@ export function AppShell({
   onOpenSettings,
   defaultSidebarCollapsed = false,
   onSidebarCollapsedChange,
+  onNewAgent,
   onEditAgent,
   onDeleteAgent,
 }: AppShellProps) {
@@ -33,6 +36,9 @@ export function AppShell({
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Workspace state
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>(DUMMY_WORKSPACES[0])
 
   // Load agents and conversations from runtime data
   const agents = (agentRuntimeData.agents || []) as Agent[]
@@ -146,6 +152,8 @@ export function AppShell({
         }}
         activeChatId={chatId}
         onOpenSettings={onOpenSettings}
+        workspace={currentWorkspace}
+        onWorkspaceChange={setCurrentWorkspace}
       />
 
       {/* Main Content Area */}
@@ -153,6 +161,7 @@ export function AppShell({
         {/* Dashboard Mode */}
         {viewMode === 'dashboard' && (
           <AgentsDashboard
+            onNewAgent={onNewAgent}
             onOpenAgent={handleOpenAgent}
             onEditAgent={onEditAgent}
             onDeleteAgent={onDeleteAgent}

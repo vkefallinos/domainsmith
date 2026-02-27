@@ -19,6 +19,7 @@ import type {
   FormFieldValue,
   AttachedFlow,
 } from '@/../product/sections/agent-builder/types'
+import { DUMMY_WORKSPACES, type Workspace } from './WorkspaceSelector'
 
 type StudioState = {
   sidebarCollapsed: boolean
@@ -108,6 +109,9 @@ export function StudioShell({
   const navigate = useNavigate()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
+
+  // Workspace state
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>(DUMMY_WORKSPACES[0])
 
   // Prompt Library state
   const [selectedFile, setSelectedFile] = useState<PromptFragment | null>(null)
@@ -487,6 +491,8 @@ export function StudioShell({
         onOpenSettings={onOpenSettings}
         onCreateDomain={handleCreateDomain}
         onCreateAgent={handleCreateAgent}
+        workspace={currentWorkspace}
+        onWorkspaceChange={setCurrentWorkspace}
       />
 
       {/* Main Content Area */}

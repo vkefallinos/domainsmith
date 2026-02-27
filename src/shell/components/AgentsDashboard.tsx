@@ -59,10 +59,10 @@ export function AgentsDashboard({
           {/* New Agent Button */}
           <button
             onClick={onNewAgent}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
-            New Agent
+            Go to Studio
           </button>
         </div>
       </div>
@@ -88,7 +88,7 @@ export function AgentsDashboard({
                 className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                Create Your First Agent
+                Go to Studio
               </button>
             )}
           </div>

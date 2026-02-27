@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AppShell } from './components'
 
 type ShellState = {
@@ -32,6 +33,7 @@ function saveState(state: ShellState) {
 }
 
 export default function ShellLayout() {
+  const navigate = useNavigate()
   const [state, setState] = useState<ShellState>(loadState)
 
   // Persist state changes
@@ -45,6 +47,7 @@ export default function ShellLayout() {
       onSidebarCollapsedChange={(collapsed) =>
         setState((prev) => ({ ...prev, sidebarCollapsed: collapsed }))
       }
+      onNewAgent={() => navigate('/studio')}
       onOpenSettings={() => console.log('Open settings')}
       onEditAgent={(id) => console.log('Edit agent:', id)}
       onDeleteAgent={(id) => console.log('Delete agent:', id)}

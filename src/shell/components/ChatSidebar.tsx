@@ -12,6 +12,8 @@ import { useState, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import agentRuntimeData from '@/../product/sections/agent-runtime/data.json'
 import logo from '@/assets/logo.png'
+import { WorkspaceSelector } from './WorkspaceSelector'
+import type { Workspace } from './WorkspaceSelector'
 
 type Agent = {
   id: string
@@ -40,6 +42,8 @@ export interface ChatSidebarProps {
   onToggleCollapse?: () => void
   activeChatId?: string
   onOpenSettings?: () => void
+  workspace?: Workspace
+  onWorkspaceChange?: (workspace: Workspace) => void
 }
 
 export function ChatSidebar({
@@ -47,6 +51,8 @@ export function ChatSidebar({
   onToggleCollapse,
   activeChatId,
   onOpenSettings,
+  workspace,
+  onWorkspaceChange,
 }: ChatSidebarProps) {
   const location = useLocation()
   const [conversationsExpanded, setConversationsExpanded] = useState(true)
@@ -87,21 +93,36 @@ export function ChatSidebar({
     >
       {/* Logo and App Name */}
       <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-        <Link
-          to="/shell"
+        <div
           className={`
             flex items-center gap-2
             ${isCollapsed ? 'justify-center' : ''}
           `}
-          title="lmthing"
         >
-          <img src={logo} alt="lmthing logo" className="w-8 h-8 rounded-md" />
+          <Link
+            to="/shell"
+            className="flex items-center gap-2"
+            title="lmthing"
+          >
+            <img src={logo} alt="lmthing logo" className="w-8 h-8 rounded-md" />
+          </Link>
           {!isCollapsed && (
-            <span className="font-semibold text-lg text-slate-900 dark:text-slate-100">
-              LMTHING
-            </span>
+            <WorkspaceSelector
+              workspace={workspace}
+              onWorkspaceChange={onWorkspaceChange}
+              isCollapsed={false}
+            />
           )}
-        </Link>
+        </div>
+        {isCollapsed && (
+          <div className="flex justify-center mt-2">
+            <WorkspaceSelector
+              workspace={workspace}
+              onWorkspaceChange={onWorkspaceChange}
+              isCollapsed={true}
+            />
+          </div>
+        )}
       </div>
 
       {/* Scrollable Content */}

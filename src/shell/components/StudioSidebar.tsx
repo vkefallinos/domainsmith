@@ -13,6 +13,8 @@ import { Link, useLocation } from 'react-router-dom'
 import promptLibraryData from '@/../product/sections/prompt-library/data.json'
 import agentBuilderData from '@/../product/sections/agent-builder/data.json'
 import logo from '@/assets/logo.png'
+import { WorkspaceSelector } from './WorkspaceSelector'
+import type { Workspace } from './WorkspaceSelector'
 
 type FileSystemNode = {
   id: string
@@ -62,6 +64,8 @@ export interface StudioSidebarProps {
   onOpenSettings?: () => void
   onCreateDomain?: () => void
   onCreateAgent?: () => void
+  workspace?: Workspace
+  onWorkspaceChange?: (workspace: Workspace) => void
 }
 
 export function StudioSidebar({
@@ -72,6 +76,8 @@ export function StudioSidebar({
   onOpenSettings,
   onCreateDomain,
   onCreateAgent,
+  workspace,
+  onWorkspaceChange,
 }: StudioSidebarProps) {
   const location = useLocation()
   const [domainsExpanded, setDomainsExpanded] = useState(true)
@@ -120,21 +126,36 @@ export function StudioSidebar({
     >
       {/* Logo and App Name */}
       <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-        <Link
-          to="/studio"
+        <div
           className={`
             flex items-center gap-2
             ${isCollapsed ? 'justify-center' : ''}
           `}
-          title="lmthing"
         >
-          <img src={logo} alt="lmthing logo" className="w-8 h-8 rounded-md" />
+          <Link
+            to="/studio"
+            className="flex items-center gap-2"
+            title="lmthing"
+          >
+            <img src={logo} alt="lmthing logo" className="w-8 h-8 rounded-md" />
+          </Link>
           {!isCollapsed && (
-            <span className="font-semibold text-lg text-slate-900 dark:text-slate-100">
-              
-            </span>
+            <WorkspaceSelector
+              workspace={workspace}
+              onWorkspaceChange={onWorkspaceChange}
+              isCollapsed={false}
+            />
           )}
-        </Link>
+        </div>
+        {isCollapsed && (
+          <div className="flex justify-center mt-2">
+            <WorkspaceSelector
+              workspace={workspace}
+              onWorkspaceChange={onWorkspaceChange}
+              isCollapsed={true}
+            />
+          </div>
+        )}
       </div>
 
       {/* Scrollable Content */}
