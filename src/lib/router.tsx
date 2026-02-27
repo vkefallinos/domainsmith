@@ -7,8 +7,40 @@ import { SectionPage } from '@/components/SectionPage'
 import { ScreenDesignPage, ScreenDesignFullscreen } from '@/components/ScreenDesignPage'
 import { ShellDesignPage, ShellDesignFullscreen } from '@/components/ShellDesignPage'
 import { ExportPage } from '@/components/ExportPage'
+import ShellLayout from '@/shell/ShellLayout'
+import StudioLayout from '@/shell/StudioLayout'
 
 export const router = createBrowserRouter([
+  // Shell app with nested routes
+  {
+    path: '/shell',
+    element: <ShellLayout />,
+    children: [
+      // Default dashboard view
+      { index: true },
+      // New chat with specific agent
+      { path: 'agent/:agentId' },
+      // Chat with specific conversation (and optionally agent)
+      { path: 'chat/:chatId' },
+      // Agent + conversation combined
+      { path: 'agent/:agentId/chat/:chatId' },
+    ],
+  },
+  // Studio app with nested routes
+  {
+    path: '/studio',
+    element: <StudioLayout />,
+    children: [
+      // Default list view
+      { index: true },
+      // Domain detail view
+      { path: 'domain/:domainId' },
+      // Agent detail view
+      { path: 'agent/:agentId' },
+      // Agent flow editing view (shows modal)
+      { path: 'agent/:agentId/commands/:commandId' },
+    ],
+  },
   {
     path: '/',
     element: <ProductPage />,

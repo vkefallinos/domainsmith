@@ -113,13 +113,8 @@ export function loadShellComponent(
  * Falls back to AppShell if ShellWrapper doesn't exist
  */
 export function loadAppShell(): (() => Promise<{ default: ComponentType<{ children?: ReactNode }> }>) | null {
-  // First try ShellWrapper - a component specifically designed to wrap content
-  const wrapperPath = '/src/shell/components/ShellWrapper.tsx'
-  if (wrapperPath in shellComponentModules) {
-    return shellComponentModules[wrapperPath] as (() => Promise<{ default: ComponentType<{ children?: ReactNode }> }>)
-  }
   // Fall back to AppShell
-  const path = '/src/shell/components/AppShell.tsx'
+  const path = '/src/shell/ShellPreview.tsx'
   return shellComponentModules[path] as (() => Promise<{ default: ComponentType<{ children?: ReactNode }> }>) || null
 }
 

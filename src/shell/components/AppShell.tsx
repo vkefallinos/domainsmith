@@ -1,111 +1,181 @@
-import { Menu } from 'lucide-react'
-import { useState, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
-import { MainNav, type NavigationItem } from './MainNav'
-import { UserMenu } from './UserMenu'
-import {
-  LayoutDashboard,
-  FileText,
-  Bot,
-  Play,
-  Users
-} from 'lucide-react'
+import { useState, useCallback, useMemo } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { ChatSidebar } from './ChatSidebar'
+import { AgentsDashboard } from './AgentsDashboard'
+import { AgentRuntimeView } from '@/sections/agent-runtime/components'
+import agentRuntimeData from '@/../product/sections/agent-runtime/data.json'
+import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
 
 export interface AppShellProps {
-  children: React.ReactNode
-  navigationItems: NavigationItem[]
+  // User props
   user?: { name: string; avatarUrl?: string }
-  onNavigate?: (href: string) => void
   onLogout?: () => void
+  onOpenSettings?: () => void
+  // Sidebar state
+  defaultSidebarCollapsed?: boolean
+  onSidebarCollapsedChange?: (collapsed: boolean) => void
+  // Callbacks for agent actions
+  onEditAgent?: (agentId: string) => void
+  onDeleteAgent?: (agentId: string) => void
 }
 
-const baseNavigationItems: Omit<NavigationItem, 'isActive'>[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Prompt Library', href: '/sections/prompt-library/screen-designs/PromptLibraryView/fullscreen', icon: FileText },
-  { label: 'Agent Builder', href: '/sections/agent-builder/screen-designs/AgentBuilderView/fullscreen', icon: Bot },
-  { label: 'Flow Builder', href: '/sections/flow-builder/screen-designs/FlowBuilderView/fullscreen', icon: Bot },
-  { label: 'Agent Runtime', href: '/sections/agent-runtime/screen-designs/AgentRuntime/fullscreen', icon: Play },
-  { label: 'Tool Library', href: '/sections/tool-library/screen-designs/ToolLibraryView/fullscreen', icon: FileText },
-  { label: 'Workspaces', href: '/sections/workspaces/screen-designs/Workspaces/fullscreen', icon: Users },
-]
-
 export function AppShell({
-  children,
   user,
-  onNavigate,
   onLogout,
+  onOpenSettings,
+  defaultSidebarCollapsed = false,
+  onSidebarCollapsedChange,
+  onEditAgent,
+  onDeleteAgent,
 }: AppShellProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const location = useLocation()
+  const { agentId, chatId } = useParams()
+  const navigate = useNavigate()
 
-  const navigationItems: NavigationItem[] = useMemo(() => {
-    return baseNavigationItems.map(item => ({
-      ...item,
-      isActive: location.pathname === item.href
-    }))
-  }, [location.pathname])
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Load agents and conversations from runtime data
+  const agents = (agentRuntimeData.agents || []) as Agent[]
+  const allConversations = (agentRuntimeData.conversations || []) as Conversation[]
+
+  // Get the active agent
+  const activeAgent = agentId
+    ? agents.find((a) => a.id === agentId) || null
+    : null
+
+  // Get conversations for the active agent
+  const agentConversations = agentId
+    ? allConversations.filter((c) => c.agentId === agentId)
+    : []
+
+  // Create a new temporary conversation when chatId starts with "new-"
+  const isNewConversation = chatId?.startsWith('new-') && activeAgent
+
+  // Build the conversations list to pass to AgentRuntimeView
+  const conversationsForView = useMemo(() => {
+    let convs = [...agentConversations]
+
+    if (isNewConversation && activeAgent) {
+      const newConv: Conversation = {
+        id: chatId!,
+        agentId: activeAgent.id,
+        agentName: activeAgent.name,
+        messages: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      convs = [newConv, ...convs]
+    }
+
+    return convs
+  }, [agentConversations, isNewConversation, activeAgent, chatId])
+
+  // Determine view mode from URL params
+  const viewMode: 'dashboard' | 'chat' = chatId || agentId ? 'chat' : 'dashboard'
+
+  // Handle back to dashboard
+  const handleBackToDashboard = useCallback(() => {
+    navigate('/shell')
+  }, [navigate])
+
+  // Handle runtime field change
+  const handleRuntimeFieldChange = useCallback((fieldId: string, value: string | string[] | boolean) => {
+    console.log('Runtime field changed:', fieldId, value)
+  }, [])
+
+  // Handle send message
+  const handleSendMessage = useCallback((content: string) => {
+    setIsLoading(true)
+    console.log('Send message:', content)
+    // Simulate response
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 1000)
+  }, [])
+
+  // Handle select conversation
+  const handleSelectConversation = useCallback((conversationId: string) => {
+    if (agentId) {
+      navigate(`/shell/agent/${agentId}/chat/${conversationId}`)
+    } else {
+      // Find the agent for this conversation
+      const conv = allConversations.find(c => c.id === conversationId)
+      if (conv) {
+        navigate(`/shell/agent/${conv.agentId}/chat/${conversationId}`)
+      }
+    }
+  }, [navigate, agentId, allConversations])
+
+  // Handle create conversation
+  const handleCreateConversation = useCallback(() => {
+    if (!activeAgent) return
+
+    const newChatId = `new-${activeAgent.id}-${Date.now()}`
+    navigate(`/shell/agent/${activeAgent.id}/chat/${newChatId}`)
+  }, [activeAgent, navigate])
+
+  // Handle delete conversation
+  const handleDeleteConversation = useCallback((conversationId: string) => {
+    console.log('Delete conversation:', conversationId)
+    // In a real app, this would update the data store
+    if (chatId === conversationId) {
+      // Switch to another conversation or back to dashboard
+      const remaining = agentConversations.filter(c => c.id !== conversationId)
+      if (remaining.length > 0) {
+        navigate(`/shell/agent/${agentId}/chat/${remaining[0].id}`)
+      } else {
+        navigate('/shell')
+      }
+    }
+  }, [chatId, agentConversations, agentId, navigate])
+
+  // Handle agent selection from dashboard
+  const handleOpenAgent = useCallback((agentId: string) => {
+    navigate(`/shell/agent/${agentId}`)
+  }, [navigate])
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      {/* Header Bar */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-30">
-        <div className="flex items-center justify-between h-full px-4">
-          <div className="flex items-center gap-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            </button>
-
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">DS</span>
-              </div>
-              <span className="font-bold text-lg text-slate-900 dark:text-slate-100 hidden sm:block">
-                DomainSmith
-              </span>
-            </div>
-          </div>
-
-          {/* User Menu */}
-          <UserMenu user={user} onLogout={onLogout} />
-        </div>
-      </header>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
+    <div className="flex h-screen bg-white dark:bg-slate-950">
       {/* Sidebar */}
-      <aside
-        className={`
-          fixed top-16 left-0 bottom-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
-          transition-transform duration-200 z-40
-          lg:translate-x-0
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
-      >
-        <div className="p-4">
-          <MainNav
-            items={navigationItems}
-            onNavigate={onNavigate}
-            onCloseMobile={() => setIsMobileMenuOpen(false)}
-          />
-        </div>
-      </aside>
+      <ChatSidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => {
+          const newState = !isSidebarCollapsed
+          setIsSidebarCollapsed(newState)
+          onSidebarCollapsedChange?.(newState)
+        }}
+        activeChatId={chatId}
+        onOpenSettings={onOpenSettings}
+      />
 
-      {/* Main Content */}
-      <main className="pt-16 lg:pl-64">
-        <div className="min-h-[calc(100vh-4rem)]">
-          {children}
-        </div>
-      </main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Dashboard Mode */}
+        {viewMode === 'dashboard' && (
+          <AgentsDashboard
+            onOpenAgent={handleOpenAgent}
+            onEditAgent={onEditAgent}
+            onDeleteAgent={onDeleteAgent}
+          />
+        )}
+
+        {/* Chat Mode - Agent Runtime View */}
+        {viewMode === 'chat' && (
+          <AgentRuntimeView
+            agent={activeAgent}
+            conversations={conversationsForView}
+            activeConversationId={chatId || null}
+            isLoading={isLoading}
+            onBackToList={handleBackToDashboard}
+            onRuntimeFieldChange={handleRuntimeFieldChange}
+            onSendMessage={handleSendMessage}
+            onSelectConversation={handleSelectConversation}
+            onCreateConversation={handleCreateConversation}
+            onDeleteConversation={handleDeleteConversation}
+            hideTopNav
+          />
+        )}
+      </div>
     </div>
   )
 }
