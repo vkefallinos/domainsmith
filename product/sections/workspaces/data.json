@@ -1,19 +1,19 @@
 {
   "_meta": {
     "models": {
-      "WorkspaceUser": "A user within the workspace with profile information, role, and current status. Represents people who have access to collaborate on agents and prompt libraries."
+      "WorkspaceUser": "A teacher or educator within the workspace with profile information, role, and current status. Represents people who have access to collaborate on educational AI agents and prompt libraries."
     },
     "relationships": [
-      "WorkspaceUsers belong to a single Workspace (this section manages users within one workspace context)",
-      "Roles determine permissions: Admin can manage users, Editor can modify content, Viewer has read-only access"
+      "WorkspaceUsers belong to a single Workspace (this section manages users within one school/district context)",
+      "Roles determine permissions: Admin can manage users, Editor can modify agents and prompts, Viewer has read-only access"
     ]
   },
   "workspaceUsers": [
     {
       "id": "usr_01",
-      "name": "Sarah Chen",
-      "email": "sarah.chen@geant.org",
-      "avatarUrl": "https://i.pravatar.cc/150?u=sarah.chen",
+      "name": "Sarah Martinez",
+      "email": "sarah.martinez@school.edu",
+      "avatarUrl": "https://i.pravatar.cc/150?u=sarah.martinez",
       "role": "admin",
       "status": "active",
       "joinedAt": "2024-01-15T09:30:00Z",
@@ -21,9 +21,9 @@
     },
     {
       "id": "usr_02",
-      "name": "Marcus Weber",
-      "email": "m.weber@research.ac.uk",
-      "avatarUrl": "https://i.pravatar.cc/150?u=marcus.weber",
+      "name": "Marcus Thompson",
+      "email": "m.thompson@school.edu",
+      "avatarUrl": "https://i.pravatar.cc/150?u=marcus.thompson",
       "role": "editor",
       "status": "active",
       "joinedAt": "2024-03-22T14:15:00Z",
@@ -32,7 +32,7 @@
     {
       "id": "usr_03",
       "name": "Elena Rodriguez",
-      "email": "elena.rodriguez@telefonica.es",
+      "email": "elena.rodriguez@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=elena.rodriguez",
       "role": "editor",
       "status": "active",
@@ -42,7 +42,7 @@
     {
       "id": "usr_04",
       "name": "James Okonkwo",
-      "email": "j.okonkwo@university.edu",
+      "email": "j.okonkwo@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=james.okonkwo",
       "role": "viewer",
       "status": "active",
@@ -52,7 +52,7 @@
     {
       "id": "usr_05",
       "name": "Aisha Patel",
-      "email": "aisha.p@cern.ch",
+      "email": "aisha.p@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=aisha.patel",
       "role": "editor",
       "status": "active",
@@ -62,7 +62,7 @@
     {
       "id": "usr_06",
       "name": "Thomas Müller",
-      "email": "t.mueller@dfn.de",
+      "email": "t.mueller@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=thomas.mueller",
       "role": "viewer",
       "status": "invited",
@@ -72,7 +72,7 @@
     {
       "id": "usr_07",
       "name": "Linda Johansson",
-      "email": "linda.j@sunet.se",
+      "email": "linda.j@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=linda.johansson",
       "role": "viewer",
       "status": "active",
@@ -82,7 +82,7 @@
     {
       "id": "usr_08",
       "name": "Kwame Osei",
-      "email": "kosei@ghrenet.org",
+      "email": "kosei@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=kwame.osei",
       "role": "admin",
       "status": "active",
@@ -92,7 +92,7 @@
     {
       "id": "usr_09",
       "name": "Isabelle Dubois",
-      "email": "i.dubois@renater.fr",
+      "email": "i.dubois@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=isabelle.dubois",
       "role": "editor",
       "status": "pending",
@@ -102,7 +102,7 @@
     {
       "id": "usr_10",
       "name": "Pedro Silva",
-      "email": "pedro.silva@fccn.pt",
+      "email": "pedro.silva@school.edu",
       "avatarUrl": "https://i.pravatar.cc/150?u=pedro.silva",
       "role": "viewer",
       "status": "active",

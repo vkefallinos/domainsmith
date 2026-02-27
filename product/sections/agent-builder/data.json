@@ -1,785 +1,559 @@
 {
   "_meta": {
     "models": {
-      "Domain": "An available domain/expertise area that can be selected when building an agent. Each domain has a schema that defines the form fields for configuration.",
-      "SchemaField": "A single form field definition within a domain's schema, defining the type, label, validation rules, default value, and whether it can be configured at runtime.",
-      "AgentConfig": "A saved agent configuration containing the selected domains, filled form values, manually enabled tools, and optional empty fields for runtime configuration.",
-      "AgentTemplate": "A saved agent configuration that can be reused as a starting point for new agents.",
-      "Tool": "A function-calling capability that can be manually enabled for an agent from the tool library.",
-      "ToolLibrary": "A collection of available tools that can be searched, configured, and added to an agent.",
-      "EnabledToolMapping": "Shows which tools are manually enabled for the agent.",
-      "PromptPreview": "A live-generated preview of the system prompt assembled from the selected domains and form values."
+      "Domain": "An educational domain/expertise area for building teaching-focused agents.",
+      "SchemaField": "A form field definition within a domain's schema for educational configuration.",
+      "AgentConfig": "A saved agent configuration for educational AI assistants.",
+      "Tool": "An educational capability that can be enabled for agents.",
+      "PromptPreview": "Live-generated system prompt from selected educational domains."
     },
     "relationships": [
-      "Domain has many SchemaFields (defined by its schema)",
-      "AgentConfig references many Domains (multi-selection)",
-      "AgentConfig has many form field values corresponding to the schemas of selected domains",
-      "AgentConfig has many EnabledTools (all manually added)",
-      "AgentConfig may have EmptyFields that are enabled for runtime configuration",
-      "Tool belongs to one ToolPackage",
-      "PromptPreview is generated from AgentConfig by combining domain templates with form values"
+      "Domain has many SchemaFields",
+      "AgentConfig references many Domains",
+      "AgentConfig has form values for classroom, teacher, curriculum, and topics",
+      "AgentConfig has many EnabledTools",
+      "PromptPreview is generated from AgentConfig"
     ]
   },
   "domains": [
     {
-      "id": "domain-cybersecurity",
-      "name": "Cybersecurity",
-      "description": "Security assessment, vulnerability analysis, and threat detection expertise",
-      "category": "Security",
-      "tags": ["security", "audit", "compliance"],
-      "icon": "shield",
+      "id": "domain-classroom",
+      "name": "Classroom Management",
+      "description": "Classroom characteristics, student demographics, and learning environment configuration",
+      "category": "Teaching",
+      "tags": ["classroom", "management", "environment", "students"],
+      "icon": "chalkboard",
       "schema": {
         "fields": [
           {
-            "id": "scope",
-            "type": "textarea",
-            "label": "Assessment Scope",
-            "placeholder": "Describe the systems, networks, or assets to be assessed...",
+            "id": "gradeLevel",
+            "type": "select",
+            "label": "Grade Level",
+            "options": ["Kindergarten", "1st Grade", "2nd Grade", "3rd Grade", "4th Grade", "5th Grade", "6th Grade", "7th Grade", "8th Grade", "9th Grade", "10th Grade", "11th Grade", "12th Grade"],
             "required": true,
-            "default": ""
+            "default": "5th Grade"
           },
           {
-            "id": "complianceStandards",
+            "id": "classSize",
+            "type": "select",
+            "label": "Class Size",
+            "options": ["Small (1-15)", "Medium (16-25)", "Large (26-35)", "Very Large (36+)"],
+            "required": true,
+            "default": "Medium (16-25)"
+          },
+          {
+            "id": "studentNeeds",
             "type": "multiselect",
-            "label": "Compliance Standards",
-            "options": ["ISO 27001", "NIST CSF", "PCI DSS", "SOC 2", "GDPR", "HIPAA"],
+            "label": "Student Support Needs",
+            "options": ["English Language Learners", "Special Education", "Gifted & Talented", "Reading Intervention", "Math Intervention", "Behavioral Support"],
             "required": false,
             "default": []
           },
           {
-            "id": "severityThreshold",
+            "id": "learningModel",
             "type": "select",
-            "label": "Minimum Severity Threshold",
-            "options": ["Critical", "High", "Medium", "Low"],
+            "label": "Learning Model",
+            "options": ["In-Person", "Hybrid", "Remote/Online", "Flipped Classroom"],
             "required": true,
-            "default": "High"
+            "default": "In-Person"
           },
           {
-            "id": "reportFormat",
-            "type": "select",
-            "label": "Report Format",
-            "options": ["Executive Summary", "Technical Detail", "Both"],
+            "id": "resourcesAvailable",
+            "type": "multiselect",
+            "label": "Available Resources",
+            "options": ["1:1 Devices", "Interactive Whiteboard", "Science Lab", "Library Access", "Art Supplies", "Music Room", "Gym/Outdoor Space"],
             "required": false,
-            "default": "Both"
+            "default": []
           }
         ]
       },
-      "template": "You are a cybersecurity specialist focused on {{scope}}. Assess findings against {{complianceStandards}} standards. Report findings at {{severityThreshold}} severity level and above. Format output as {{reportFormat}}."
+      "template": "You are assisting with a {{gradeLevel}} class of {{classSize}} students{{#if studentNeeds}} with the following support needs: {{studentNeeds}}{{/if}}. The learning model is {{learningModel}}{{#if resourcesAvailable}}. Available resources include: {{resourcesAvailable}}{{/if}}."
     },
     {
-      "id": "domain-cloud-architecture",
-      "name": "Cloud Architecture",
-      "description": "AWS, Azure, and GCP infrastructure design and optimization",
-      "category": "Infrastructure",
-      "tags": ["cloud", "aws", "azure", "gcp", "devops"],
-      "icon": "cloud",
+      "id": "domain-teacher",
+      "name": "Teacher Profile",
+      "description": "Teacher experience, specialization, and teaching preferences",
+      "category": "Teaching",
+      "tags": ["teacher", "profile", "experience", "specialization"],
+      "icon": "person",
       "schema": {
         "fields": [
           {
-            "id": "primaryProvider",
+            "id": "yearsExperience",
             "type": "select",
-            "label": "Primary Cloud Provider",
-            "options": ["AWS", "Azure", "Google Cloud", "Multi-cloud"],
+            "label": "Years of Experience",
+            "options": ["0-2 years (Novice)", "3-5 years (Beginning)", "6-10 years (Experienced)", "11-20 years (Advanced)", "20+ years (Expert)"],
             "required": true,
-            "default": "AWS"
+            "default": "3-5 years (Beginning)"
           },
           {
-            "id": "architectureType",
-            "type": "select",
-            "label": "Architecture Pattern",
-            "options": ["Serverless", "Microservices", "Monolith", "Event-driven", "Hybrid"],
+            "id": "subjectExpertise",
+            "type": "multiselect",
+            "label": "Subject Expertise",
+            "options": ["Mathematics", "English Language Arts", "Science", "Social Studies", "Art", "Music", "Physical Education", "Special Education", "ESL/ELL"],
             "required": true,
-            "default": "Microservices"
+            "default": []
           },
           {
-            "id": "costOptimization",
+            "id": "teachingStyle",
+            "type": "multiselect",
+            "label": "Teaching Style",
+            "options": ["Direct Instruction", "Inquiry-Based", "Cooperative Learning", "Project-Based Learning", "Differentiated Instruction", "Gamification"],
+            "required": false,
+            "default": ["Direct Instruction"]
+          },
+          {
+            "id": "certifications",
+            "type": "multiselect",
+            "label": "Certifications",
+            "options": ["General Elementary", "Subject-Specific Secondary", "Special Education", "ESL/ELL Endorsement", "Gifted Education", "Reading Specialist"],
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "professionalGoals",
+            "type": "textarea",
+            "label": "Professional Development Goals",
+            "placeholder": "Describe areas for growth or improvement...",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      "template": "The teacher has {{yearsExperience}} with expertise in {{subjectExpertise}}. Their preferred teaching styles include {{teachingStyle}}{{#if certifications}}. Certifications: {{certifications}}{{/if}}{{#if professionalGoals}}. Professional goals: {{professionalGoals}}{{/if}}."
+    },
+    {
+      "id": "domain-curriculum",
+      "name": "Curriculum Standards",
+      "description": "Curriculum frameworks, standards alignment, and learning objectives per grade",
+      "category": "Curriculum",
+      "tags": ["curriculum", "standards", "objectives", "alignment"],
+      "icon": "book",
+      "schema": {
+        "fields": [
+          {
+            "id": "curriculumFramework",
+            "type": "select",
+            "label": "Curriculum Framework",
+            "options": ["Common Core State Standards", "NGSS", "TEKS", "State Specific", "International Baccalaureate", "Cambridge International"],
+            "required": true,
+            "default": "Common Core State Standards"
+          },
+          {
+            "id": "assessmentMethods",
+            "type": "multiselect",
+            "label": "Assessment Methods",
+            "options": ["Formative Assessment", "Summative Assessment", "Portfolio-Based", "Project-Based", "Standardized Testing", "Performance Tasks"],
+            "required": false,
+            "default": ["Formative Assessment", "Summative Assessment"]
+          },
+          {
+            "id": "pacingGuide",
             "type": "toggle",
-            "label": "Enable Cost Optimization Guidance",
+            "label": "Include Pacing Guide Considerations",
             "required": false,
             "default": true
           },
           {
-            "id": "scalingRequirements",
-            "type": "textarea",
-            "label": "Scaling Requirements",
-            "placeholder": "Describe expected traffic patterns and scaling needs...",
+            "id": "differentiationRequired",
+            "type": "toggle",
+            "label": "Require Differentiation Strategies",
+            "required": false,
+            "default": true
+          },
+          {
+            "id": "unitFocus",
+            "type": "text",
+            "label": "Current Unit or Topic Focus",
+            "placeholder": "e.g., Fractions, Civil Rights Movement, Photosynthesis...",
             "required": false,
             "default": "",
             "runtimeOptional": true
           }
         ]
       },
-      "template": "You are a cloud architecture consultant specializing in {{primaryProvider}}. Focus on {{architectureType}} patterns{{#if costOptimization}} with emphasis on cost optimization{{/if}}{{#if scalingRequirements}}. Scaling context: {{scalingRequirements}}{{/if}}."
+      "template": "Following {{curriculumFramework}} framework{{#if pacingGuide}} with pacing guide considerations{{/if}}{{#if differentiationRequired}}. All recommendations must include differentiation strategies{{/if}}{{#if unitFocus}}. Current unit focus: {{unitFocus}}{{/if}}. Assessment approaches: {{assessmentMethods}}."
     },
     {
-      "id": "domain-data-privacy",
-      "name": "Data Privacy",
-      "description": "GDPR, CCPA, and global privacy regulation compliance guidance",
-      "category": "Compliance",
-      "tags": ["privacy", "gdpr", "ccpa", "compliance"],
-      "icon": "lock",
+      "id": "domain-subjects",
+      "name": "Subject Topics",
+      "description": "Topic breakdowns and content areas by subject area",
+      "category": "Curriculum",
+      "tags": ["subjects", "topics", "content", "standards"],
+      "icon": "library",
       "schema": {
         "fields": [
           {
-            "id": "jurisdictions",
-            "type": "multiselect",
-            "label": "Applicable Jurisdictions",
-            "options": ["EU (GDPR)", "California (CCPA/CPRA)", "UK (UK GDPR)", "Canada (PIPEDA)", "Australia (Privacy Act)"],
+            "id": "primarySubject",
+            "type": "select",
+            "label": "Primary Subject",
+            "options": ["Mathematics", "English Language Arts", "Science", "Social Studies", "Art", "Music", "Physical Education", "Health", "Computer Science"],
             "required": true,
-            "default": ["EU (GDPR)"]
+            "default": "Mathematics"
           },
           {
-            "id": "dataCategories",
+            "id": "topics",
+            "type": "multiselect",
+            "label": "Topics to Cover",
+            "options": [],
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "skillLevel",
+            "type": "select",
+            "label": "Target Skill Level",
+            "options": ["Introduction", "Developing", "Proficient", "Advanced", "Extension"],
+            "required": true,
+            "default": "Developing"
+          },
+          {
+            "id": "crossCurricular",
+            "type": "multiselect",
+            "label": "Cross-Curricular Connections",
+            "options": ["Literacy", "Numeracy", "Technology", "Arts Integration", "Real-World Applications", "Social-Emotional Learning"],
+            "required": false,
+            "default": []
+          },
+          {
+            "id": "essentialQuestions",
             "type": "textarea",
-            "label": "Data Categories Handled",
-            "placeholder": "Describe types of personal data processed (e.g., health, financial, behavioral)...",
-            "required": true,
-            "default": ""
-          },
-          {
-            "id": "includeDPIA",
-            "type": "toggle",
-            "label": "Include DPIA Framework",
-            "required": false,
-            "default": false
-          },
-          {
-            "id": "dataSubjectRights",
-            "type": "multiselect",
-            "label": "Focus on Data Subject Rights",
-            "options": ["Right to Access", "Right to Erasure", "Right to Portability", "Right to Object", "All Rights"],
-            "required": false,
-            "default": []
-          }
-        ]
-      },
-      "template": "You are a data privacy advisor for jurisdictions: {{jurisdictions}}. The organization handles: {{dataCategories}}.{{#if includeDPIA}} Include Data Protection Impact Assessment guidance.{{/if}}{{#if dataSubjectRights}} Pay special attention to: {{dataSubjectRights}}.{{/if}}"
-    },
-    {
-      "id": "domain-network-engineering",
-      "name": "Network Engineering",
-      "description": "Network design, protocols, and troubleshooting expertise",
-      "category": "Infrastructure",
-      "tags": ["networking", "tcp/ip", "routing", "firewalls"],
-      "icon": "network",
-      "schema": {
-        "fields": [
-          {
-            "id": "networkType",
-            "type": "select",
-            "label": "Network Type",
-            "options": ["Enterprise LAN", "Data Center", "WAN/SD-WAN", "Cloud Network", "Industrial/OT"],
-            "required": true,
-            "default": "Enterprise LAN"
-          },
-          {
-            "id": "protocols",
-            "type": "multiselect",
-            "label": "Relevant Protocols",
-            "options": ["BGP", "OSPF", "MPLS", "VXLAN", "HTTP/HTTPS", "DNS", "DHCP"],
-            "required": false,
-            "default": []
-          },
-          {
-            "id": "securityLevel",
-            "type": "select",
-            "label": "Security Posture",
-            "options": ["Open/Permissive", "Standard", "High Security", "Air-gapped/Isolated"],
-            "required": true,
-            "default": "Standard"
-          }
-        ]
-      },
-      "template": "You are a network engineer for {{networkType}} environments{{#if protocols}} with expertise in: {{protocols}}{{/if}}. Security posture: {{securityLevel}}."
-    },
-    {
-      "id": "domain-incident-response",
-      "name": "Incident Response",
-      "description": "Security incident handling, forensics, and recovery procedures",
-      "category": "Security",
-      "tags": ["ir", "forensics", "emergency"],
-      "icon": "alert",
-      "schema": {
-        "fields": [
-          {
-            "id": "responseTier",
-            "type": "select",
-            "label": "Response Tier",
-            "options": ["Tier 1 - Triage", "Tier 2 - Investigation", "Tier 3 - Forensics", "Tier 4 - Crisis Management"],
-            "required": true,
-            "default": "Tier 2 - Investigation"
-          },
-          {
-            "id": "incidentTypes",
-            "type": "multiselect",
-            "label": "Incident Types",
-            "options": ["Malware/Ransomware", "Phishing/BEC", "DDoS", "Insider Threat", "Data Breach", "Supply Chain"],
-            "required": true,
-            "default": []
-          },
-          {
-            "id": "timeToObjectives",
-            "type": "text",
-            "label": "Time Objectives (MTTR/MTTD)",
-            "placeholder": "e.g., MTTD < 1 hour, MTTR < 4 hours",
-            "required": false,
-            "default": ""
-          },
-          {
-            "id": "includePlaybooks",
-            "type": "toggle",
-            "label": "Include Runbook Suggestions",
-            "required": false,
-            "default": true
-          }
-        ]
-      },
-      "template": "You are an incident response handler at {{responseTier}} level. Focus on: {{incidentTypes}}.{{#if timeToObjectives}} Time objectives: {{timeToObjectives}}.{{/if}}{{#if includePlaybooks}} Include specific runbook steps for each scenario.{{/if}}"
-    },
-    {
-      "id": "domain-software-development",
-      "name": "Software Development",
-      "description": "Code review, architecture, and best practices across programming languages",
-      "category": "Development",
-      "tags": ["coding", "review", "architecture", "best-practices"],
-      "icon": "code",
-      "schema": {
-        "fields": [
-          {
-            "id": "primaryLanguage",
-            "type": "select",
-            "label": "Primary Language",
-            "options": ["Python", "JavaScript/TypeScript", "Java", "C#", "Go", "Rust", "Other"],
-            "required": true,
-            "default": "Python"
-          },
-          {
-            "id": "focusAreas",
-            "type": "multiselect",
-            "label": "Focus Areas",
-            "options": ["Code Quality", "Performance", "Security", "Testability", "Maintainability"],
-            "required": false,
-            "default": ["Code Quality"]
-          },
-          {
-            "id": "frameworks",
-            "type": "text",
-            "label": "Relevant Frameworks",
-            "placeholder": "e.g., React, Django, Spring Boot...",
+            "label": "Essential Questions to Address",
+            "placeholder": "What big questions should students be able to answer?",
             "required": false,
             "default": ""
           }
         ]
       },
-      "template": "You are a software development expert specializing in {{primaryLanguage}}{{#if frameworks}} with {{frameworks}} framework experience{{/if}}. Prioritize: {{focusAreas}}."
+      "template": "Focusing on {{primarySubject}}{{#if topics}} with topics: {{topics}}{{/if}} at {{skillLevel}} level{{#if crossCurricular}}. Integrating: {{crossCurricular}}{{/if}}{{#if essentialQuestions}}. Essential questions: {{essentialQuestions}}{{/if}}."
     }
   ],
   "savedAgentConfigs": [
     {
-      "id": "agent-001",
-      "name": "Security Auditor",
-      "description": "Combined cybersecurity and data privacy agent for compliance audits",
-      "selectedDomains": ["domain-cybersecurity", "domain-data-privacy"],
+      "id": "agent-lesson-plan",
+      "name": "LessonPlanAgent",
+      "description": "Creates comprehensive lesson plans aligned with standards, customized for classroom and teacher needs",
+      "selectedDomains": ["domain-classroom", "domain-teacher", "domain-curriculum", "domain-subjects"],
       "formValues": {
-        "scope": "Customer-facing web application and underlying database infrastructure",
-        "complianceStandards": ["SOC 2", "GDPR", "ISO 27001"],
-        "severityThreshold": "Medium",
-        "reportFormat": "Both",
-        "jurisdictions": ["EU (GDPR)", "California (CCPA/CPRA)"],
-        "dataCategories": "User names, email addresses, payment information, and usage analytics",
-        "includeDPIA": true,
-        "dataSubjectRights": ["Right to Erasure", "Right to Access"]
+        "gradeLevel": "5th Grade",
+        "classSize": "Medium (16-25)",
+        "studentNeeds": ["English Language Learners", "Gifted & Talented"],
+        "learningModel": "In-Person",
+        "resourcesAvailable": ["1:1 Devices", "Interactive Whiteboard"],
+        "yearsExperience": "3-5 years (Beginning)",
+        "subjectExpertise": ["Mathematics", "Science"],
+        "teachingStyle": ["Differentiated Instruction", "Project-Based Learning"],
+        "certifications": ["General Elementary"],
+        "professionalGoals": "Improve engagement through hands-on activities",
+        "curriculumFramework": "Common Core State Standards",
+        "assessmentMethods": ["Formative Assessment", "Project-Based"],
+        "pacingGuide": true,
+        "differentiationRequired": true,
+        "unitFocus": "",
+        "primarySubject": "Mathematics",
+        "topics": ["Fractions", "Decimals"],
+        "skillLevel": "Developing",
+        "crossCurricular": ["Real-World Applications", "Technology"],
+        "essentialQuestions": ""
       },
-      "createdAt": "2025-10-15T09:30:00Z",
-      "updatedAt": "2025-11-22T14:20:00Z",
       "enabledTools": [
         {
-          "toolId": "nmap-scanner",
+          "toolId": "standards-alignment-checker",
           "source": "manual"
         },
         {
-          "toolId": "ssl-analyzer",
+          "toolId": "resource-library-search",
           "source": "manual"
         },
         {
-          "toolId": "compliance-checker",
-          "source": "manual",
-          "config": {
-            "frameworks": ["SOC 2", "GDPR", "ISO 27001"],
-            "strictMode": false
-          }
-        },
-        {
-          "toolId": "report-generator",
-          "source": "manual"
-        },
-        {
-          "toolId": "gdpr-validator",
-          "source": "manual"
-        },
-        {
-          "toolId": "ccpa-compliance-checker",
-          "source": "manual"
-        },
-        {
-          "toolId": "dpia-generator",
-          "source": "manual"
-        },
-        {
-          "toolId": "sentinel-one-integration",
-          "source": "manual",
-          "config": {
-            "apiEndpoint": "https://api.sentinelone.net",
-            "configured": true
-          }
-        }
-      ],
-      "emptyFieldsForRuntime": []
-    },
-    {
-      "id": "agent-002",
-      "name": "Cloud Migration Advisor",
-      "description": "Helps plan and execute cloud infrastructure migrations",
-      "selectedDomains": ["domain-cloud-architecture", "domain-network-engineering"],
-      "formValues": {
-        "primaryProvider": "AWS",
-        "architectureType": "Hybrid",
-        "costOptimization": true,
-        "scalingRequirements": "Seasonal traffic peaks of 10x baseline during holiday periods",
-        "networkType": "Cloud Network",
-        "protocols": ["BGP", "HTTP/HTTPS", "DNS"],
-        "securityLevel": "High Security"
-      },
-      "createdAt": "2025-09-08T11:45:00Z",
-      "updatedAt": "2025-09-08T11:45:00Z",
-      "enabledTools": [
-        {
-          "toolId": "aws-sdk",
-          "source": "manual",
-          "config": {
-            "region": "us-east-1",
-            "requiresCredentials": true
-          }
-        },
-        {
-          "toolId": "cost-analyzer",
+          "toolId": "assessment-generator",
           "source": "manual"
         }
       ],
-      "emptyFieldsForRuntime": ["scalingRequirements"]
-    },
-    {
-      "id": "agent-003",
-      "name": "Incident Responder - Ransomware",
-      "description": "Specialized responder for ransomware and malware incidents",
-      "selectedDomains": ["domain-incident-response", "domain-cybersecurity"],
-      "formValues": {
-        "responseTier": "Tier 3 - Forensics",
-        "incidentTypes": ["Malware/Ransomware", "Data Breach"],
-        "timeToObjectives": "MTTD < 15 min, MTTR < 2 hours",
-        "includePlaybooks": true,
-        "scope": "Enterprise Windows environment with Active Directory",
-        "complianceStandards": [],
-        "severityThreshold": "Critical",
-        "reportFormat": "Technical Detail"
-      },
-      "createdAt": "2025-11-05T16:00:00Z",
-      "updatedAt": "2025-12-01T10:30:00Z",
-      "enabledTools": [
+      "emptyFieldsForRuntime": ["unitFocus", "topics", "essentialQuestions"],
+      "attachedFlows": [
         {
-          "toolId": "nmap-scanner",
-          "source": "manual"
-        },
-        {
-          "toolId": "report-generator",
-          "source": "manual"
-        },
-        {
-          "toolId": "siem-connector",
-          "source": "manual",
-          "config": {
-            "siemType": "splunk",
-            "apiEndpoint": "https://splunk.example.com:8089",
-            "configured": true
+          "flowId": "flow_lesson_generate",
+          "flowName": "Generate Lesson Plan",
+          "flowDescription": "Creates a complete lesson plan with 8 gradual section generation tasks",
+          "taskCount": 8,
+          "slashCommand": {
+            "id": "sc_lesson_generate",
+            "commandId": "generate",
+            "name": "Generate Lesson",
+            "description": "Create a complete lesson plan with structured sections",
+            "flowId": "flow_lesson_generate",
+            "enabled": true
           }
         }
       ],
-      "emptyFieldsForRuntime": []
+      "createdAt": "2025-01-15T09:00:00Z",
+      "updatedAt": "2025-02-20T14:30:00Z"
     },
     {
-      "id": "agent-004",
-      "name": "DevOps Consultant",
-      "description": "Full-stack development and cloud infrastructure guidance",
-      "selectedDomains": ["domain-software-development", "domain-cloud-architecture"],
+      "id": "agent-assessment",
+      "name": "AssessmentAgent",
+      "description": "Designs formative and summative assessments aligned to learning objectives and standards",
+      "selectedDomains": ["domain-curriculum", "domain-subjects", "domain-classroom"],
       "formValues": {
-        "primaryLanguage": "Python",
-        "focusAreas": ["Code Quality", "Security", "Testability"],
-        "frameworks": "Django, Terraform, Kubernetes",
-        "primaryProvider": "Multi-cloud",
-        "architectureType": "Microservices",
-        "costOptimization": true,
-        "scalingRequirements": ""
+        "gradeLevel": "8th Grade",
+        "classSize": "Large (26-35)",
+        "studentNeeds": ["Reading Intervention", "Special Education"],
+        "learningModel": "In-Person",
+        "resourcesAvailable": ["1:1 Devices"],
+        "curriculumFramework": "Common Core State Standards",
+        "assessmentMethods": ["Formative Assessment", "Summative Assessment", "Performance Tasks"],
+        "pacingGuide": true,
+        "differentiationRequired": true,
+        "unitFocus": "Linear Equations",
+        "primarySubject": "Mathematics",
+        "topics": ["Algebra", "Linear Equations", "Graphing"],
+        "skillLevel": "Proficient",
+        "crossCurricular": ["Real-World Applications"],
+        "essentialQuestions": "How can we represent real-world situations with equations?"
       },
-      "createdAt": "2025-10-20T08:15:00Z",
-      "updatedAt": "2025-10-20T08:15:00Z",
-      "enabledTools": [],
-      "emptyFieldsForRuntime": ["scalingRequirements"]
-    },
-    {
-      "id": "agent-005",
-      "name": "Privacy Compliance Assistant",
-      "description": "Focused guidance on GDPR and international privacy requirements",
-      "selectedDomains": ["domain-data-privacy"],
-      "formValues": {
-        "jurisdictions": ["EU (GDPR)", "UK (UK GDPR)", "Canada (PIPEDA)"],
-        "dataCategories": "Employee records including: personal identification, financial details, health information, and performance evaluations",
-        "includeDPIA": true,
-        "dataSubjectRights": ["All Rights"]
-      },
-      "createdAt": "2025-08-30T13:20:00Z",
-      "updatedAt": "2025-11-10T09:45:00Z",
       "enabledTools": [
         {
-          "toolId": "gdpr-validator",
+          "toolId": "standards-alignment-checker",
           "source": "manual"
         },
         {
-          "toolId": "ccpa-compliance-checker",
+          "toolId": "rubric-generator",
           "source": "manual"
         },
         {
-          "toolId": "dpia-generator",
+          "toolId": "question-bank",
+          "source": "manual"
+        },
+        {
+          "toolId": "accommodation-suggester",
           "source": "manual"
         }
       ],
-      "emptyFieldsForRuntime": []
+      "emptyFieldsForRuntime": ["unitFocus", "topics"],
+      "attachedFlows": [
+        {
+          "flowId": "flow_assessment_generate",
+          "flowName": "Generate Assessment",
+          "flowDescription": "Creates a complete assessment with 6 gradual section generation tasks",
+          "taskCount": 6,
+          "slashCommand": {
+            "id": "sc_assessment_generate",
+            "commandId": "generate",
+            "name": "Generate Assessment",
+            "description": "Create a complete assessment with structured sections",
+            "flowId": "flow_assessment_generate",
+            "enabled": true
+          }
+        }
+      ],
+      "createdAt": "2025-01-20T10:30:00Z",
+      "updatedAt": "2025-02-18T11:15:00Z"
     },
     {
-      "id": "agent-006",
-      "name": "Network Security Architect",
-      "description": "Designs secure network infrastructure with segmentation and access controls",
-      "selectedDomains": ["domain-network-engineering", "domain-cybersecurity"],
+      "id": "agent-team-building",
+      "name": "TeamBuildingAgent",
+      "description": "Creates collaborative learning activities and team-building exercises for classroom community building",
+      "selectedDomains": ["domain-classroom", "domain-teacher", "domain-subjects"],
       "formValues": {
-        "networkType": "Data Center",
-        "protocols": ["BGP", "OSPF", "VXLAN"],
-        "securityLevel": "High Security",
-        "scope": "Multi-tier data center with separate management, production, and DMZ zones",
-        "complianceStandards": ["PCI DSS"],
-        "severityThreshold": "High",
-        "reportFormat": "Executive Summary"
+        "gradeLevel": "6th Grade",
+        "classSize": "Medium (16-25)",
+        "studentNeeds": ["Behavioral Support"],
+        "learningModel": "In-Person",
+        "resourcesAvailable": ["Gym/Outdoor Space", "Art Supplies"],
+        "yearsExperience": "0-2 years (Novice)",
+        "subjectExpertise": ["Physical Education", "Health"],
+        "teachingStyle": ["Cooperative Learning", "Gamification"],
+        "certifications": ["General Elementary"],
+        "professionalGoals": "Build stronger classroom community and improve group work dynamics",
+        "primarySubject": "Social Studies",
+        "topics": ["Teamwork", "Communication", "Problem Solving"],
+        "skillLevel": "Introduction",
+        "crossCurricular": ["Social-Emotional Learning"],
+        "essentialQuestions": "How do we work together effectively?"
       },
-      "createdAt": "2025-11-18T15:50:00Z",
-      "updatedAt": "2025-11-18T15:50:00Z",
       "enabledTools": [
         {
-          "toolId": "nmap-scanner",
+          "toolId": "activity-database",
           "source": "manual"
         },
         {
-          "toolId": "report-generator",
+          "toolId": "grouping-strategy",
+          "source": "manual"
+        },
+        {
+          "toolId": "reflection-prompt-generator",
           "source": "manual"
         }
       ],
-      "emptyFieldsForRuntime": []
-    },
-    {
-      "id": "agent-007",
-      "name": "Code Review Assistant",
-      "description": "General-purpose code review focused on quality and security",
-      "selectedDomains": ["domain-software-development"],
-      "formValues": {
-        "primaryLanguage": "TypeScript",
-        "focusAreas": ["Security", "Code Quality", "Maintainability"],
-        "frameworks": "React, Node.js, Express"
-      },
-      "createdAt": "2025-12-05T10:00:00Z",
-      "updatedAt": "2025-12-05T10:00:00Z",
-      "enabledTools": [],
-      "emptyFieldsForRuntime": []
-    },
-    {
-      "id": "agent-008",
-      "name": "Draft SOC Analyst",
-      "description": "Incomplete configuration - still being configured",
-      "selectedDomains": ["domain-incident-response"],
-      "formValues": {
-        "responseTier": "Tier 1 - Triage",
-        "incidentTypes": [],
-        "timeToObjectives": "",
-        "includePlaybooks": true
-      },
-      "createdAt": "2025-12-10T14:30:00Z",
-      "updatedAt": "2025-12-10T14:30:00Z",
-      "enabledTools": [],
-      "emptyFieldsForRuntime": []
+      "emptyFieldsForRuntime": ["topics", "essentialQuestions"],
+      "attachedFlows": [
+        {
+          "flowId": "flow_teambuild_generate",
+          "flowName": "Generate Team Building Session",
+          "flowDescription": "Creates a complete team-building session with 5 gradual section generation tasks",
+          "taskCount": 5,
+          "slashCommand": {
+            "id": "sc_teambuild_generate",
+            "commandId": "generate",
+            "name": "Generate Session",
+            "description": "Create a complete team-building session with structured sections",
+            "flowId": "flow_teambuild_generate",
+            "enabled": true
+          }
+        }
+      ],
+      "createdAt": "2025-02-01T08:00:00Z",
+      "updatedAt": "2025-02-15T16:45:00Z"
     }
   ],
   "toolLibrary": [
     {
-      "id": "nmap-scanner",
-      "name": "NMAP Network Scanner",
-      "description": "Performs network discovery and security scanning using NMAP",
-      "category": "Security",
-      "package": "@domainsmith/nmap-scanner",
+      "id": "standards-alignment-checker",
+      "name": "Standards Alignment Checker",
+      "description": "Validates lesson plans and assessments against curriculum standards",
+      "category": "Curriculum",
+      "package": "@edtools/standards",
       "version": "2.1.0",
-      "installed": true,
-      "configRequired": false,
-      "config": {}
-    },
-    {
-      "id": "ssl-analyzer",
-      "name": "SSL/TLS Analyzer",
-      "description": "Analyzes SSL/TLS certificates and configuration for security issues",
-      "category": "Security",
-      "package": "@domainsmith/ssl-analyzer",
-      "version": "1.4.2",
-      "installed": true,
-      "configRequired": false,
-      "config": {}
-    },
-    {
-      "id": "compliance-checker",
-      "name": "Compliance Framework Checker",
-      "description": "Validates configurations against common compliance frameworks (ISO, NIST, PCI, SOC 2)",
-      "category": "Compliance",
-      "package": "@domainsmith/compliance-checker",
-      "version": "3.0.1",
       "installed": true,
       "configRequired": true,
       "config": {
-        "frameworks": ["ISO 27001", "NIST CSF", "PCI DSS", "SOC 2"],
-        "strictMode": false
+        "framework": "CCSS",
+        "state": ""
       }
     },
     {
-      "id": "report-generator",
-      "name": "Security Report Generator",
-      "description": "Generates formatted security assessment reports in multiple formats",
-      "category": "Reporting",
-      "package": "@domainsmith/report-generator",
+      "id": "resource-library-search",
+      "name": "Resource Library Search",
+      "description": "Searches educational resource libraries for lesson materials",
+      "category": "Teaching",
+      "package": "@edtools/resources",
+      "version": "1.5.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "assessment-generator",
+      "name": "Assessment Generator",
+      "description": "Creates quizzes, tests, and performance tasks based on learning objectives",
+      "category": "Curriculum",
+      "package": "@edtools/assessment",
+      "version": "3.0.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "rubric-generator",
+      "name": "Rubric Generator",
+      "description": "Creates customizable rubrics for performance-based assessments",
+      "category": "Curriculum",
+      "package": "@edtools/rubrics",
+      "version": "1.2.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "question-bank",
+      "name": "Question Bank",
+      "description": "Access to thousands of standards-aligned assessment questions",
+      "category": "Curriculum",
+      "package": "@edtools/questions",
+      "version": "2.3.0",
+      "installed": true,
+      "configRequired": true,
+      "config": {
+        "subjects": ["Math", "ELA"],
+        "gradeLevels": ["K-8"]
+      }
+    },
+    {
+      "id": "accommodation-suggester",
+      "name": "Accommodation Suggester",
+      "description": "Suggests IEP/504 accommodations and modifications for assessments",
+      "category": "Teaching",
+      "package": "@edtools/special-ed",
+      "version": "1.0.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "activity-database",
+      "name": "Activity Database",
+      "description": "Database of team-building and collaborative learning activities",
+      "category": "Teaching",
+      "package": "@edtools/activities",
       "version": "1.8.0",
       "installed": true,
       "configRequired": false,
       "config": {}
     },
     {
-      "id": "aws-sdk",
-      "name": "AWS SDK Integration",
-      "description": "Provides access to AWS services for infrastructure querying and management",
-      "category": "Cloud",
-      "package": "aws-sdk",
-      "version": "2.1500.0",
-      "installed": true,
-      "configRequired": true,
-      "config": {
-        "region": "us-east-1",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "azure-cli",
-      "name": "Azure CLI Integration",
-      "description": "Provides access to Azure resources and management capabilities",
-      "category": "Cloud",
-      "package": "@azure/identity",
-      "version": "4.0.0",
-      "installed": true,
-      "configRequired": true,
-      "config": {
-        "subscriptionId": "",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "gcloud-sdk",
-      "name": "Google Cloud SDK",
-      "description": "Integration with Google Cloud Platform services",
-      "category": "Cloud",
-      "package": "@google-cloud/sdk",
-      "version": "6.0.0",
-      "installed": false,
-      "configRequired": true,
-      "config": {
-        "projectId": "",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "cost-analyzer",
-      "name": "Cloud Cost Analyzer",
-      "description": "Analyzes cloud infrastructure costs and provides optimization recommendations",
-      "category": "Cloud",
-      "package": "@domainsmith/cost-analyzer",
-      "version": "2.3.0",
-      "installed": true,
-      "configRequired": false,
-      "config": {}
-    },
-    {
-      "id": "gdpr-validator",
-      "name": "GDPR Compliance Validator",
-      "description": "Validates data handling practices against GDPR requirements",
-      "category": "Compliance",
-      "package": "@domainsmith/gdpr-validator",
-      "version": "1.5.0",
-      "installed": true,
-      "configRequired": false,
-      "config": {}
-    },
-    {
-      "id": "ccpa-compliance-checker",
-      "name": "CCPA/CPRA Compliance Checker",
-      "description": "Validates practices against California Consumer Privacy Act requirements",
-      "category": "Compliance",
-      "package": "@domainsmith/ccpa-checker",
-      "version": "1.2.0",
-      "installed": true,
-      "configRequired": false,
-      "config": {}
-    },
-    {
-      "id": "dpia-generator",
-      "name": "DPIA Framework Generator",
-      "description": "Generates Data Protection Impact Assessment frameworks and templates",
-      "category": "Privacy",
-      "package": "@domainsmith/dpia-generator",
-      "version": "1.0.0",
-      "installed": true,
-      "configRequired": false,
-      "config": {}
-    },
-    {
-      "id": "siem-connector",
-      "name": "SIEM Platform Connector",
-      "description": "Connects to SIEM platforms for log analysis and threat detection",
-      "category": "Security",
-      "package": "@domainsmith/siem-connector",
-      "version": "2.0.0",
-      "installed": true,
-      "configRequired": true,
-      "config": {
-        "siemType": "splunk",
-        "apiEndpoint": "",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "sentinel-one-integration",
-      "name": "SentinelOne EDR Integration",
-      "description": "Integrates with SentinelOne endpoint detection and response",
-      "category": "Security",
-      "package": "@domainsmith/sentinelone",
-      "version": "1.3.0",
-      "installed": true,
-      "configRequired": true,
-      "config": {
-        "apiEndpoint": "https://api.sentinelone.net",
-        "siteId": "",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "virus-total-scanner",
-      "name": "VirusTotal File Scanner",
-      "description": "Scans files and URLs against VirusTotal's threat intelligence database",
-      "category": "Security",
-      "package": "@domainsmith/virustotal",
+      "id": "grouping-strategy",
+      "name": "Grouping Strategy Advisor",
+      "description": "Suggests optimal student grouping strategies based on class profile",
+      "category": "Teaching",
+      "package": "@edtools/grouping",
       "version": "1.1.0",
-      "installed": false,
-      "configRequired": true,
-      "config": {
-        "apiKey": "",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "crowdstrike-falcon",
-      "name": "CrowdStrike Falcon Integration",
-      "description": "Integrates with CrowdStrike Falcon endpoint protection platform",
-      "category": "Security",
-      "package": "@domainsmith/crowdstrike",
-      "version": "2.0.0",
-      "installed": false,
-      "configRequired": true,
-      "config": {
-        "clientId": "",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "terraform-validator",
-      "name": "Terraform Configuration Validator",
-      "description": "Validates Terraform infrastructure-as-code configurations",
-      "category": "DevOps",
-      "package": "@domainsmith/terraform-validator",
-      "version": "1.4.0",
       "installed": true,
       "configRequired": false,
       "config": {}
     },
     {
-      "id": "kubernetes-auditor",
-      "name": "Kubernetes Cluster Auditor",
-      "description": "Audits Kubernetes clusters for security and configuration issues",
-      "category": "DevOps",
-      "package": "@domainsmith/k8s-auditor",
-      "version": "2.1.0",
+      "id": "reflection-prompt-generator",
+      "name": "Reflection Prompt Generator",
+      "description": "Creates reflection prompts for team-building and SEL activities",
+      "category": "Teaching",
+      "package": "@edtools/reflection",
+      "version": "1.0.0",
       "installed": true,
-      "configRequired": true,
-      "config": {
-        "kubeconfigPath": "",
-        "context": ""
-      }
+      "configRequired": false,
+      "config": {}
     },
     {
-      "id": "github-actions-runner",
-      "name": "GitHub Actions Integration",
-      "description": "Triggers and monitors GitHub Actions workflows",
-      "category": "DevOps",
-      "package": "@domainsmith/github-actions",
-      "version": "1.0.0",
+      "id": "differentiation-helper",
+      "name": "Differentiation Helper",
+      "description": "Suggests differentiation strategies for diverse learner needs",
+      "category": "Teaching",
+      "package": "@edtools/differentiation",
+      "version": "2.0.0",
+      "installed": true,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "parent-communication",
+      "name": "Parent Communication Assistant",
+      "description": "Drafts professional emails and updates for families",
+      "category": "Communication",
+      "package": "@edtools/communication",
+      "version": "1.3.0",
+      "installed": false,
+      "configRequired": false,
+      "config": {}
+    },
+    {
+      "id": "iep-writer",
+      "name": "IEP Goal Writer",
+      "description": "Helps write SMART IEP goals aligned to standards",
+      "category": "Special Education",
+      "package": "@edtools/iep",
+      "version": "1.5.0",
       "installed": false,
       "configRequired": true,
       "config": {
-        "repoUrl": "",
-        "requiresCredentials": true
-      }
-    },
-    {
-      "id": "slack-notifier",
-      "name": "Slack Notification Sender",
-      "description": "Sends notifications and alerts to Slack channels",
-      "category": "Communication",
-      "package": "@domainsmith/slack-notifier",
-      "version": "1.2.0",
-      "installed": true,
-      "configRequired": true,
-      "config": {
-        "webhookUrl": "",
-        "defaultChannel": ""
-      }
-    },
-    {
-      "id": "email-sender",
-      "name": "Email Notification Service",
-      "description": "Sends email notifications for agent events and reports",
-      "category": "Communication",
-      "package": "@domainsmith/email-sender",
-      "version": "1.5.0",
-      "installed": true,
-      "configRequired": true,
-      "config": {
-        "smtpHost": "",
-        "smtpPort": 587,
-        "requiresCredentials": true
+        "districtTemplates": ""
       }
     }
   ],
   "promptPreview": {
-    "agentId": "agent-001",
-    "domains": ["Cybersecurity", "Data Privacy"],
-    "generatedPrompt": "You are a cybersecurity specialist focused on Customer-facing web application and underlying database infrastructure. Assess findings against SOC 2, GDPR, ISO 27001 standards. Report findings at Medium severity level and above. Format output as Both.\n\nYou are a data privacy advisor for jurisdictions: EU (GDPR), California (CCPA/CPRA). The organization handles: User names, email addresses, payment information, and usage analytics. Include Data Protection Impact Assessment guidance. Pay special attention to: Right to Erasure, Right to Access.\n\nWhen responding, integrate both security and privacy perspectives. Always consider the compliance implications of security recommendations and the security requirements of privacy obligations.",
-    "tokenCount": 245,
-    "lastGenerated": "2025-11-22T14:20:00Z"
+    "agentId": "agent-lesson-plan",
+    "domains": ["Classroom Management", "Teacher Profile", "Curriculum Standards", "Subject Topics"],
+    "generatedPrompt": "# Lesson Plan Assistant\n\nYou are helping create a lesson plan for a 5th Grade class of Medium (16-25) students with English Language Learners, Gifted & Talented support needs. The learning model is In-Person with 1:1 Devices, Interactive Whiteboard available.\n\nThe teacher has 3-5 years (Beginning) experience with expertise in Mathematics, Science. Their preferred teaching styles include Differentiated Instruction, Project-Based Learning with General Elementary certification. Professional goals: Improve engagement through hands-on activities\n\nFollowing Common Core State Standards framework with pacing guide considerations. All recommendations must include differentiation strategies. Assessment approaches: Formative Assessment, Project-Based.\n\nFocusing on Mathematics with topics: Fractions, Decimals at Developing level. Integrating: Real-World Applications, Technology.",
+    "tokenCount": 198,
+    "lastGenerated": "2025-02-20T14:30:00Z"
   }
 }
