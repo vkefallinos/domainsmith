@@ -9,7 +9,6 @@ import {
 } from 'lucide-react'
 
 export default function ShellPreview() {
-  const navigate = useNavigate()
   const navigationItems: NavigationItem[] = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, isActive: true },
     { label: 'Prompt Library', href: '/sections/prompt-library/screen-designs/PromptLibraryView/fullscreen', icon: FileText },
@@ -27,7 +26,6 @@ export default function ShellPreview() {
     <AppShell
       navigationItems={navigationItems}
       user={user}
-      onNavigate={(href) => navigate(href)}
       onLogout={() => console.log('Logout')}
     >
       <div className="p-8">

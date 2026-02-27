@@ -96,7 +96,7 @@ export function FormField({
         {renderFieldInput(field, value, onChange, baseInputClass, errorClass)}
 
         {/* Value indicator */}
-        {hasValue && field.type !== 'toggle' && (
+        {hasValue && field.fieldType !== 'toggle' && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -138,7 +138,7 @@ function renderFieldInput(
 ) {
   const inputClass = `${baseClass} ${errorClass}`
 
-  switch (field.type) {
+  switch (field.fieldType) {
     case 'text':
       return (
         <input
@@ -171,8 +171,8 @@ function renderFieldInput(
           >
             <option value="">Select...</option>
             {field.options?.map(opt => (
-              <option key={opt} value={opt}>
-                {opt}
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
               </option>
             ))}
           </select>
@@ -191,24 +191,28 @@ function renderFieldInput(
           {/* Selected values as tags */}
           {selectedValues.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {selectedValues.map(val => (
-                <span
-                  key={val}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-medium"
-                >
-                  {val}
-                  <button
-                    onClick={() => {
-                      onChange(selectedValues.filter(v => v !== val))
-                    }}
-                    className="hover:text-violet-900 dark:hover:text-violet-300"
+              {selectedValues.map(val => {
+                const opt = field.options?.find(o => o.id === val)
+                const label = opt?.label || val
+                return (
+                  <span
+                    key={val}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-medium"
                   >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              ))}
+                    {label}
+                    <button
+                      onClick={() => {
+                        onChange(selectedValues.filter(v => v !== val))
+                      }}
+                      className="hover:text-violet-900 dark:hover:text-violet-300"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )
+              })}
             </div>
           )}
 
@@ -224,9 +228,9 @@ function renderFieldInput(
               className={`${inputClass} appearance-none pr-10`}
             >
               <option value="">Add option...</option>
-              {field.options?.filter(opt => !selectedValues.includes(opt)).map(opt => (
-                <option key={opt} value={opt}>
-                  {opt}
+              {field.options?.filter(opt => !selectedValues.includes(opt.id)).map(opt => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
                 </option>
               ))}
             </select>

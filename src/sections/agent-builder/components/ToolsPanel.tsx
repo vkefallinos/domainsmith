@@ -42,12 +42,12 @@ const statusConfig: Record<
 }
 
 const categoryIcons: Record<string, string> = {
-  Security: '🛡️',
-  Cloud: '☁️',
-  Compliance: '✓',
-  Privacy: '🔒',
-  DevOps: '⚙️',
+  Curriculum: '📚',
+  Teaching: '👨‍🏫',
+  Assessment: '📝',
+  'Special Education': '🧩',
   Communication: '💬',
+  Collaboration: '🤝',
   Reporting: '📊',
 }
 

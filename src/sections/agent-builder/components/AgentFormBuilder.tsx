@@ -2,6 +2,8 @@ import type {
   AgentBuilderScreenProps,
   Domain,
   SchemaField,
+  SchemaNode,
+  SchemaSection,
   FormFieldValue,
   Tool,
   EnabledToolMapping,
@@ -16,6 +18,69 @@ import { ToolsPanel } from './ToolsPanel'
 import { CommandsPanel } from './CommandsPanel'
 import { PromptPreviewPanel } from './PromptPreviewPanel'
 import { SaveTemplateModal } from './SaveTemplateModal'
+
+/**
+ * Recursively extract all SchemaFields from a SchemaNode tree
+ */
+function extractFields(node: SchemaNode): SchemaField[] {
+  if (node.type === 'field') {
+    return [node]
+  }
+  // node.type === 'section' - recursively extract from children
+  return node.children.flatMap(extractFields)
+}
+
+/**
+ * Get all fields from a domain's schema
+ */
+function getDomainFields(domain: Domain): SchemaField[] {
+  return extractFields(domain.schema.root)
+}
+
+/**
+ * Props for rendering a schema node (section or field)
+ */
+interface SchemaNodeRendererProps {
+  node: SchemaNode
+  formValues: Record<string, FormFieldValue>
+  validationErrors: Record<string, string>
+  emptyFieldsForRuntime: string[]
+  domainName: string
+  onFieldValueChange: (fieldId: string, value: FormFieldValue) => void
+  onToggleRuntime: (fieldId: string) => void
+}
+
+/**
+ * Recursively render a schema node (section or field)
+ */
+function SchemaNodeRenderer({ node, ...props }: SchemaNodeRendererProps) {
+  if (node.type === 'field') {
+    return (
+      <FormField
+        key={node.id}
+        field={node}
+        value={props.formValues[node.variableName]}
+        error={props.validationErrors[node.variableName]}
+        isRuntimeEnabled={props.emptyFieldsForRuntime.includes(node.variableName)}
+        domainName={props.domainName}
+        onChange={(val) => props.onFieldValueChange(node.variableName, val)}
+        onToggleRuntime={() => props.onToggleRuntime(node.variableName)}
+      />
+    )
+  }
+
+  // node.type === 'section' - render section with nested children
+  return (
+    <div key={node.id} className="space-y-5">
+      {node.description && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">{node.description}</p>
+      )}
+      {node.children.map((child) => (
+        <SchemaNodeRenderer key={child.id} node={child} {...props} />
+      ))}
+    </div>
+  )
+}
 
 /**
  * AgentFormBuilder - A multi-view control panel for configuring specialized agents
@@ -126,41 +191,41 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
       .filter(Boolean) as EnabledToolMapping[]
   }, [enabledTools, toolLibrary])
 
-  // Check if field is runtime-enabled
+  // Check if field is runtime-enabled (checks by variableName)
   const isRuntimeEnabled = useCallback(
-    (fieldId: string) => emptyFieldsForRuntime.includes(fieldId),
+    (variableName: string) => emptyFieldsForRuntime.includes(variableName),
     [emptyFieldsForRuntime]
   )
 
-  // Handle field value change
+  // Handle field value change (receives variableName)
   const handleFieldValueChange = useCallback(
-    (fieldId: string, value: FormFieldValue) => {
-      onFieldValueChange(fieldId, value)
+    (variableName: string, value: FormFieldValue) => {
+      onFieldValueChange(variableName, value)
       // Trigger preview regeneration with debounce (handled by parent)
     },
     [onFieldValueChange]
   )
 
-  // Handle runtime toggle
+  // Handle runtime toggle (receives variableName)
   const handleToggleRuntime = useCallback(
-    (fieldId: string) => {
-      if (isRuntimeEnabled(fieldId)) {
-        onDisableFieldForRuntime?.(fieldId)
+    (variableName: string) => {
+      if (isRuntimeEnabled(variableName)) {
+        onDisableFieldForRuntime?.(variableName)
       } else {
-        onEnableFieldForRuntime?.(fieldId)
-        onFieldValueChange(fieldId, '')
+        onEnableFieldForRuntime?.(variableName)
+        onFieldValueChange(variableName, '')
       }
     },
     [isRuntimeEnabled, onEnableFieldForRuntime, onDisableFieldForRuntime, onFieldValueChange]
   )
 
-  // Enable all fields in a domain for runtime
+  // Enable all fields in a domain for runtime (uses variableName)
   const handleEnableAllForRuntime = useCallback(
     (domain: Domain) => {
-      domain.schema.fields.forEach(field => {
-        if (!isRuntimeEnabled(field.id) && field.runtimeOptional !== false) {
-          onEnableFieldForRuntime?.(field.id)
-          onFieldValueChange(field.id, '')
+      getDomainFields(domain).forEach(field => {
+        if (!isRuntimeEnabled(field.variableName) && field.runtimeOptional !== false) {
+          onEnableFieldForRuntime?.(field.variableName)
+          onFieldValueChange(field.variableName, '')
         }
       })
     },
@@ -177,9 +242,14 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
   )
 
   const hasSelection = selectedDomains.length > 0
-  const totalFields = selectedDomains.reduce((sum, d) => sum + d.schema.fields.length, 0)
-  const filledFields = Object.keys(formValues).filter(
-    key => formValues[key] !== '' && formValues[key] !== null && formValues[key] !== undefined
+  const allFields = selectedDomains.flatMap(d => getDomainFields(d))
+  const totalFields = allFields.length
+  const filledFields = allFields.filter(
+    field => {
+      const value = formValues[field.variableName]
+      return value !== '' && value !== null && value !== undefined &&
+             (!Array.isArray(value) || value.length > 0)
+    }
   ).length
   const completionProgress = totalFields > 0 ? (filledFields / totalFields) * 100 : 0
 
@@ -325,19 +395,16 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
                       {/* Domain Fields */}
                       {expandedDomains.has(domain.id) && (
                         <div className="px-6 pb-6 border-t border-slate-100 dark:border-slate-800">
-                          <div className="pt-5 space-y-5">
-                            {domain.schema.fields.map(field => (
-                              <FormField
-                                key={field.id}
-                                field={field}
-                                value={formValues[field.id]}
-                                error={validationErrors[field.id]}
-                                isRuntimeEnabled={isRuntimeEnabled(field.id)}
-                                domainName={domain.name}
-                                onChange={(val) => handleFieldValueChange(field.id, val)}
-                                onToggleRuntime={() => handleToggleRuntime(field.id)}
-                              />
-                            ))}
+                          <div className="pt-5">
+                            <SchemaNodeRenderer
+                              node={domain.schema.root}
+                              formValues={formValues}
+                              validationErrors={validationErrors}
+                              emptyFieldsForRuntime={emptyFieldsForRuntime}
+                              domainName={domain.name}
+                              onFieldValueChange={handleFieldValueChange}
+                              onToggleRuntime={handleToggleRuntime}
+                            />
                           </div>
                         </div>
                       )}

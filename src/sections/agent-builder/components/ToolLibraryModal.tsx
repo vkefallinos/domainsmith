@@ -13,12 +13,12 @@ interface ToolLibraryModalProps {
 }
 
 const categories: Array<{ value: ToolCategory; label: string; icon: string }> = [
-  { value: 'Security', label: 'Security', icon: '🛡️' },
-  { value: 'Cloud', label: 'Cloud', icon: '☁️' },
-  { value: 'Compliance', label: 'Compliance', icon: '📋' },
-  { value: 'Privacy', label: 'Privacy', icon: '🔒' },
-  { value: 'DevOps', label: 'DevOps', icon: '⚙️' },
+  { value: 'Curriculum', label: 'Curriculum', icon: '📚' },
+  { value: 'Teaching', label: 'Teaching', icon: '👨‍🏫' },
+  { value: 'Assessment', label: 'Assessment', icon: '📝' },
+  { value: 'Special Education', label: 'Special Ed', icon: '🧩' },
   { value: 'Communication', label: 'Communication', icon: '💬' },
+  { value: 'Collaboration', label: 'Collaboration', icon: '🤝' },
   { value: 'Reporting', label: 'Reporting', icon: '📊' }
 ]
 

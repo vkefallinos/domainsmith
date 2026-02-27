@@ -1,9 +1,21 @@
+import { useState, useMemo } from 'react'
 import data from '@/../product/sections/prompt-library/data.json'
 import { PromptLibrary } from './components/PromptLibrary'
-import type { Directory, PromptFragment, NewFileForm, NewFolderForm, UnsavedChangesAction } from '@/../product/sections/prompt-library/types'
+import type { Directory, PromptFragment, NewFileForm, NewFolderForm, UnsavedChangesAction, FileSystemNode } from '@/../product/sections/prompt-library/types'
 
 // This is a preview wrapper for Design OS only
 // It imports sample data and feeds it to the props-based component
+
+// Helper to collect all folder paths from the file system
+function collectAllFolderPaths(node: FileSystemNode, paths: string[] = []): string[] {
+  if (node.type === 'directory') {
+    paths.push(node.path)
+    if (node.children) {
+      node.children.forEach(child => collectAllFolderPaths(child, paths))
+    }
+  }
+  return paths
+}
 
 // Sample tools data for demonstration
 const sampleTools = [
@@ -40,9 +52,30 @@ const sampleTools = [
 ]
 
 export default function PromptLibraryPreview() {
-  // Simulate state changes for demo purposes
+  // State for expanded folders
+  const [expandedFolders, setExpandedFolders] = useState<string[]>(
+    data.expandedFolders as string[]
+  )
+
+  // Memoize all folder paths for expand/collapse all
+  const allFolderPaths = useMemo(() => {
+    return collectAllFolderPaths(data.fileSystem as Directory)
+  }, [])
+
   const handleToggleFolder = (path: string) => {
-    console.log('Toggle folder:', path)
+    setExpandedFolders(prev =>
+      prev.includes(path)
+        ? prev.filter(p => p !== path)
+        : [...prev, path]
+    )
+  }
+
+  const handleExpandAll = () => {
+    setExpandedFolders(allFolderPaths)
+  }
+
+  const handleCollapseAll = () => {
+    setExpandedFolders([])
   }
 
   const handleSelectFile = (file: PromptFragment) => {
@@ -55,14 +88,6 @@ export default function PromptLibraryPreview() {
 
   const handleSave = () => {
     console.log('Save changes')
-  }
-
-  const handleExpandAll = () => {
-    console.log('Expand all folders')
-  }
-
-  const handleCollapseAll = () => {
-    console.log('Collapse all folders')
   }
 
   const handleCreateFile = ({ filename, parentPath }: NewFileForm) => {
@@ -113,7 +138,7 @@ export default function PromptLibraryPreview() {
     <PromptLibrary
       fileSystem={data.fileSystem as Directory}
       selectedFile={data.selectedFile as PromptFragment | null}
-      expandedFolders={data.expandedFolders as string[]}
+      expandedFolders={expandedFolders}
       unsavedChanges={data.unsavedChanges as boolean}
       availableTools={sampleTools}
       toolSidebar={{ isOpen: false, searchQuery: '', filterCategory: null }}

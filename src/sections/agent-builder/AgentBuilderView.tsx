@@ -18,44 +18,17 @@ import type { FormFieldValue, AttachedFlow } from '@/../product/sections/agent-b
 export default function AgentBuilderPreview() {
   const [view, setView] = useState<'builder' | 'templates'>('builder')
 
-  // Initial state with sample data
-  const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>([
-    'domain-cybersecurity',
-    'domain-data-privacy',
-  ])
-  const [formValues, setFormValues] = useState<Record<string, FormFieldValue>>({
-    scope: 'Customer-facing web application and underlying database infrastructure',
-    complianceStandards: ['SOC 2', 'GDPR', 'ISO 27001'],
-    severityThreshold: 'Medium',
-    reportFormat: 'Both',
-    jurisdictions: ['EU (GDPR)', 'California (CCPA/CPRA)'],
-    dataCategories: 'User names, email addresses, payment information, and usage analytics',
-    includeDPIA: true,
-    dataSubjectRights: ['Right to Erasure', 'Right to Access'],
-  })
+  // Initial state with sample data - using the first saved agent config
+  const firstAgent = data.savedAgentConfigs[0]
+  const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>(firstAgent.selectedDomains)
+  const [formValues, setFormValues] = useState<Record<string, FormFieldValue>>(firstAgent.formValues)
   const [enabledTools, setEnabledTools] = useState(data.savedAgentConfigs[0].enabledTools || [])
-  const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>([])
+  const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>(firstAgent.emptyFieldsForRuntime || [])
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
 
-  // Sample attached flows for demo
-  const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>([
-    {
-      flowId: 'flow_001',
-      flowName: 'Customer Onboarding Analysis',
-      flowDescription: 'Analyzes new customer data and generates summary',
-      taskCount: 4,
-      slashCommand: {
-        id: 'sc_001',
-        commandId: 'analyze',
-        name: 'Analyze Customer',
-        description: 'Run customer onboarding analysis',
-        flowId: 'flow_001',
-        flowName: 'Customer Onboarding Analysis',
-        enabled: true,
-      },
-    },
-  ])
+  // Sample attached flows for demo - use from first agent if available
+  const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>(firstAgent.attachedFlows || [])
 
   // Available flows for attaching
   const availableFlows = [

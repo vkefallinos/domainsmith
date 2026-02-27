@@ -1375,7 +1375,28 @@ export function PromptLibrary({
         </div>
 
         {/* Tree */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 scroll-smooth">
+          <style>{`
+            .tree-scroll::-webkit-scrollbar {
+              width: 6px;
+            }
+            .tree-scroll::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            .tree-scroll::-webkit-scrollbar-thumb {
+              background: rgb(203 213 225);
+              border-radius: 3px;
+            }
+            .tree-scroll::-webkit-scrollbar-thumb:hover {
+              background: rgb(148 163 184);
+            }
+            .dark .tree-scroll::-webkit-scrollbar-thumb {
+              background: rgb(51 65 85);
+            }
+            .dark .tree-scroll::-webkit-scrollbar-thumb:hover {
+              background: rgb(71 85 105);
+            }
+          `}</style>
           {filteredTree.children && filteredTree.children.length > 0 ? (
             filteredTree.children.map((node) => (
               <TreeNode
