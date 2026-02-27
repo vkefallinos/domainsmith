@@ -167,17 +167,39 @@ export function TaskCard({ task, isExpanded, isDraggable, onClick, onEdit, onDel
 function TaskConfigPreview({ task }: { task: Task }) {
   const config = task.config as TaskConfig
 
+  const hasTargetFieldName = config.targetFieldName !== undefined
   const hasOutputSchema = config.outputSchema !== undefined
-  const hasFieldUpdates = config.fieldUpdates && config.fieldUpdates.length > 0
-  const hasArrayPushes = config.arrayPushes && config.arrayPushes.length > 0
+  const hasPromptFragments = config.promptFragmentFields && config.promptFragmentFields.length > 0
   const hasTools = config.enabledTools && config.enabledTools.length > 0
   const hasInstructions = config.taskInstructions && config.taskInstructions.length > 0
   const hasModel = config.model !== undefined
+  const isPushable = config.isPushable === true
 
   return (
     <div className="space-y-4">
-      {/* Output Schema */}
-      {hasOutputSchema && (
+      {/* Target Field Name (updateFlowOutput only) */}
+      {task.type === 'updateFlowOutput' && hasTargetFieldName && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <svg className="w-4 h-4 text-violet-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Target Field
+            {isPushable && (
+              <span className="px-1.5 py-0.5 text-xs rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                Push to Array
+              </span>
+            )}
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-2 text-sm">
+            <span className="font-mono text-sky-600 dark:text-sky-400">{config.targetFieldName}</span>
+            {isPushable && <span className="text-slate-500 ml-1">[]</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Output Schema (updateFlowOutput only) */}
+      {task.type === 'updateFlowOutput' && hasOutputSchema && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
             <svg className="w-4 h-4 text-violet-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -185,11 +207,6 @@ function TaskConfigPreview({ task }: { task: Task }) {
               <path d="M14 2v6h6" />
             </svg>
             Output Schema
-            {task.type === 'updateFlowOutput' && (
-              <span className="px-1.5 py-0.5 text-xs rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                Passed to next task
-              </span>
-            )}
           </div>
           <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3 font-mono text-sm">
             <div className="text-violet-600 dark:text-violet-400">{`{`}</div>
@@ -207,44 +224,20 @@ function TaskConfigPreview({ task }: { task: Task }) {
         </div>
       )}
 
-      {/* Field Updates */}
-      {hasFieldUpdates && (
+      {/* Prompt Fragment Fields */}
+      {hasPromptFragments && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            <svg className="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            <svg className="w-4 h-4 text-violet-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
             </svg>
-            Field Updates ({config.fieldUpdates!.length})
+            Prompt Fragments ({config.promptFragmentFields!.length})
           </div>
-          <div className="space-y-1">
-            {config.fieldUpdates!.map((update, i) => (
-              <div key={i} className="bg-slate-50 dark:bg-slate-950 rounded-lg p-2 text-sm flex items-center gap-2">
-                <span className="text-sky-600 dark:text-sky-400 font-mono">{update.field}</span>
-                <span className="text-slate-500">=</span>
-                <span className="text-slate-700 dark:text-slate-300 truncate">{String(update.value)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Array Pushes */}
-      {hasArrayPushes && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Array Pushes ({config.arrayPushes!.length})
-          </div>
-          <div className="space-y-1">
-            {config.arrayPushes!.map((push, i) => (
-              <div key={i} className="bg-slate-50 dark:bg-slate-950 rounded-lg p-2 text-sm flex items-center gap-2">
-                <span className="text-sky-600 dark:text-sky-400 font-mono">{push.arrayField}</span>
-                <span className="text-slate-500">.push()</span>
-                <span className="text-slate-700 dark:text-slate-300 truncate">{String(push.items)}</span>
-              </div>
+          <div className="flex flex-wrap gap-2">
+            {config.promptFragmentFields!.map((pf, i) => (
+              <span key={i} className="px-2 py-1 text-xs rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-mono">
+                {pf.fragmentId}
+              </span>
             ))}
           </div>
         </div>
@@ -309,7 +302,7 @@ function TaskConfigPreview({ task }: { task: Task }) {
       )}
 
       {/* No configuration */}
-      {!hasOutputSchema && !hasFieldUpdates && !hasArrayPushes && !hasTools && !hasInstructions && !hasModel && (
+      {!hasTargetFieldName && !hasOutputSchema && !hasPromptFragments && !hasTools && !hasInstructions && !hasModel && (
         <div className="text-sm text-slate-500 dark:text-slate-400 italic">
           No configuration set
         </div>

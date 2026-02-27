@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import type { Task, TaskType, TaskConfig } from '@/../product/sections/flow-builder/types'
+import type { Task, TaskType, TaskConfig, PromptFragmentField } from '@/../product/sections/flow-builder/types'
 
 interface TaskConfigPanelProps {
   task: Task | null
   availableTools: Array<{ id: string; name: string; description: string }>
+  availablePromptFragments?: Array<{ id: string; name: string; description: string }>
   isOpen: boolean
   onClose: () => void
   onSave: (config: TaskConfig) => void
@@ -13,32 +14,35 @@ const TASK_TYPES: { type: TaskType; label: string; description: string; passesDa
   {
     type: 'updateFlowOutput',
     label: 'Update Flow Output',
-    description: 'Update flow output and pass structured data to the next task',
+    description: 'Update a specific key in the flow output with structured LLM output',
     passesData: true
   },
   {
     type: 'executeTask',
     label: 'Execute Task',
-    description: 'Execute operations without passing data to the next task',
+    description: 'Perform operations without adding structured output to the flow state',
     passesData: false
   },
 ]
 
-export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave }: TaskConfigPanelProps) {
+export function TaskConfigPanel({ task, availableTools, availablePromptFragments = [], isOpen, onClose, onSave }: TaskConfigPanelProps) {
   const [selectedType, setSelectedType] = useState<TaskType>(task?.type || 'updateFlowOutput')
   const [taskName, setTaskName] = useState(task?.name || '')
   const [taskDescription, setTaskDescription] = useState(task?.description || '')
 
-  // Config states
+  // Config states for updateFlowOutput
   const [outputSchema, setOutputSchema] = useState(
     task?.config?.outputSchema ? JSON.stringify(task.config.outputSchema, null, 2) : ''
   )
-  const [fieldUpdates, setFieldUpdates] = useState(
-    task?.config?.fieldUpdates?.map(f => `${f.field}=${f.value}`).join('\n') || ''
+  const [targetFieldName, setTargetFieldName] = useState(task?.config?.targetFieldName || '')
+  const [isPushable, setIsPushable] = useState(task?.config?.isPushable ?? false)
+
+  // Prompt fragment fields
+  const [promptFragmentFields, setPromptFragmentFields] = useState<PromptFragmentField[]>(
+    task?.config?.promptFragmentFields || []
   )
-  const [arrayPushes, setArrayPushes] = useState(
-    task?.config?.arrayPushes?.map(p => `${p.arrayField}=${JSON.stringify(p.items)}`).join('\n') || ''
-  )
+
+  // Shared config states
   const [enabledTools, setEnabledTools] = useState<string[]>(task?.config?.enabledTools || [])
   const [taskInstructions, setTaskInstructions] = useState(task?.config?.taskInstructions || '')
   const [model, setModel] = useState(task?.config?.model || 'claude-3-5-sonnet')
@@ -50,51 +54,48 @@ export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave 
   const taskConfig = TASK_TYPES.find(t => t.type === selectedType)
 
   const handleSave = () => {
-    const config: TaskConfig = {}
+    const config: TaskConfig = {
+      model,
+      temperature,
+    }
 
-    if (outputSchema.trim()) {
-      try {
-        config.outputSchema = JSON.parse(outputSchema)
-      } catch (e) {
-        // Invalid JSON - in real app would show error
+    // updateFlowOutput specific fields
+    if (selectedType === 'updateFlowOutput') {
+      if (!targetFieldName.trim()) {
+        // In real app would show validation error
+        return
+      }
+      config.targetFieldName = targetFieldName.trim()
+
+      if (isPushable) {
+        config.isPushable = true
+      }
+
+      if (outputSchema.trim()) {
+        try {
+          config.outputSchema = JSON.parse(outputSchema)
+        } catch (e) {
+          // Invalid JSON - in real app would show error
+        }
       }
     }
 
-    if (fieldUpdates.trim()) {
-      config.fieldUpdates = fieldUpdates.split('\n')
-        .filter(line => line.trim())
-        .map(line => {
-          const [field, ...valueParts] = line.split('=')
-          return { field: field.trim(), value: valueParts.join('=').trim() }
-        })
+    // Prompt fragment fields
+    if (promptFragmentFields.length > 0) {
+      config.promptFragmentFields = promptFragmentFields
     }
 
-    if (arrayPushes.trim()) {
-      config.arrayPushes = arrayPushes.split('\n')
-        .filter(line => line.trim())
-        .map(line => {
-          const [field, ...valueParts] = line.split('=')
-          const valueStr = valueParts.join('=')
-          try {
-            return { arrayField: field.trim(), items: JSON.parse(valueStr) }
-          } catch {
-            return { arrayField: field.trim(), items: valueStr.trim() }
-          }
-        })
-    }
-
+    // Enabled tools
     if (enabledTools.length > 0) {
       config.enabledTools = enabledTools
     }
 
+    // Task instructions
     if (taskInstructions.trim()) {
       config.taskInstructions = taskInstructions.trim()
     }
 
-    config.model = model
-    config.temperature = temperature
-
-    onSave(config)
+    onSave({ ...config, type: selectedType })
   }
 
   return (
@@ -198,64 +199,115 @@ export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave 
 
           {/* Task Configuration */}
           <div className="border-t border-slate-200 dark:border-slate-800 pt-6 space-y-6">
-            {/* Output Schema */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Output Schema {selectedType === 'updateFlowOutput' && (
-                  <span className="text-emerald-600 dark:text-emerald-400 text-xs ml-1">(Passed to next task)</span>
-                )}
-              </label>
-              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-                <textarea
-                  value={outputSchema}
-                  onChange={(e) => setOutputSchema(e.target.value)}
-                  rows={6}
-                  className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-                  placeholder='{\n  "type": "object",\n  "properties": {\n    "output": { "type": "string" }\n  }\n}'
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Define JSON Schema for structured output (optional)
-              </p>
-            </div>
+            {/* updateFlowOutput specific fields */}
+            {selectedType === 'updateFlowOutput' && (
+              <>
+                {/* Target Field Name */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Target Field Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={targetFieldName}
+                    onChange={(e) => setTargetFieldName(e.target.value)}
+                    placeholder="e.g., customerAnalysis, extractedData"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    The key in the flow output object where this task's LLM output will be stored
+                  </p>
+                </div>
 
-            {/* Field Updates */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Field Updates
-              </label>
-              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-                <textarea
-                  value={fieldUpdates}
-                  onChange={(e) => setFieldUpdates(e.target.value)}
-                  rows={3}
-                  className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-                  placeholder="fieldName=value&#10;anotherField={{dynamicValue}}"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Add or update fields in flow output (one per line: field=value)
-              </p>
-            </div>
+                {/* Is Pushable */}
+                <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-950 rounded-xl">
+                  <button
+                    onClick={() => setIsPushable(!isPushable)}
+                    className={`
+                      relative w-12 h-6 rounded-full transition-colors
+                      ${isPushable ? 'bg-violet-500' : 'bg-slate-300 dark:bg-slate-700'}
+                    `}
+                  >
+                    <span
+                      className={`
+                        absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform
+                        ${isPushable ? 'translate-x-7' : 'translate-x-1'}
+                      `}
+                    />
+                  </button>
+                  <div>
+                    <div className="font-medium text-slate-900 dark:text-slate-100">Push to Array</div>
+                    <div className="text-sm text-slate-500">
+                      If enabled, output is pushed to an array at the target field instead of overwriting
+                    </div>
+                  </div>
+                </div>
 
-            {/* Array Pushes */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Array Pushes
-              </label>
-              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
-                <textarea
-                  value={arrayPushes}
-                  onChange={(e) => setArrayPushes(e.target.value)}
-                  rows={3}
-                  className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
-                  placeholder='arrayField=["item1", "item2"]&#10;anotherArray=singleValue'
-                />
+                {/* Output Schema */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Output Schema
+                  </label>
+                  <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4">
+                    <textarea
+                      value={outputSchema}
+                      onChange={(e) => setOutputSchema(e.target.value)}
+                      rows={6}
+                      className="w-full font-mono text-sm bg-transparent text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
+                      placeholder='{\n  "type": "object",\n  "properties": {\n    "summary": { "type": "string" },\n    "score": { "type": "number" }\n  }\n}'
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    JSON Schema definition for the LLM's structured output (optional)
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Prompt Fragment Fields */}
+            {(availablePromptFragments.length > 0 || promptFragmentFields.length > 0) && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Prompt Fragments
+                </label>
+                <div className="space-y-2">
+                  {promptFragmentFields.map((pf, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-950 rounded-lg">
+                      <span className="flex-1 text-sm font-mono text-slate-700 dark:text-slate-300">
+                        {pf.fragmentId}
+                      </span>
+                      <button
+                        onClick={() => setPromptFragmentFields(prev => prev.filter((_, i) => i !== index))}
+                        className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  {availablePromptFragments.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const fragment = availablePromptFragments[0]
+                        if (fragment) {
+                          setPromptFragmentFields(prev => [
+                            ...prev,
+                            { fragmentId: fragment.id, fieldValues: {} }
+                          ])
+                        }
+                      }}
+                      className="w-full p-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:border-violet-500 hover:text-violet-500 transition-colors text-sm"
+                    >
+                      + Add Prompt Fragment
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Enable specific prompt fragments based on field values
+                </p>
               </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Push items to array fields (one per line: field=items)
-              </p>
-            </div>
+            )}
 
             {/* Enabled Tools */}
             <div>
@@ -302,9 +354,18 @@ export function TaskConfigPanel({ task, availableTools, isOpen, onClose, onSave 
                   placeholder="Describe what this task should do..."
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Natural language instructions for task execution
-              </p>
+              <div className="mt-2 p-2 bg-violet-50 dark:bg-violet-950/30 rounded-lg">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                  <span className="font-semibold">Template variables:</span>
+                </p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                  <code className="bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded">{`{{input}}`}</code>
+                  <code className="bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded">{`{{previousTask.taskId.field}}`}</code>
+                  <code className="bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded">{`{{flow.output.field}}`}</code>
+                  <code className="bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded">{`{{now}}`}</code>
+                  <code className="bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded">{`{{agent.name}}`}</code>
+                </div>
+              </div>
             </div>
 
             {/* Model Settings */}

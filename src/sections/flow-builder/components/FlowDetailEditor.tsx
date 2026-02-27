@@ -260,16 +260,26 @@ export function FlowDetailEditor({
         {/* Flow output info */}
         {sortedTasks.length > 0 && (
           <div className="bg-gradient-to-br from-violet-50 to-amber-50 dark:from-violet-950/30 dark:to-amber-950/30 rounded-xl p-6 border border-violet-200 dark:border-violet-900/50">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Flow Output</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Flow Output State</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              This flow will output the combined result of all tasks in sequence.
+              All tasks share a mutable flow output object that accumulates data across execution.
             </p>
             <div className="bg-white dark:bg-slate-900 rounded-lg p-4 font-mono text-sm text-slate-700 dark:text-slate-300">
-              <span className="text-slate-400">// Final output from last task</span><br />
-              <span className="text-violet-600 dark:text-violet-400">output</span>
-              <span className="text-slate-500">: </span>
-              <span className="text-sky-600 dark:text-sky-400">{sortedTasks[sortedTasks.length - 1].type}</span>
-              <span className="text-slate-500">_result</span>
+              <span className="text-slate-400">// Accumulated flow state</span><br />
+              <span className="text-violet-600 dark:text-violet-400">{`{`}</span><br />
+              {sortedTasks
+                .filter(t => t.type === 'updateFlowOutput' && t.config?.targetFieldName)
+                .map((t, i) => (
+                  <span key={t.id} className="ml-4">
+                    <span className="text-sky-600 dark:text-sky-400">{t.config?.targetFieldName}</span>
+                    {t.config?.isPushable && <span className="text-slate-500">[]</span>}
+                    <span className="text-slate-500">: </span>
+                    <span className="text-slate-400 italic">{`/* ${t.name} */`}</span>
+                    {i < sortedTasks.filter(x => x.type === 'updateFlowOutput' && x.config?.targetFieldName).length - 1 && <span className="text-slate-500">,</span>}
+                    <br />
+                  </span>
+                ))}
+              <span className="text-violet-600 dark:text-violet-400">{`}`}</span>
             </div>
           </div>
         )}

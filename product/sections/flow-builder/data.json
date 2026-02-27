@@ -1,18 +1,18 @@
 {
   "_meta": {
     "models": {
-      "Flow": "A sequential task flow that defines a series of operations to be executed in order. Can be standalone or attached to an agent via slash command.",
-      "Task": "A single step within a flow that performs an operation to update flow output or execute a task. updateFlowOutput tasks pass structured data to the next task, while executeTask tasks do not.",
-      "SlashCommand": "A custom command trigger (e.g., /summarize) that users can type to invoke an attached flow.",
-      "FlowTaskConfig": "Configuration for task operations including output schema, field updates, array pushes, prompt fragments, enabled tools, and task instructions."
+      "Flow": "A sequential task flow that defines a series of operations to be executed in order. Can be standalone or attached to multiple agents via slash commands.",
+      "Task": "A single step within a flow that performs an operation. updateFlowOutput tasks store LLM output at a specific key in the shared flow state. executeTask tasks perform operations without adding structured output to flow state.",
+      "SlashCommand": "A custom command trigger (e.g., /summarize) that users can type to invoke an attached flow. One-to-one mapping: one flow = one slash command per agent.",
+      "FlowTaskConfig": "Configuration for task operations including output schema with target field name, array push behavior, prompt fragments, enabled tools, and task instructions."
     },
     "relationships": [
       "Flow belongs to one Workspace",
-      "Flow can be attached to many Agents (reusable)",
+      "Flow can be attached to many Agents (reusable, many-to-many)",
       "Flow has many Tasks in sequence",
       "SlashCommand belongs to one Agent",
       "SlashCommand triggers one Flow",
-      "Task receives input from the previous Task in the Flow (only for updateFlowOutput type)"
+      "All tasks share a mutable flow output object that accumulates data across execution"
     ]
   },
   "flows": [
@@ -127,6 +127,7 @@
           },
           "required": ["customerName", "email", "company"]
         },
+        "targetFieldName": "customerData",
         "model": "claude-3-5-sonnet",
         "temperature": 0.3
       },
@@ -138,14 +139,10 @@
       "type": "executeTask",
       "order": 2,
       "name": "Enrich with Company Data",
-      "description": "Calls company enrichment API (no structured output passed to next task)",
+      "description": "Calls company enrichment API to augment customer data",
       "config": {
         "enabledTools": ["clearbit_company_api"],
-        "taskInstructions": "Call the Clearbit Company API with domain from previous task output. Request industry, employees, revenue, and founded fields.",
-        "fieldUpdates": [
-          { "field": "companyEnriched", "value": true },
-          { "field": "enrichmentTimestamp", "value": "{{now}}" }
-        ]
+        "taskInstructions": "Call the Clearbit Company API with domain from {{flow.output.customerData.company}}. Request industry, employees, revenue, and founded fields."
       },
       "status": "valid"
     },
@@ -165,10 +162,8 @@
             "priorityScore": { "type": "number" }
           }
         },
-        "taskInstructions": "Map planTier to tierScore (basic=1, pro=2, enterprise=3). Map employees to sizeScore (1-50=1, 51-200=2, 201-1000=3, 1000+=4). Calculate priorityScore as tierScore * 2 + sizeScore.",
-        "fieldUpdates": [
-          { "field": "scoreCalculated", "value": true }
-        ]
+        "targetFieldName": "scores",
+        "taskInstructions": "Map planTier from {{flow.output.customerData.planTier}} to tierScore (basic=1, pro=2, enterprise=3). Map employees to sizeScore (1-50=1, 51-200=2, 201-1000=3, 1000+=4). Calculate priorityScore as tierScore * 2 + sizeScore."
       },
       "status": "valid"
     },
@@ -180,7 +175,7 @@
       "name": "Generate Onboarding Plan",
       "description": "Creates personalized onboarding plan (final output, no next task)",
       "config": {
-        "taskInstructions": "Generate a personalized onboarding plan based on customer profile including name, company, industry, employee count, plan tier, and priority score. Include specific milestones, training modules, and success metrics.",
+        "taskInstructions": "Generate a personalized onboarding plan based on customer profile: name {{flow.output.customerData.customerName}}, company {{flow.output.customerData.company}}, priority score {{flow.output.scores.priorityScore}}. Include specific milestones, training modules, and success metrics.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.7
       },
@@ -194,7 +189,7 @@
       "name": "Extract Document Text",
       "description": "Extracts and cleans text content from uploaded document",
       "config": {
-        "taskInstructions": "Extract all text content from the provided document. Preserve headings, lists, and table structures. Clean up any formatting artifacts from OCR or PDF conversion.",
+        "taskInstructions": "Extract all text content from {{input}}. Preserve headings, lists, and table structures. Clean up any formatting artifacts from OCR or PDF conversion.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.3
       },
@@ -220,6 +215,7 @@
           },
           "required": ["documentType", "confidence"]
         },
+        "targetFieldName": "classification",
         "model": "claude-3-5-sonnet",
         "temperature": 0.2
       },
@@ -234,7 +230,7 @@
       "description": "Stores extracted metadata in document database",
       "config": {
         "enabledTools": ["document_store_insert"],
-        "taskInstructions": "Store the processed document with extracted text, document type, topics, and timestamp in the processed_documents collection."
+        "taskInstructions": "Store the processed document with classification {{flow.output.classification.documentType}}, topics {{flow.output.classification.keyTopics}}, and timestamp {{now}} in the processed_documents collection."
       },
       "status": "valid"
     },
@@ -256,6 +252,7 @@
           },
           "required": ["subject", "category"]
         },
+        "targetFieldName": "ticketData",
         "model": "claude-3-5-sonnet",
         "temperature": 0.3
       },
@@ -276,10 +273,8 @@
             "priorityLevel": { "type": "string", "enum": ["P1", "P2", "P3"] }
           }
         },
-        "taskInstructions": "Calculate priorityScore: critical=100, high=75, medium=50, low=25. Set priorityLevel: P1 if score>=75, P2 if >=50, else P3.",
-        "fieldUpdates": [
-          { "field": "priorityAssigned", "value": true }
-        ]
+        "targetFieldName": "priority",
+        "taskInstructions": "Calculate priorityScore: critical=100, high=75, medium=50, low=25 from {{flow.output.ticketData.urgency}}. Set priorityLevel: P1 if score>=75, P2 if >=50, else P3."
       },
       "status": "valid"
     },
@@ -291,7 +286,7 @@
       "name": "Generate Response Draft",
       "description": "Creates initial response template",
       "config": {
-        "taskInstructions": "Draft a response for a support ticket. Acknowledge the issue, set expectations based on priority level, request additional info if needed, maintain professional and empathetic tone.",
+        "taskInstructions": "Draft a response for {{flow.output.ticketData.subject}} in category {{flow.output.ticketData.category}}. Acknowledge the issue, set expectations based on priority level {{flow.output.priority.priorityLevel}}, request additional info if needed, maintain professional and empathetic tone.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.6
       },
@@ -306,7 +301,7 @@
       "description": "Retrieves previous customer interactions",
       "config": {
         "enabledTools": ["support_history_lookup"],
-        "taskInstructions": "Look up customer history including previous interactions and tickets. Include resolved tickets, limit to 10 most recent."
+        "taskInstructions": "Look up customer history for customer from {{flow.output.ticketData.customerTier}} tier including previous interactions and tickets. Include resolved tickets, limit to 10 most recent."
       },
       "status": "valid"
     },
@@ -318,7 +313,7 @@
       "name": "Refine Response with Context",
       "description": "Updates response draft with customer history",
       "config": {
-        "taskInstructions": "Update the draft response with customer history context. Acknowledge patterns or recurring issues. Ensure welcoming tone for first-time customers.",
+        "taskInstructions": "Update the draft response with customer history context from tool results. Acknowledge patterns or recurring issues. Ensure welcoming tone for first-time customers.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.5
       },
@@ -343,6 +338,7 @@
           },
           "required": ["fullName", "email", "company"]
         },
+        "targetFieldName": "leadData",
         "model": "claude-3-5-sonnet",
         "temperature": 0.2
       },
@@ -357,7 +353,7 @@
       "description": "Fetches company information from external API",
       "config": {
         "enabledTools": ["clearbit_company_api"],
-        "taskInstructions": "Extract domain from email and fetch company data including industry, employees, revenue, technologies, and alexa rank."
+        "taskInstructions": "Extract domain from {{flow.output.leadData.email}} and fetch company data including industry, employees, revenue, technologies, and alexa rank."
       },
       "status": "valid"
     },
@@ -370,7 +366,7 @@
       "description": "Retrieves professional profile data",
       "config": {
         "enabledTools": ["linkedin_profile_fetch"],
-        "taskInstructions": "Fetch LinkedIn profile using email. Request profileUrl, currentPosition, companySize, and connections."
+        "taskInstructions": "Fetch LinkedIn profile using email {{flow.output.leadData.email}}. Request profileUrl, currentPosition, companySize, and connections."
       },
       "status": "valid"
     },
@@ -389,7 +385,8 @@
             "segment": { "type": "string", "enum": ["enterprise", "mid-market", "smb"] }
           }
         },
-        "taskInstructions": "Calculate leadScore: revenue>10M=30 else 10, employees>500=25 else 5, connections>500=20 else 5, has salesforce=15, referral source=10 else 5. Segment: >=75=enterprise, >=50=mid-market, else smb."
+        "targetFieldName": "leadScore",
+        "taskInstructions": "Calculate leadScore based on enriched company data: revenue>10M=30 else 10, employees>500=25 else 5, connections>500=20 else 5, has salesforce=15, referral source from {{flow.output.leadData.source}}=10 else 5. Segment: >=75=enterprise, >=50=mid-market, else smb."
       },
       "status": "valid"
     },
@@ -410,7 +407,9 @@
             "explanation": { "type": "string" }
           }
         },
-        "taskInstructions": "Analyze content for: hate speech, self-harm, violence, sexual content, spam. Return structured assessment.",
+        "targetFieldName": "violationCategories",
+        "isPushable": true,
+        "taskInstructions": "Analyze {{input}} for: hate speech, self-harm, violence, sexual content, spam. Return structured assessment.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.2
       },
@@ -431,7 +430,8 @@
             "reviewPriority": { "type": "string", "enum": ["high", "medium", "low"] }
           }
         },
-        "taskInstructions": "Set requiresReview=true if violationFound or confidence<0.8. Set reviewPriority: high if violationFound, medium if confidence<0.5, else low."
+        "targetFieldName": "reviewFlags",
+        "taskInstructions": "Set requiresReview=true if {{flow.output.safetyAnalysis.violationFound}} or confidence<0.8. Set reviewPriority: high if violationFound, medium if confidence<0.5, else low."
       },
       "status": "valid"
     },
@@ -452,6 +452,7 @@
             "dates": { "type": "array", "items": { "type": "string" } }
           }
         },
+        "targetFieldName": "entities",
         "model": "claude-3-5-sonnet",
         "temperature": 0.1
       },
@@ -478,6 +479,7 @@
             "totalAmount": { "type": "number" }
           }
         },
+        "targetFieldName": "invoiceData",
         "taskInstructions": "Extract invoice number, dates, vendor, line items with description/quantity/price/total, subtotal, tax, and total.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.1
@@ -493,7 +495,7 @@
       "description": "Cross-references invoice with purchase order",
       "config": {
         "enabledTools": ["erp_po_validation"],
-        "taskInstructions": "Validate invoice against existing PO using invoice number and vendor. Use match threshold of 0.95."
+        "taskInstructions": "Validate invoice {{flow.output.invoiceData.invoiceNumber}} from vendor {{flow.output.invoiceData.vendorName}} against existing PO. Use match threshold of 0.95."
       },
       "status": "valid"
     },
@@ -537,6 +539,8 @@
             }
           }
         },
+        "targetFieldName": "actionItems",
+        "isPushable": true,
         "model": "claude-3-5-sonnet",
         "temperature": 0.3
       },
@@ -567,6 +571,8 @@
             }
           }
         },
+        "targetFieldName": "decisions",
+        "isPushable": true,
         "model": "claude-3-5-sonnet",
         "temperature": 0.3
       },
@@ -580,7 +586,7 @@
       "name": "Generate Meeting Summary",
       "description": "Creates comprehensive meeting summary",
       "config": {
-        "taskInstructions": "Generate meeting summary with: overview (purpose, attendees, duration), key discussion points, decisions made, action items table, next meeting info if mentioned.",
+        "taskInstructions": "Generate meeting summary with: overview (purpose, attendees, duration), key discussion points, decisions {{flow.output.decisions}}, action items {{flow.output.actionItems}}, next meeting info if mentioned.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.5
       },

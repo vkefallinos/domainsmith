@@ -8,8 +8,8 @@
 
 /**
  * Type of task that defines what operation it performs
- * - updateFlowOutput: Partially updates flow output data and passes structured output to next task
- * - executeTask: Same as updateFlowOutput but does NOT pass structured output to next task
+ * - updateFlowOutput: Updates a specific key in the flow output with structured LLM output
+ * - executeTask: Performs operations without adding structured LLM output to flow state
  */
 export type TaskType = "updateFlowOutput" | "executeTask";
 
@@ -117,51 +117,29 @@ export type TaskConfig = FlowTaskConfig;
  * Configuration for flow task types (updateFlowOutput and executeTask)
  */
 export interface FlowTaskConfig {
-  /** JSON Schema definition for expected output structure */
+  /** JSON Schema definition for expected output structure (updateFlowOutput only) */
   outputSchema?: JSONSchema;
 
-  /** Field updates to apply to flow output */
-  fieldUpdates?: FieldUpdate[];
+  /** The key in the flow output object where the LLM output will be stored (updateFlowOutput only, required) */
+  targetFieldName?: string;
 
-  /** Array push operations - add items to array fields */
-  arrayPushes?: ArrayPushOperation[];
+  /** If true, the LLM output is pushed to an array at targetFieldName instead of overwriting (updateFlowOutput only) */
+  isPushable?: boolean;
 
   /** Prompt fragments to enable with specific field values */
   promptFragmentFields?: PromptFragmentField[];
 
-  /** Tools to enable for this task */
+  /** Tools to enable for this task (from workspace tool registry) */
   enabledTools?: string[];
 
-  /** Task-specific instructions */
+  /** Task-specific instructions (supports template variables) */
   taskInstructions?: string;
 
-  /** Model identifier to use for generation */
+  /** Model identifier to use for generation (inherits from agent if not specified) */
   model?: string;
 
-  /** Temperature setting for generation (0-1) */
+  /** Temperature setting for generation (0-1, inherits from agent if not specified) */
   temperature?: number;
-}
-
-/**
- * A field update operation
- */
-export interface FieldUpdate {
-  /** Target field path (supports dot notation for nested fields) */
-  field: string;
-
-  /** Value to set (can use template variables like {{previousTask.fieldName}}) */
-  value: string | number | boolean | null;
-}
-
-/**
- * An array push operation
- */
-export interface ArrayPushOperation {
-  /** Target array field path (supports dot notation) */
-  arrayField: string;
-
-  /** Item(s) to push (can use template variables) */
-  items: string | number | boolean | null | unknown[];
 }
 
 /**
