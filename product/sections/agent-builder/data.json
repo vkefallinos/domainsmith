@@ -26,7 +26,7 @@
       "description": "Classroom characteristics, student demographics, and learning environment configuration",
       "category": "Teaching",
       "tags": ["classroom", "management", "environment", "students"],
-      "icon": "users",
+      "icon": "👥",
       "color": "#3b82f6",
       "directoryPath": "/classroom",
       "schema": {
@@ -35,7 +35,7 @@
           "id": "section-classroom",
           "label": "Classroom Management",
           "description": "Classroom characteristics, student demographics, and learning environment configuration",
-          "icon": "users",
+          "icon": "👥",
           "directoryPath": "/classroom",
           "children": [
             {
@@ -374,7 +374,7 @@
       "description": "Teacher experience, specialization, and teaching preferences",
       "category": "Teaching",
       "tags": ["teacher", "profile", "experience", "specialization"],
-      "icon": "person",
+      "icon": "👤",
       "color": "#8b5cf6",
       "directoryPath": "/teacher",
       "schema": {
@@ -383,7 +383,7 @@
           "id": "section-teacher",
           "label": "Teacher Profile",
           "description": "Teacher experience, specialization, and teaching preferences",
-          "icon": "person",
+          "icon": "👤",
           "directoryPath": "/teacher",
           "children": [
             {
@@ -656,7 +656,7 @@
       "description": "Curriculum frameworks, standards alignment, and learning objectives",
       "category": "Curriculum",
       "tags": ["curriculum", "standards", "objectives", "alignment"],
-      "icon": "book",
+      "icon": "📚",
       "color": "#10b981",
       "directoryPath": "/curriculum",
       "schema": {
@@ -665,7 +665,7 @@
           "id": "section-curriculum",
           "label": "Curriculum Standards",
           "description": "Curriculum frameworks, standards alignment, and learning objectives",
-          "icon": "book",
+          "icon": "📚",
           "directoryPath": "/curriculum",
           "children": [
             {
@@ -832,7 +832,7 @@
       "description": "Topic breakdowns and content areas by subject",
       "category": "Curriculum",
       "tags": ["subjects", "topics", "content", "standards"],
-      "icon": "library",
+      "icon": "📖",
       "color": "#f59e0b",
       "directoryPath": "/subjects",
       "schema": {
@@ -841,7 +841,7 @@
           "id": "section-subjects",
           "label": "Subject Topics",
           "description": "Topic breakdowns and content areas by subject",
-          "icon": "library",
+          "icon": "📖",
           "directoryPath": "/subjects",
           "children": [
             {

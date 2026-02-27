@@ -372,8 +372,8 @@ export interface AgentBuilderCallbacks {
   onDetachFlow: (slashCommandId: string) => void;
   /** Called to toggle a slash command enabled/disabled */
   onToggleSlashCommand: (slashCommandId: string, enabled: boolean) => void;
-  /** Called to edit an existing slash command */
-  onEditSlashCommand: (slashCommandId: string, commandId: string, name: string, description: string) => void;
+  /** Called to edit an existing slash command - receives the slash command ID */
+  onEditSlashCommand: (slashCommandId: string) => void;
 }
 
 /**
