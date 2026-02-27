@@ -2,7 +2,7 @@ import data from '@/../product/sections/flow-builder/data.json'
 import type { Flow, Task } from '@/../product/sections/flow-builder/types'
 import { FlowDetailEditor } from './components'
 
-// Mock a flow with its tasks for preview
+// shell a flow with its tasks for preview
 const previewFlow: Flow = data.flows[0] // Customer Onboarding Analysis
 const previewTasks: Task[] = data.tasks.filter((t: Task) => t.flowId === previewFlow.id)
 
