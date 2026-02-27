@@ -289,87 +289,6 @@ export interface EditorConfig {
   syntaxHighlighting: boolean;
 }
 
-// ============================================================================
-// Tool Configuration Types
-// ============================================================================
-
-/**
- * A tool parameter definition
- */
-export interface ToolParameter {
-  /** Parameter name */
-  name: string;
-  /** Parameter type */
-  type: 'string' | 'number' | 'boolean' | 'enum';
-  /** Display label */
-  label?: string;
-  /** Description of what the parameter does */
-  description?: string;
-  /** Whether this parameter is required */
-  required?: boolean;
-  /** Default value */
-  default?: string | number | boolean | string[];
-  /** Whether this is a secret parameter (password, API key, etc.) */
-  secret?: boolean;
-  /** Whether multiple values can be selected (for enum type) */
-  multiple?: boolean;
-  /** Available options (for enum type) */
-  options?: string[];
-}
-
-/**
- * A tool that can be configured and used by prompt fragments
- */
-export interface Tool {
-  /** Unique tool identifier */
-  id: string;
-  /** Display name */
-  name: string;
-  /** Description of what the tool does */
-  description: string;
-  /** Tool category for filtering */
-  category?: string;
-  /** Configurable parameters */
-  parameters: ToolParameter[];
-}
-
-/**
- * Tool configuration attached to a file or directory
- */
-export interface ToolConfiguration {
-  /** Tool identifier */
-  toolId: string;
-  /** Whether the tool is enabled */
-  enabled: boolean;
-  /** Parameter values */
-  parameters?: Record<string, string | number | boolean | string[]>;
-}
-
-/**
- * Tool inherited from a parent directory
- */
-export interface InheritedTool {
-  /** Tool identifier */
-  toolId: string;
-  /** Source directory path */
-  sourcePath: string;
-  /** Parameter values from parent */
-  parameters?: Record<string, string | number | boolean | string[]>;
-}
-
-/**
- * Tool sidebar UI state
- */
-export interface ToolSidebarState {
-  /** Whether sidebar is open */
-  isOpen: boolean;
-  /** Current search query */
-  searchQuery: string;
-  /** Category filter (null = all) */
-  filterCategory: string | null;
-}
-
-// Extend PromptLibraryProps with tool-related props
 export interface PromptLibraryProps {
   /** The complete file system tree structure */
   fileSystem: Directory;
@@ -387,15 +306,6 @@ export interface PromptLibraryProps {
   validationErrors?: ValidationError[];
   /** Empty state type */
   emptyState?: 'no-selection' | 'empty-library';
-
-  /** Available tools that can be configured */
-  availableTools?: Tool[];
-  /** Tool sidebar state */
-  toolSidebar?: ToolSidebarState;
-  /** Tools inherited from parent directories */
-  inheritedTools?: InheritedTool[];
-  /** Tools explicitly configured for current node */
-  configuredTools?: ToolConfiguration[];
 
   /** Callback when a file is selected in the tree */
   onSelectFile: (file: PromptFragment) => void;
@@ -425,14 +335,4 @@ export interface PromptLibraryProps {
   onDuplicate?: (nodeId: string) => void;
   /** Callback when error is dismissed */
   onDismissError?: () => void;
-
-  /** Tool sidebar callbacks */
-  /** Callback when tool sidebar toggle is clicked */
-  onToggleToolSidebar?: () => void;
-  /** Callback when tool search query changes */
-  onToolSearchChange?: (query: string) => void;
-  /** Callback when a tool is toggled on/off */
-  onToggleTool?: (toolId: string, enabled: boolean) => void;
-  /** Callback when tool parameters are updated */
-  onUpdateToolParameters?: (toolId: string, parameters: Record<string, string | number | boolean | string[]>) => void;
 }

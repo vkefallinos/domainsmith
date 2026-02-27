@@ -17,40 +17,6 @@ function collectAllFolderPaths(node: FileSystemNode, paths: string[] = []): stri
   return paths
 }
 
-// Sample tools data for demonstration
-const sampleTools = [
-  {
-    id: 'web-search',
-    name: 'Web Search',
-    description: 'Search the web for current information',
-    category: 'search',
-    parameters: [
-      { name: 'maxResults', type: 'number' as const, label: 'Max Results', default: 5, description: 'Maximum number of results to return' },
-      { name: 'safeSearch', type: 'boolean' as const, label: 'Safe Search', default: true },
-    ],
-  },
-  {
-    id: 'code-executor',
-    name: 'Code Executor',
-    description: 'Execute code snippets in a sandboxed environment',
-    category: 'execution',
-    parameters: [
-      { name: 'timeout', type: 'number' as const, label: 'Timeout (s)', default: 30, description: 'Execution timeout in seconds' },
-      { name: 'language', type: 'enum' as const, label: 'Language', default: 'python', options: ['python', 'javascript', 'bash'] },
-    ],
-  },
-  {
-    id: 'api-client',
-    name: 'API Client',
-    description: 'Make HTTP requests to external APIs',
-    category: 'network',
-    parameters: [
-      { name: 'timeout', type: 'number' as const, label: 'Timeout (ms)', default: 5000 },
-      { name: 'apiKey', type: 'string' as const, label: 'API Key', secret: true },
-    ],
-  },
-]
-
 export default function PromptLibraryPreview() {
   // State for expanded folders
   const [expandedFolders, setExpandedFolders] = useState<string[]>(
@@ -114,36 +80,12 @@ export default function PromptLibraryPreview() {
     console.log('Duplicate node:', nodeId)
   }
 
-  // Tool configuration handlers
-  const handleToggleToolSidebar = () => {
-    console.log('Toggle tool sidebar')
-  }
-
-  const handleToolSearchChange = (query: string) => {
-    console.log('Tool search:', query)
-  }
-
-  const handleToggleTool = (toolId: string, enabled: boolean) => {
-    console.log('Toggle tool:', toolId, 'enabled:', enabled)
-  }
-
-  const handleUpdateToolParameters = (
-    toolId: string,
-    parameters: Record<string, string | number | boolean | string[]>
-  ) => {
-    console.log('Update tool parameters:', toolId, parameters)
-  }
-
   return (
     <PromptLibrary
       fileSystem={data.fileSystem as Directory}
       selectedFile={data.selectedFile as PromptFragment | null}
       expandedFolders={expandedFolders}
       unsavedChanges={data.unsavedChanges as boolean}
-      availableTools={sampleTools}
-      toolSidebar={{ isOpen: false, searchQuery: '', filterCategory: null }}
-      inheritedTools={[]}
-      configuredTools={[]}
       onSelectFile={handleSelectFile}
       onToggleFolder={handleToggleFolder}
       onExpandAll={handleExpandAll}
@@ -156,10 +98,6 @@ export default function PromptLibraryPreview() {
       onMove={handleMove}
       onDelete={handleDelete}
       onDuplicate={handleDuplicate}
-      onToggleToolSidebar={handleToggleToolSidebar}
-      onToolSearchChange={handleToolSearchChange}
-      onToggleTool={handleToggleTool}
-      onUpdateToolParameters={handleUpdateToolParameters}
     />
   )
 }
