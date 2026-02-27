@@ -134,7 +134,7 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
   } = props
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'tools' | 'commands' | 'preview'>('tools')
+  const [activeTab, setActiveTab] = useState<'tools' | 'commands' | 'preview'>('commands')
   const [saveModalOpen, setSaveModalOpen] = useState(false)
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set(selectedDomainIds))
 
@@ -247,50 +247,52 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
   const hasSelection = selectedDomains.length > 0
 
   return (
-    <div className="h-full flex bg-slate-50 dark:bg-slate-950">
-      {/* Left Panel - Domain Selection */}
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
+      {/* Domain Selector - Top Bar */}
       <DomainSelector
         domains={domains}
         selectedDomainIds={selectedDomainIds}
         onDomainsChange={onDomainsChange}
       />
 
-      {/* Center Panel - Agent Builder */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                  Configure Agent
-                </h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {hasSelection
-                    ? `Building with ${selectedDomains.length} domain${selectedDomains.length > 1 ? 's' : ''}`
-                    : 'Select domains to begin building your agent'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={onNewAgent}
-                  className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
-                >
-                  New Agent
-                </button>
-                <button
-                  onClick={() => setSaveModalOpen(true)}
-                  disabled={!hasSelection}
-                  className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white rounded-lg transition-all shadow-lg shadow-violet-200/50 dark:shadow-violet-900/20 disabled:shadow-none flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                  </svg>
-                  Save Agent
-                </button>
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Center Panel - Agent Builder */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-6 py-8">
+            {/* Header */}
+            <div className="mb-8">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                    Configure Agent
+                  </h1>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {hasSelection
+                      ? `Building with ${selectedDomains.length} domain${selectedDomains.length > 1 ? 's' : ''}`
+                      : 'Select domains to begin building your agent'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={onNewAgent}
+                    className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                  >
+                    New Agent
+                  </button>
+                  <button
+                    onClick={() => setSaveModalOpen(true)}
+                    disabled={!hasSelection}
+                    className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white rounded-lg transition-all shadow-lg shadow-violet-200/50 dark:shadow-violet-900/20 disabled:shadow-none flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    Save Agent
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Main Instruction Section */}
           <div className="mb-8">
@@ -428,13 +430,13 @@ These instructions will appear at the top of your agent's system prompt.`}
         </div>
       </main>
 
-      {/* Right Panel - Tools, Commands & Preview */}
-      <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
-        {/* Tabs */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800">
+    {/* Right Panel - Commands, Tools & Preview */}
+    <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+      {/* Tabs */}
+      <div className="flex border-b border-slate-200 dark:border-slate-800">
           {[
-            { id: 'tools' as const, label: 'Tools', count: enabledToolMappings.length },
             { id: 'commands' as const, label: 'Commands', count: attachedFlows?.filter(f => f.slashCommand.enabled).length || 0 },
+            { id: 'tools' as const, label: 'Tools', count: enabledToolMappings.length },
             { id: 'preview' as const, label: 'Preview', count: null },
           ].map(tab => (
             <button
@@ -487,7 +489,7 @@ These instructions will appear at the top of your agent's system prompt.`}
               attachedFlows={attachedFlows || []}
               availableFlows={availableFlows || []}
               onToggleEnabled={onToggleSlashCommand || (() => {})}
-              onEditCommand={(id) => onEditSlashCommand?.(id, '', '', '')}
+              onEditCommand={(id) => onEditSlashCommand?.(id)}
               onDetachFlow={onDetachFlow || (() => {})}
               onAttachFlow={onAttachFlow || (() => {})}
               onOpenFlowBuilder={onOpenFlowBuilder || (() => {})}
@@ -498,14 +500,15 @@ These instructions will appear at the top of your agent's system prompt.`}
             <PromptPreviewPanel promptPreview={promptPreview} onGenerate={onGeneratePreview || (() => {})} />
           )}
         </div>
-      </aside>
+    </aside>
 
-      {/* Save Agent Modal */}
-      <SaveAgentModal
-        isOpen={saveModalOpen}
-        onClose={() => setSaveModalOpen(false)}
-        onSave={handleSaveAgent}
-      />
+    {/* Save Agent Modal */}
+    <SaveAgentModal
+      isOpen={saveModalOpen}
+      onClose={() => setSaveModalOpen(false)}
+      onSave={handleSaveAgent}
+    />
+    </div>
     </div>
   )
 }

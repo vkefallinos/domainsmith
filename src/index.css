@@ -9,10 +9,10 @@
   Using Tailwind's stone palette for warmth
 */
 @theme {
-  /* Font families - DM Sans for clean, geometric type */
-  --font-display: "DM Sans", system-ui, sans-serif;
-  --font-body: "DM Sans", system-ui, sans-serif;
-  --font-sans: "DM Sans", system-ui, sans-serif;
+  /* Font families - Quicksand for clean, geometric type */
+  --font-display: "Quicksand", system-ui, sans-serif;
+  --font-body: "Quicksand", system-ui, sans-serif;
+  --font-sans: "Quicksand", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 

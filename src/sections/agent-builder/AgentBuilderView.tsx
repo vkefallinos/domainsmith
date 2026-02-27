@@ -1,11 +1,14 @@
 import data from '@/../product/sections/agent-builder/data.json'
+import flowBuilderData from '@/../product/sections/flow-builder/data.json'
 import { useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AgentFormBuilder } from './components/AgentFormBuilder'
 import { SavedAgentsList } from './components/SavedAgentsList'
 import { ToolLibraryModal } from './components/ToolLibraryModal'
 import { FlowBuilderModal } from './components/FlowBuilderModal'
+import { FlowEditorModal } from './components/FlowEditorModal'
 import type { FormFieldValue, AttachedFlow } from '@/../product/sections/agent-builder/types'
-import { useNavigate } from 'react-router-dom'
+import type { Flow, Task } from '@/../product/sections/flow-builder/types'
 
 /**
  * Preview wrapper for Agent Builder view
@@ -17,6 +20,7 @@ import { useNavigate } from 'react-router-dom'
  * and pass your own data via props.
  */
 export default function AgentBuilderPreview() {
+  const navigate = useNavigate()
   const [view, setView] = useState<'builder' | 'agents'>('builder')
 
   // Initial state with sample data - using the first saved agent config
@@ -28,6 +32,9 @@ export default function AgentBuilderPreview() {
   const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>(firstAgent.emptyFieldsForRuntime || [])
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
+  const [flowEditorOpen, setFlowEditorOpen] = useState(false)
+  const [currentEditingFlow, setCurrentEditingFlow] = useState<Flow | null>(null)
+  const [currentEditingTasks, setCurrentEditingTasks] = useState<Task[]>([])
 
   // Sample attached flows for demo - use from first agent if available
   const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>(firstAgent.attachedFlows || [])
@@ -176,14 +183,93 @@ export default function AgentBuilderPreview() {
     )
     console.log('Toggle command:', slashCommandId, 'enabled:', enabled)
   }, [])
-  const navigate = useNavigate()
+
+  // Find the attached flow by slash command ID
   const handleEditSlashCommand = useCallback(
-    (slashCommandId: string, commandId: string, name: string, description: string) => {
-      window.location.href = '/sections/flow-builder/screen-designs/FlowBuilderView/fullscreen'
-      console.log('Edit command:', slashCommandId, commandId, name, description)
+    (slashCommandId: string) => {
+      const attachedFlow = attachedFlows.find(af => af.slashCommand.id === slashCommandId)
+      if (!attachedFlow) return
+
+      // Get the full flow data from flow builder data
+      const fullFlow = flowBuilderData.flows.find(f => f.id === attachedFlow.flowId)
+      if (!fullFlow) return
+
+      // Get the tasks for this flow
+      const flowTasks = flowBuilderData.tasks.filter((t: Task) => t.flowId === attachedFlow.flowId)
+
+      setCurrentEditingFlow(fullFlow)
+      setCurrentEditingTasks(flowTasks)
+      setFlowEditorOpen(true)
+
+      // Navigate to a route based on the command name
+      navigate(`/agent-builder/flow/${attachedFlow.slashCommand.commandId}`)
+
+      console.log('Edit flow:', attachedFlow.flowName, 'with', flowTasks.length, 'tasks')
     },
-    []
+    [attachedFlows, navigate]
   )
+
+  // Flow editor handlers
+  const handleCloseFlowEditor = useCallback(() => {
+    setFlowEditorOpen(false)
+    setCurrentEditingFlow(null)
+    setCurrentEditingTasks([])
+    // Navigate back to agent builder
+    navigate('/agent-builder')
+  }, [navigate])
+
+  const handleUpdateFlow = useCallback((updates: Partial<Flow>) => {
+    if (!currentEditingFlow) return
+    setCurrentEditingFlow(prev => prev ? { ...prev, ...updates } : null)
+    console.log('Update flow:', currentEditingFlow.id, updates)
+  }, [currentEditingFlow])
+
+  const handleAddTask = useCallback((task: Omit<Task, 'id'>) => {
+    const newTask: Task = {
+      ...task,
+      id: `task_${Date.now()}`,
+    }
+    setCurrentEditingTasks(prev => [...prev, newTask])
+    console.log('Add task to flow:', currentEditingFlow?.id)
+  }, [currentEditingFlow])
+
+  const handleUpdateTask = useCallback((taskId: string, updates: Partial<Task>) => {
+    setCurrentEditingTasks(prev =>
+      prev.map(t => (t.id === taskId ? { ...t, ...updates } : t))
+    )
+    console.log('Update task:', taskId)
+  }, [])
+
+  const handleDeleteTask = useCallback((taskId: string) => {
+    setCurrentEditingTasks(prev => prev.filter(t => t.id !== taskId))
+    console.log('Delete task:', taskId)
+  }, [])
+
+  const handleDuplicateTask = useCallback((taskId: string) => {
+    setCurrentEditingTasks(prev => {
+      const task = prev.find(t => t.id === taskId)
+      if (!task) return prev
+      const newTask: Task = {
+        ...task,
+        id: `task_${Date.now()}`,
+        name: `${task.name} (copy)`,
+        order: prev.length + 1,
+      }
+      return [...prev, newTask]
+    })
+    console.log('Duplicate task:', taskId)
+  }, [])
+
+  const handleReorderTasks = useCallback((taskIds: string[]) => {
+    setCurrentEditingTasks(prev => {
+      const taskMap = new Map(prev.map(t => [t.id, t]))
+      return taskIds.map((id, index) => {
+        const task = taskMap.get(id)
+        return task ? { ...task, order: index + 1 } : prev[index]
+      })
+    })
+    console.log('Reorder tasks:', taskIds)
+  }, [])
 
   const promptPreview = data.promptPreview
 
@@ -291,6 +377,22 @@ export default function AgentBuilderPreview() {
         onAttachFlow={handleAttachFlow}
         onCreateNewFlow={() => console.log('Create new flow')}
       />
+
+      {/* Flow Editor Modal */}
+      {currentEditingFlow && (
+        <FlowEditorModal
+          isOpen={flowEditorOpen}
+          onClose={handleCloseFlowEditor}
+          flow={currentEditingFlow}
+          tasks={currentEditingTasks}
+          onUpdateFlow={handleUpdateFlow}
+          onAddTask={handleAddTask}
+          onUpdateTask={handleUpdateTask}
+          onDeleteTask={handleDeleteTask}
+          onDuplicateTask={handleDuplicateTask}
+          onReorderTasks={handleReorderTasks}
+        />
+      )}
     </div>
   )
 }

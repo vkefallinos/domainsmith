@@ -14,6 +14,7 @@ export { SaveAgentModal } from './SaveAgentModal'
 // Modal components
 export { ToolLibraryModal } from './ToolLibraryModal'
 export { FlowBuilderModal } from './FlowBuilderModal'
+export { FlowEditorModal } from './FlowEditorModal'
 
 // Other components
 export { SavedAgentsList } from './SavedAgentsList'
