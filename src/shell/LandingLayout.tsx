@@ -267,7 +267,7 @@ export default function LandingLayout() {
       <Dialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Select Workspace</DialogTitle>
+            <DialogTitle>Select Demo Workspace</DialogTitle>
             <DialogDescription>
               Choose a workspace to open {targetApp === 'studio' ? 'Studio' : 'Chat'}.
             </DialogDescription>
