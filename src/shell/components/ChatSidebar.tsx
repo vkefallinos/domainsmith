@@ -92,7 +92,7 @@ export function ChatSidebar({
       `}
     >
       {/* Logo and App Name */}
-      <div className="p-3 border-b border-slate-200 dark:border-slate-800">
+      <div className="p-3 border-b border-slate-200 dark:border-slate-800 ">
         <div
           className={`
             flex items-center gap-2
@@ -126,7 +126,7 @@ export function ChatSidebar({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-8">
         {!isCollapsed ? (
           <div className="space-y-6">
             {/* Agents Section */}

@@ -522,24 +522,14 @@ export function StudioShell({
           <div className="flex items-center gap-2">
             <Link
               to="/shell"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-300"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors text-violet-700 dark:text-violet-300"
               title="Go to Shell"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m0 0l3-3 3m-3 3V9" />
               </svg>
-              <span className="text-sm font-medium hidden sm:inline">Shell</span>
+              <span className="text-sm font-medium">Go to Shell</span>
             </Link>
-            {user && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
-                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-medium">
-                  {user.name.charAt(0)}
-                </div>
-                {!isSidebarCollapsed && (
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{user.name}</span>
-                )}
-              </div>
-            )}
           </div>
         </header>
 
