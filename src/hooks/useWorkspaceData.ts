@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { WORKSPACE_MAP, loadWorkspaceData } from '@/lib/workspaceContext'
+import { loadWorkspaceData } from '@/lib/workspaceContext'
+import { DEFAULT_WORKSPACE_SLUG, getNormalizedWorkspace } from '@/lib/workspaces'
 
 // Maps workspace slug to directory name
 export function getWorkspaceDir(workspaceName?: string): string {
-  if (!workspaceName) return 'education'
-  return WORKSPACE_MAP[workspaceName] || 'education'
+  return getNormalizedWorkspace(workspaceName)
 }
 
 // Hook to dynamically load workspace-specific JSON data
 export function useWorkspaceData<T>(sectionPath: string) {
-  const { workspaceName } = useParams<{ workspaceName?: string }>()
+  const { workspaceName = DEFAULT_WORKSPACE_SLUG } = useParams<{ workspaceName?: string }>()
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<Error | null>(null)
   const [loading, setLoading] = useState(true)

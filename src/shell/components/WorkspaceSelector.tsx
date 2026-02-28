@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { AVAILABLE_WORKSPACE_SLUGS } from '@/lib/workspaces'
 
 export type Workspace = {
   id: string
@@ -21,11 +22,28 @@ export function workspaceToSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/^-+|-+$/g, '')
 }
 
+function slugToWorkspaceName(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444', '#84cc16']
+
+const FALLBACK_WORKSPACE: Workspace = {
+  id: 'workspace-default',
+  name: 'Workspace',
+  color: WORKSPACE_COLORS[0],
+}
+
 // Dummy workspaces
-export const DUMMY_WORKSPACES: Workspace[] = [
-  { id: 'workspace-education', name: 'Education', color: '#10b981' },
-  { id: 'workspace-web-development', name: 'Web development', color: '#8b5cf6' },
-]
+export const DUMMY_WORKSPACES: Workspace[] = AVAILABLE_WORKSPACE_SLUGS.map((slug, index) => ({
+  id: `workspace-${slug}`,
+  name: slugToWorkspaceName(slug),
+  color: WORKSPACE_COLORS[index % WORKSPACE_COLORS.length],
+}))
 
 export interface WorkspaceSelectorProps {
   currentWorkspace?: Workspace
@@ -34,7 +52,7 @@ export interface WorkspaceSelectorProps {
 }
 
 export function WorkspaceSelector({
-  currentWorkspace = DUMMY_WORKSPACES[0],
+  currentWorkspace = DUMMY_WORKSPACES[0] || FALLBACK_WORKSPACE,
   onWorkspaceChange,
   isCollapsed = false,
 }: WorkspaceSelectorProps) {
