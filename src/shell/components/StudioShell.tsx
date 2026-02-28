@@ -542,11 +542,8 @@ export function StudioShell({
             <div className="p-6">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                  Prompt Library Studio
+                  Manage domains and agents
                 </h2>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Manage domains and agents for your prompt library.
-                </p>
               </div>
 
               {/* Domains Section */}
