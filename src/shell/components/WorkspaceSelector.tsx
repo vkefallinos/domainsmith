@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Building2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +16,15 @@ export type Workspace = {
   color: string
 }
 
+// Helper to convert workspace name to URL-friendly slug
+export function workspaceToSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/^-+|-+$/g, '')
+}
+
 // Dummy workspaces
 export const DUMMY_WORKSPACES: Workspace[] = [
-  { id: 'workspace-1', name: 'Education', color: '#10b981' },
-  { id: 'workspace-2', name: 'Web development', color: '#8b5cf6' },
-  { id: 'workspace-3', name: 'Personal', color: '#f59e0b' },
-  { id: 'workspace-4', name: 'Company ', color: '#3b82f6' },
+  { id: 'workspace-education', name: 'Education', color: '#10b981' },
+  { id: 'workspace-web-development', name: 'Web development', color: '#8b5cf6' },
 ]
 
 export interface WorkspaceSelectorProps {
@@ -35,12 +39,30 @@ export function WorkspaceSelector({
   isCollapsed = false,
 }: WorkspaceSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
 
-  const handleSelect = (workspace: Workspace) => {
+  const handleSelect = useCallback((workspace: Workspace) => {
     onWorkspaceChange?.(workspace)
     setIsOpen(false)
-  }
 
+    // Navigate to the new workspace URL
+    // Extract the current app path (chat or studio) and any nested routes
+    const pathParts = location.pathname.split('/')
+    const workspaceIndex = pathParts.findIndex(part =>
+      DUMMY_WORKSPACES.some(w => workspaceToSlug(w.name) === part)
+    )
+    console.log('Current path parts:', pathParts, 'Workspace index:', workspaceIndex)
+    if (workspaceIndex !== -1) {
+      // Replace the workspace slug in the current path
+      pathParts[workspaceIndex] = workspaceToSlug(workspace.name)
+      navigate(pathParts.join('/'))
+    } else {
+      // If we're not in a workspace route, navigate to the default chat view
+      navigate(`/workspace/${workspaceToSlug(workspace.name)}/chat`)
+    }
+  }, [navigate, location.pathname, onWorkspaceChange])
+  console.log('Rendering WorkspaceSelector with currentWorkspace:', currentWorkspace, 'isCollapsed:', isCollapsed)
   if (isCollapsed) {
     // Collapsed state - show just an icon
     return (

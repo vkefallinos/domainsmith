@@ -1,11 +1,22 @@
-import { useState, useCallback, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ChatSidebar } from './ChatSidebar'
 import { AgentsDashboard } from './AgentsDashboard'
 import { AgentRuntimeView } from '@/sections/agent-runtime/components'
-import agentRuntimeData from '@/../product/sections/agent-runtime/data.json'
+import agentRuntimeData from '@/../mock_data/workspaces/education/sections/agent-runtime/data.json'
 import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
-import { DUMMY_WORKSPACES, type Workspace } from './WorkspaceSelector'
+import { DUMMY_WORKSPACES, workspaceToSlug, type Workspace } from './WorkspaceSelector'
+
+// Helper to get workspace from URL param
+function useWorkspace(workspaceName?: string): Workspace {
+  return useMemo(() => {
+    if (workspaceName) {
+      const found = DUMMY_WORKSPACES.find(w => workspaceToSlug(w.name) === workspaceName)
+      return found || DUMMY_WORKSPACES[0]
+    }
+    return DUMMY_WORKSPACES[0]
+  }, [workspaceName])
+}
 
 export interface AppShellProps {
   // User props
@@ -31,14 +42,17 @@ export function AppShell({
   onEditAgent,
   onDeleteAgent,
 }: AppShellProps) {
-  const { agentId, chatId } = useParams()
+  const { agentId, chatId, workspaceName } = useParams()
   const navigate = useNavigate()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Workspace state
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>(DUMMY_WORKSPACES[0])
+  // Workspace - derived directly from URL
+  const currentWorkspace = useWorkspace(workspaceName)
+
+  // Build workspace-aware path helper
+  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
   // Load agents and conversations from runtime data
   const agents = (agentRuntimeData.agents || []) as Agent[]
@@ -81,8 +95,8 @@ export function AppShell({
 
   // Handle back to dashboard
   const handleBackToDashboard = useCallback(() => {
-    navigate('/chat')
-  }, [navigate])
+    navigate(chatPath)
+  }, [navigate, chatPath])
 
   // Handle runtime field change
   const handleRuntimeFieldChange = useCallback((fieldId: string, value: string | string[] | boolean) => {
@@ -102,23 +116,23 @@ export function AppShell({
   // Handle select conversation
   const handleSelectConversation = useCallback((conversationId: string) => {
     if (agentId) {
-      navigate(`/chat/agent/${agentId}/chat/${conversationId}`)
+      navigate(`${chatPath}/agent/${agentId}/chat/${conversationId}`)
     } else {
       // Find the agent for this conversation
       const conv = allConversations.find(c => c.id === conversationId)
       if (conv) {
-        navigate(`/chat/agent/${conv.agentId}/chat/${conversationId}`)
+        navigate(`${chatPath}/agent/${conv.agentId}/chat/${conversationId}`)
       }
     }
-  }, [navigate, agentId, allConversations])
+  }, [navigate, agentId, allConversations, chatPath])
 
   // Handle create conversation
   const handleCreateConversation = useCallback(() => {
     if (!activeAgent) return
 
     const newChatId = `new-${activeAgent.id}-${Date.now()}`
-    navigate(`/chat/agent/${activeAgent.id}/chat/${newChatId}`)
-  }, [activeAgent, navigate])
+    navigate(`${chatPath}/agent/${activeAgent.id}/chat/${newChatId}`)
+  }, [activeAgent, navigate, chatPath])
 
   // Handle delete conversation
   const handleDeleteConversation = useCallback((conversationId: string) => {
@@ -128,17 +142,17 @@ export function AppShell({
       // Switch to another conversation or back to dashboard
       const remaining = agentConversations.filter(c => c.id !== conversationId)
       if (remaining.length > 0) {
-        navigate(`/chat/agent/${agentId}/chat/${remaining[0].id}`)
+        navigate(`${chatPath}/agent/${agentId}/chat/${remaining[0].id}`)
       } else {
-        navigate('/chat')
+        navigate(chatPath)
       }
     }
-  }, [chatId, agentConversations, agentId, navigate])
+  }, [chatId, agentConversations, agentId, navigate, chatPath])
 
   // Handle agent selection from dashboard
   const handleOpenAgent = useCallback((agentId: string) => {
-    navigate(`/chat/agent/${agentId}`)
-  }, [navigate])
+    navigate(`${chatPath}/agent/${agentId}`)
+  }, [navigate, chatPath])
 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950">
@@ -153,7 +167,6 @@ export function AppShell({
         activeChatId={chatId}
         onOpenSettings={onOpenSettings}
         workspace={currentWorkspace}
-        onWorkspaceChange={setCurrentWorkspace}
       />
 
       {/* Main Content Area */}

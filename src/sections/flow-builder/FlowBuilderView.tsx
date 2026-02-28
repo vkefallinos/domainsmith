@@ -1,35 +1,49 @@
-import data from '@/../product/sections/flow-builder/data.json'
+import { useCallback } from 'react'
+import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import type { Flow, Task } from '@/../product/sections/flow-builder/types'
 import { FlowDetailEditor } from './components'
 
-// shell a flow with its tasks for preview
-const previewFlow: Flow = data.flows[0] // Customer Onboarding Analysis
-const previewTasks: Task[] = data.tasks.filter((t: Task) => t.flowId === previewFlow.id)
+type FlowBuilderData = {
+  flows: Flow[]
+  tasks: Task[]
+}
 
 export default function FlowDetailPreview() {
-  const handleUpdateFlow = (updates: Partial<Flow>) => {
-    console.log('Update flow:', previewFlow.id, updates)
-  }
+  const { data, loading, error } = useWorkspaceData<FlowBuilderData>('flow-builder')
 
-  const handleAddTask = (task: Omit<Task, 'id'>) => {
-    console.log('Add task to flow:', previewFlow.id, task)
-  }
+  const handleUpdateFlow = useCallback((updates: Partial<Flow>) => {
+    console.log('Update flow:', updates)
+  }, [])
 
-  const handleUpdateTask = (taskId: string, updates: Partial<Task>) => {
-    console.log('Update task:', taskId, updates)
-  }
+  const handleAddTask = useCallback((task: Omit<Task, 'id'>) => {
+    console.log('Add task to flow:', task)
+  }, [])
 
-  const handleDeleteTask = (taskId: string) => {
+  const handleUpdateTask = useCallback((taskId: string, updates: Partial<Task>) => {
+    console.log('Update task:', taskId)
+  }, [])
+
+  const handleDeleteTask = useCallback((taskId: string) => {
     console.log('Delete task:', taskId)
-  }
+  }, [])
 
-  const handleDuplicateTask = (taskId: string) => {
+  const handleDuplicateTask = useCallback((taskId: string) => {
     console.log('Duplicate task:', taskId)
+  }, [])
+
+  const handleReorderTasks = useCallback((taskIds: string[]) => {
+    console.log('Reorder tasks:', taskIds)
+  }, [])
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
+  if (error || !data?.flows?.[0]) {
+    return <div className="flex items-center justify-center h-screen text-red-500">Error loading data</div>
   }
 
-  const handleReorderTasks = (taskIds: string[]) => {
-    console.log('Reorder tasks:', taskIds)
-  }
+  const previewFlow: Flow = data.flows[0]
+  const previewTasks: Task[] = data.tasks.filter((t: Task) => t.flowId === previewFlow.id)
 
   return (
     <FlowDetailEditor

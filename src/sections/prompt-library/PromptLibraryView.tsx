@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react'
-import data from '@/../product/sections/prompt-library/data.json'
+import { useState, useMemo, useEffect } from 'react'
+import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import { PromptLibrary } from './components/PromptLibrary'
 import type { Directory, PromptFragment, NewFileForm, NewFolderForm, UnsavedChangesAction, FileSystemNode } from '@/../product/sections/prompt-library/types'
 
 // This is a preview wrapper for Design OS only
-// It imports sample data and feeds it to the props-based component
+// It loads workspace-specific sample data and feeds it to the props-based component
 
 // Helper to collect all folder paths from the file system
 function collectAllFolderPaths(node: FileSystemNode, paths: string[] = []): string[] {
@@ -17,16 +17,31 @@ function collectAllFolderPaths(node: FileSystemNode, paths: string[] = []): stri
   return paths
 }
 
+type PromptLibraryData = {
+  fileSystem: Directory
+  selectedFile: PromptFragment | null
+  expandedFolders: string[]
+  unsavedChanges: boolean
+}
+
 export default function PromptLibraryPreview() {
-  // State for expanded folders
-  const [expandedFolders, setExpandedFolders] = useState<string[]>(
-    data.expandedFolders as string[]
-  )
+  const { data, loading, error } = useWorkspaceData<PromptLibraryData>('prompt-library')
+
+  // State for expanded folders - initialize with empty array
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([])
+
+  // Sync expanded folders when data loads
+  useEffect(() => {
+    if (data?.expandedFolders) {
+      setExpandedFolders(data.expandedFolders)
+    }
+  }, [data])
 
   // Memoize all folder paths for expand/collapse all
   const allFolderPaths = useMemo(() => {
-    return collectAllFolderPaths(data.fileSystem as Directory)
-  }, [])
+    if (!data?.fileSystem) return []
+    return collectAllFolderPaths(data.fileSystem as FileSystemNode)
+  }, [data])
 
   const handleToggleFolder = (path: string) => {
     setExpandedFolders(prev =>
@@ -78,6 +93,13 @@ export default function PromptLibraryPreview() {
 
   const handleDuplicate = (nodeId: string) => {
     console.log('Duplicate node:', nodeId)
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
+  if (error || !data) {
+    return <div className="flex items-center justify-center h-screen text-red-500">Error loading data</div>
   }
 
   return (

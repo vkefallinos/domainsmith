@@ -9,11 +9,11 @@ import {
   ChevronRight as ChevronRightSmall,
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import promptLibraryData from '@/../product/sections/prompt-library/data.json'
-import agentBuilderData from '@/../product/sections/agent-builder/data.json'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import promptLibraryData from '@/../mock_data/workspaces/education/sections/prompt-library/data.json'
+import agentBuilderData from '@/../mock_data/workspaces/education/sections/agent-builder/data.json'
 import logo from '@/assets/logo.png'
-import { WorkspaceSelector } from './WorkspaceSelector'
+import { WorkspaceSelector, workspaceToSlug } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
 
 type FileSystemNode = {
@@ -65,7 +65,6 @@ export interface StudioSidebarProps {
   onCreateDomain?: () => void
   onCreateAgent?: () => void
   workspace?: Workspace
-  onWorkspaceChange?: (workspace: Workspace) => void
 }
 
 export function StudioSidebar({
@@ -77,11 +76,15 @@ export function StudioSidebar({
   onCreateDomain,
   onCreateAgent,
   workspace,
-  onWorkspaceChange,
 }: StudioSidebarProps) {
   const location = useLocation()
+  const { workspaceName } = useParams<{ workspaceName: string }>()
   const [domainsExpanded, setDomainsExpanded] = useState(true)
   const [agentsExpanded, setAgentsExpanded] = useState(true)
+
+  // Build workspace-aware path helper
+  const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
+  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
   // Extract domains from prompt library data (top-level directories with renderAs='section')
   const domains = useMemo(() => {
@@ -141,8 +144,7 @@ export function StudioSidebar({
           </Link>
           {!isCollapsed && (
             <WorkspaceSelector
-              workspace={workspace}
-              onWorkspaceChange={onWorkspaceChange}
+              currentWorkspace={workspace}
               isCollapsed={false}
             />
           )}
@@ -150,8 +152,7 @@ export function StudioSidebar({
         {isCollapsed && (
           <div className="flex justify-center mt-2">
             <WorkspaceSelector
-              workspace={workspace}
-              onWorkspaceChange={onWorkspaceChange}
+              currentWorkspace={workspace}
               isCollapsed={true}
             />
           </div>
@@ -182,7 +183,7 @@ export function StudioSidebar({
               {domainsExpanded && (
                 <div className="space-y-0.5">
                   {domains.map((domain) => {
-                    const href = `/studio/domain/${domain.id}`
+                    const href = `${studioPath}/domain/${domain.id}`
                     const isActive = location.pathname === href || activeDomainId === domain.id
 
                     return (
@@ -243,7 +244,7 @@ export function StudioSidebar({
               {agentsExpanded && (
                 <div className="space-y-0.5">
                   {agents.map((agent) => {
-                    const href = `/studio/agent/${agent.id}`
+                    const href = `${studioPath}/agent/${agent.id}`
                     const isActive = location.pathname === href || activeAgentId === agent.id
                     const hasSlashCommand = agent.attachedFlows?.some(
                       (f) => f.slashCommand?.enabled
@@ -315,7 +316,7 @@ export function StudioSidebar({
         <div className="flex flex-col gap-1">
           {/* Chat */}
           <Link
-            to="/chat"
+            to={chatPath}
             className={`
               flex items-center gap-3
               text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300

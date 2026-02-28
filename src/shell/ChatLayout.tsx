@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from './components'
 
 type ChatState = {
@@ -34,7 +34,11 @@ function saveState(state: ChatState) {
 
 export default function ChatLayout() {
   const navigate = useNavigate()
+  const { workspaceName } = useParams<{ workspaceName: string }>()
   const [state, setState] = useState<ChatState>(loadState)
+
+  // Build workspace-aware path helper
+  const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
 
   // Persist state changes
   useEffect(() => {
@@ -47,7 +51,7 @@ export default function ChatLayout() {
       onSidebarCollapsedChange={(collapsed) =>
         setState((prev) => ({ ...prev, sidebarCollapsed: collapsed }))
       }
-      onNewAgent={() => navigate('/studio')}
+      onNewAgent={() => navigate(studioPath)}
       onOpenSettings={() => console.log('Open settings')}
       onEditAgent={(id) => console.log('Edit agent:', id)}
       onDeleteAgent={(id) => console.log('Delete agent:', id)}

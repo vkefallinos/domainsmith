@@ -4,8 +4,7 @@ import { StudioSidebar } from './StudioSidebar'
 import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
-import promptLibraryData from '@/../product/sections/prompt-library/data.json'
-import agentBuilderData from '@/../product/sections/agent-builder/data.json'
+import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import type {
   PromptLibraryProps,
   FileSystemNode,
@@ -19,7 +18,18 @@ import type {
   FormFieldValue,
   AttachedFlow,
 } from '@/../product/sections/agent-builder/types'
-import { DUMMY_WORKSPACES, type Workspace } from './WorkspaceSelector'
+import { DUMMY_WORKSPACES, workspaceToSlug, type Workspace } from './WorkspaceSelector'
+
+// Helper to get workspace from URL param
+function useWorkspace(workspaceName?: string): Workspace {
+  return useMemo(() => {
+    if (workspaceName) {
+      const found = DUMMY_WORKSPACES.find(w => workspaceToSlug(w.name) === workspaceName)
+      return found || DUMMY_WORKSPACES[0]
+    }
+    return DUMMY_WORKSPACES[0]
+  }, [workspaceName])
+}
 
 type StudioState = {
   sidebarCollapsed: boolean
@@ -105,13 +115,22 @@ export function StudioShell({
   onDelete,
   onDuplicate,
 }: StudioShellProps) {
-  const { domainId, agentId } = useParams()
+  const { domainId, agentId, workspaceName } = useParams()
   const navigate = useNavigate()
+
+  // Load workspace data dynamically
+  const { data: promptLibraryData, loading: loadingPromptLibrary } = useWorkspaceData<any>('prompt-library')
+  const { data: agentBuilderData, loading: loadingAgentBuilder } = useWorkspaceData<any>('agent-builder')
+
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
 
-  // Workspace state
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>(DUMMY_WORKSPACES[0])
+  // Workspace - derived directly from URL
+  const currentWorkspace = useWorkspace(workspaceName)
+
+  // Build workspace-aware path helper
+  const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
+  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
   // Prompt Library state
   const [selectedFile, setSelectedFile] = useState<PromptFragment | null>(null)
@@ -130,12 +149,12 @@ export function StudioShell({
 
   // Extract domains from prompt library data
   const domains = useMemo(() => {
-    const fileSystem = (promptLibraryData as any).fileSystem as FileSystemNode
-    if (!fileSystem.children) return []
+    const fileSystem = promptLibraryData?.fileSystem as FileSystemNode
+    if (!fileSystem?.children) return []
 
     return fileSystem.children
-      .filter((child) => child.type === 'directory' && child.config?.renderAs === 'section')
-      .map((dir) => ({
+      .filter((child: any) => child.type === 'directory' && child.config?.renderAs === 'section')
+      .map((dir: any) => ({
         id: dir.id,
         name: dir.name,
         label: dir.config?.label || dir.name,
@@ -144,13 +163,13 @@ export function StudioShell({
         color: dir.config?.color || '#6366f1',
         path: dir.path,
       })) as Domain[]
-  }, [])
+  }, [promptLibraryData])
 
   // Extract agents from agent builder data
   const agents = useMemo(() => {
-    const savedConfigs = (agentBuilderData as any).savedAgentConfigs as AgentConfig[]
+    const savedConfigs = agentBuilderData?.savedAgentConfigs as AgentConfig[]
     return savedConfigs || []
-  }, [])
+  }, [agentBuilderData])
 
   // Get the active domain
   const activeDomain = domainId
@@ -193,9 +212,11 @@ export function StudioShell({
   const domainFileSystem = useMemo(() => {
     if (!activeDomain) return null
 
-    const fileSystem = (promptLibraryData as any).fileSystem as Directory
+    const fileSystem = promptLibraryData?.fileSystem as Directory
+    if (!fileSystem?.children) return null
+
     const domainNode = fileSystem.children?.find(
-      (child) => child.id === activeDomain.id && child.type === 'directory'
+      (child: any) => child.id === activeDomain.id && child.type === 'directory'
     ) as Directory | undefined
 
     if (!domainNode) return null
@@ -208,7 +229,7 @@ export function StudioShell({
       path: '/',
       children: [domainNode],
     } as Directory
-  }, [activeDomain])
+  }, [activeDomain, promptLibraryData])
 
   // Available flows (empty for now, would come from flow builder data)
   const availableFlows: any[] = []
@@ -343,8 +364,8 @@ export function StudioShell({
     setEnabledTools([])
     setEmptyFieldsForRuntime([])
     setAttachedFlows([])
-    navigate('/studio')
-  }, [navigate])
+    navigate(studioPath)
+  }, [navigate, studioPath])
 
   const handleOpenFlowBuilder = useCallback(() => {
     setFlowBuilderOpen(true)
@@ -403,13 +424,13 @@ export function StudioShell({
     }
 
     // Navigate to the agent flow editing route
-    navigate(`/studio/agent/${agentId}/commands/${attachedFlow.slashCommand.commandId}`)
-  }, [navigate, agentId, attachedFlows])
+    navigate(`${studioPath}/agent/${agentId}/commands/${attachedFlow.slashCommand.commandId}`)
+  }, [navigate, agentId, attachedFlows, studioPath])
 
   // Navigation helpers
   const handleBackToList = useCallback(() => {
-    navigate('/studio')
-  }, [navigate])
+    navigate(studioPath)
+  }, [navigate, studioPath])
 
   const handleCreateAgent = useCallback(() => {
     onCreateAgent?.()
@@ -437,6 +458,23 @@ export function StudioShell({
   useEffect(() => {
     handleExpandAll()
   },[domainFileSystem])
+  // Show loading state while data loads
+  if (loadingPromptLibrary || loadingAgentBuilder) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-slate-500">Loading workspace data...</div>
+      </div>
+    )
+  }
+
+  if (!promptLibraryData || !agentBuilderData) {
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        Failed to load workspace data
+      </div>
+    )
+  }
+
   // Prompt preview from data
   const promptPreview = (agentBuilderData as any).promptPreview
 
@@ -494,7 +532,6 @@ export function StudioShell({
         onCreateDomain={handleCreateDomain}
         onCreateAgent={handleCreateAgent}
         workspace={currentWorkspace}
-        onWorkspaceChange={setCurrentWorkspace}
       />
 
       {/* Main Content Area */}
@@ -523,7 +560,7 @@ export function StudioShell({
           </div>
           <div className="flex items-center gap-2">
             <Link
-              to="/chat"
+              to={chatPath}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors text-violet-700 dark:text-violet-300"
               title="Go to Chat"
             >
@@ -564,7 +601,7 @@ export function StudioShell({
                   {domains.map((domain) => (
                     <Link
                       key={domain.id}
-                      to={`/studio/domain/${domain.id}`}
+                      to={`${studioPath}/domain/${domain.id}`}
                       className="group p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-lg transition-all bg-white dark:bg-slate-900"
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -617,7 +654,7 @@ export function StudioShell({
                     return (
                       <Link
                         key={agent.id}
-                        to={`/studio/agent/${agent.id}`}
+                        to={`${studioPath}/agent/${agent.id}`}
                         className="group p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-violet-500 dark:hover:border-violet-500 hover:shadow-lg transition-all bg-white dark:bg-slate-900"
                       >
                         <div className="flex items-start justify-between mb-3">

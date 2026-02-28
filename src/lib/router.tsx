@@ -9,9 +9,9 @@ export const router = createBrowserRouter([
     path: '/',
     element: <LandingLayout />,
   },
-  // Chat app with nested routes
+  // Workspace-based Chat app with nested routes
   {
-    path: '/chat',
+    path: '/workspace/:workspaceName/chat',
     element: <ChatLayout />,
     children: [
       // Default dashboard view
@@ -24,9 +24,9 @@ export const router = createBrowserRouter([
       { path: 'agent/:agentId/chat/:chatId' },
     ],
   },
-  // Studio app with nested routes
+  // Workspace-based Studio app with nested routes
   {
-    path: '/studio',
+    path: '/workspace/:workspaceName/studio',
     element: <StudioLayout />,
     children: [
       // Default list view

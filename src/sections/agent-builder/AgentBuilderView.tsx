@@ -1,14 +1,39 @@
-import data from '@/../product/sections/agent-builder/data.json'
-import flowBuilderData from '@/../product/sections/flow-builder/data.json'
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import { AgentFormBuilder } from './components/AgentFormBuilder'
 import { SavedAgentsList } from './components/SavedAgentsList'
 import { ToolLibraryModal } from './components/ToolLibraryModal'
 import { FlowBuilderModal } from './components/FlowBuilderModal'
 import { FlowEditorModal } from './components/FlowEditorModal'
-import type { FormFieldValue, AttachedFlow } from '@/../product/sections/agent-builder/types'
+import type {
+  FormFieldValue,
+  AttachedFlow,
+  AgentConfig,
+  Domain,
+  Tool,
+  PromptPreview,
+  EnabledTool,
+} from '@/../product/sections/agent-builder/types'
 import type { Flow, Task } from '@/../product/sections/flow-builder/types'
+
+type AgentBuilderData = {
+  domains: Domain[]
+  toolLibrary: Tool[]
+  savedAgentConfigs: AgentConfig[]
+  promptPreview: PromptPreview
+}
+
+type FlowBuilderData = {
+  flows: Flow[]
+  tasks: Task[]
+}
+
+type AgentBuilderPreviewContentProps = {
+  data: AgentBuilderData
+  flowBuilderData: FlowBuilderData
+  firstAgent: AgentConfig
+}
 
 /**
  * Preview wrapper for Agent Builder view
@@ -20,15 +45,45 @@ import type { Flow, Task } from '@/../product/sections/flow-builder/types'
  * and pass your own data via props.
  */
 export default function AgentBuilderPreview() {
+  const { data, loading, error } = useWorkspaceData<AgentBuilderData>('agent-builder')
+  const {
+    data: flowBuilderData,
+    loading: flowBuilderLoading,
+    error: flowBuilderError,
+  } = useWorkspaceData<FlowBuilderData>('flow-builder')
+  const firstAgent = data?.savedAgentConfigs?.[0]
+
+  if (loading || flowBuilderLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
+  }
+
+  if (error || flowBuilderError || !data || !flowBuilderData) {
+    return <div className="flex items-center justify-center h-screen text-red-500">Error loading data</div>
+  }
+
+  if (!firstAgent) {
+    return <div className="flex items-center justify-center h-screen text-slate-500">No agents found</div>
+  }
+
+  return (
+    <AgentBuilderPreviewContent
+      data={data}
+      flowBuilderData={flowBuilderData}
+      firstAgent={firstAgent}
+    />
+  )
+}
+
+function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: AgentBuilderPreviewContentProps) {
   const navigate = useNavigate()
+
   const [view, setView] = useState<'builder' | 'agents'>('builder')
 
   // Initial state with sample data - using the first saved agent config
-  const firstAgent = data.savedAgentConfigs[0]
   const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>(firstAgent.selectedDomains)
   const [formValues, setFormValues] = useState<Record<string, FormFieldValue>>(firstAgent.formValues)
   const [mainInstruction, setMainInstruction] = useState<string>(firstAgent.mainInstruction || '')
-  const [enabledTools, setEnabledTools] = useState(data.savedAgentConfigs[0].enabledTools || [])
+  const [enabledTools, setEnabledTools] = useState<EnabledTool[]>(firstAgent.enabledTools || [])
   const [emptyFieldsForRuntime, setEmptyFieldsForRuntime] = useState<string[]>(firstAgent.emptyFieldsForRuntime || [])
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
@@ -40,9 +95,12 @@ export default function AgentBuilderPreview() {
   const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>(firstAgent.attachedFlows || [])
 
   // Available flows for attaching
-  const availableFlows = [
-
-  ]
+  const availableFlows = flowBuilderData.flows.map((flow) => ({
+    id: flow.id,
+    name: flow.name,
+    description: flow.description,
+    taskCount: flow.taskCount,
+  }))
 
   // Domain handlers
   const handleDomainsChange = useCallback((domainIds: string[]) => {
@@ -121,7 +179,7 @@ export default function AgentBuilderPreview() {
       setEmptyFieldsForRuntime(agent.emptyFieldsForRuntime)
       setView('builder')
     }
-  }, [])
+  }, [data.savedAgentConfigs])
 
   const handleDeleteAgent = useCallback((agentId: string) => {
     console.log('Delete agent:', agentId)
@@ -206,7 +264,7 @@ export default function AgentBuilderPreview() {
 
       console.log('Edit flow:', attachedFlow.flowName, 'with', flowTasks.length, 'tasks')
     },
-    [attachedFlows, navigate]
+    [attachedFlows, flowBuilderData.flows, flowBuilderData.tasks, navigate]
   )
 
   // Flow editor handlers
@@ -301,6 +359,9 @@ export default function AgentBuilderPreview() {
     onConfigureTool: handleConfigureTool,
     onGeneratePreview: handleGeneratePreview,
     onSaveAgent: handleSaveAgent,
+    onLoadAgent: handleLoadAgent,
+    onDeleteAgent: handleDeleteAgent,
+    onDuplicateAgent: handleDuplicateAgent,
     onNewAgent: handleNewAgent,
     onOpenFlowBuilder: handleOpenFlowBuilder,
     onCloseFlowBuilder: handleCloseFlowBuilder,

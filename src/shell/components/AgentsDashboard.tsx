@@ -1,6 +1,6 @@
 import { Search, Plus, Bot } from 'lucide-react'
 import { useState, useMemo } from 'react'
-import agentRuntimeData from '@/../product/sections/agent-runtime/data.json'
+import agentRuntimeData from '@/../mock_data/workspaces/education/sections/agent-runtime/data.json'
 
 type Agent = {
   id: string

@@ -9,8 +9,8 @@ import {
   FolderOpen,
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import agentRuntimeData from '@/../product/sections/agent-runtime/data.json'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import agentRuntimeData from '@/../mock_data/workspaces/education/sections/agent-runtime/data.json'
 import logo from '@/assets/logo.png'
 import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
@@ -43,7 +43,6 @@ export interface ChatSidebarProps {
   activeChatId?: string
   onOpenSettings?: () => void
   workspace?: Workspace
-  onWorkspaceChange?: (workspace: Workspace) => void
 }
 
 export function ChatSidebar({
@@ -52,10 +51,14 @@ export function ChatSidebar({
   activeChatId,
   onOpenSettings,
   workspace,
-  onWorkspaceChange,
 }: ChatSidebarProps) {
   const location = useLocation()
+  const { workspaceName } = useParams<{ workspaceName: string }>()
   const [conversationsExpanded, setConversationsExpanded] = useState(true)
+
+  // Build workspace-aware path helper
+  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
+  const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
 
   // Load agents from runtime data (same source as AppShell)
   const agents = useMemo(() => {
@@ -108,8 +111,7 @@ export function ChatSidebar({
           </Link>
           {!isCollapsed && (
             <WorkspaceSelector
-              workspace={workspace}
-              onWorkspaceChange={onWorkspaceChange}
+              currentWorkspace={workspace}
               isCollapsed={false}
             />
           )}
@@ -117,8 +119,7 @@ export function ChatSidebar({
         {isCollapsed && (
           <div className="flex justify-center mt-2">
             <WorkspaceSelector
-              workspace={workspace}
-              onWorkspaceChange={onWorkspaceChange}
+              currentWorkspace={workspace}
               isCollapsed={true}
             />
           </div>
@@ -136,7 +137,7 @@ export function ChatSidebar({
               </h2>
               <div className="space-y-0.5">
                 {agents.map((agent) => {
-                  const href = `/chat/agent/${agent.id}`
+                  const href = `${chatPath}/agent/${agent.id}`
                   const isActive = location.pathname === href
 
                   return (
@@ -193,7 +194,7 @@ export function ChatSidebar({
 
                           {/* Conversations for this agent */}
                           {agentConvs.map((conv) => {
-                            const href = `/chat/agent/${agentId}/chat/${conv.id}`
+                            const href = `${chatPath}/agent/${agentId}/chat/${conv.id}`
                             const isActive = location.pathname === href
 
                             return (
@@ -243,7 +244,7 @@ export function ChatSidebar({
         <div className="flex flex-col gap-1">
           {/* Studio */}
           <Link
-            to="/studio"
+            to={studioPath}
             className={`
               flex items-center gap-3
               text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200
