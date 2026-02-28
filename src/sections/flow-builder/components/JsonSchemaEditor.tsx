@@ -27,11 +27,11 @@ interface Property {
 }
 
 const TYPE_OPTIONS: { value: PropertyType; label: string; icon: string }[] = [
-  { value: 'string', label: 'String', icon: 'text' },
+  { value: 'string', label: 'Text (Paragraph / Word)', icon: 'text' },
   { value: 'number', label: 'Number', icon: '123' },
   { value: 'boolean', label: 'Boolean', icon: 'bool' },
   { value: 'object', label: 'Object', icon: '{ }' },
-  { value: 'array', label: 'Array', icon: '[ ]' },
+  { value: 'array', label: 'List of Items', icon: '[ ]' },
 ]
 
 const STRING_FORMATS = ['date', 'date-time', 'email', 'uri', 'uuid', 'time', 'duration']

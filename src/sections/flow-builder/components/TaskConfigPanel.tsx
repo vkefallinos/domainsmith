@@ -268,9 +268,9 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
                     />
                   </button>
                   <div>
-                    <div className="font-medium text-slate-900 dark:text-slate-100">Push to Array</div>
+                    <div className="font-medium text-slate-900 dark:text-slate-100">Add to Existing List</div>
                     <div className="text-sm text-slate-500">
-                      If enabled, output is pushed to an array at the target field instead of overwriting
+                      Turn this on if you want the AI to add new items to a list you started in a previous step, rather than replacing it.
                     </div>
                   </div>
                 </div>
@@ -278,14 +278,20 @@ export function TaskConfigPanel({ task, availableTools, availablePromptFragments
                 {/* Output Schema */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Output Schema
+                    Expected Output Format
                   </label>
                   <JsonSchemaEditor
                     value={outputSchema}
                     onChange={setOutputSchema}
                   />
                   <p className="text-xs text-slate-500 mt-2">
-                    JSON Schema definition for the LLM's structured output (optional)
+                    Tell the AI exactly how to format its answer so you can use it in the next step.
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Text (Paragraph / Word): Best for titles, descriptions, or summaries.
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    List of Items: Best for learning objectives, steps, or multiple ideas. The AI will output distinct bullet points.
                   </p>
                 </div>
               </>

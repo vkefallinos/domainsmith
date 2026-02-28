@@ -37,7 +37,7 @@ export function FormField({
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Runtime
+              Ask User in Chat
             </span>
           </label>
           <button
@@ -57,7 +57,7 @@ export function FormField({
             </div>
             <div className="text-center">
               <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                Configured at Runtime
+                Configured by User
               </span>
               <p className="text-xs text-amber-500/70 dark:text-amber-400/70 mt-0.5">
                 This field will be filled during agent execution
@@ -86,7 +86,7 @@ export function FormField({
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Runtime
+            Ask User in Chat
           </button>
         )}
       </div>

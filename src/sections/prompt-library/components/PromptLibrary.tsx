@@ -1217,10 +1217,13 @@ export function PromptLibrary({
         {/* Sidebar Header */}
         <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
           <div className="flex items-center justify-between mb-2.5">
-            <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 text-sm">
-              <span className="w-2 h-2 rounded-full bg-violet-500" />
-              Prompt Library
-            </h2>
+            <div>
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 text-sm">
+                <span className="w-2 h-2 rounded-full bg-violet-500" />
+                Knowledge Base
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">Add the documents, rules, and context your agent needs to understand your specific domain.</p>
+            </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setShowNewFileModal(true)}

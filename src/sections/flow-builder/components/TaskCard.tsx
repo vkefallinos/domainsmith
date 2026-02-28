@@ -187,7 +187,7 @@ function TaskConfigPreview({ task }: { task: Task }) {
             Target Field
             {isPushable && (
               <span className="px-1.5 py-0.5 text-xs rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                Push to Array
+                Add to Existing List
               </span>
             )}
           </div>
@@ -206,7 +206,7 @@ function TaskConfigPreview({ task }: { task: Task }) {
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <path d="M14 2v6h6" />
             </svg>
-            Output Schema
+            Expected Output Format
           </div>
           <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3 font-mono text-sm">
             <div className="text-violet-600 dark:text-violet-400">{`{`}</div>
