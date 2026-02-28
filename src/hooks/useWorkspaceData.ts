@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { WORKSPACE_MAP, type WorkspaceName } from '@/lib/workspaceContext'
+import { WORKSPACE_MAP, loadWorkspaceData } from '@/lib/workspaceContext'
 
 // Maps workspace slug to directory name
 export function getWorkspaceDir(workspaceName?: string): string {
@@ -18,24 +18,33 @@ export function useWorkspaceData<T>(sectionPath: string) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const workspaceDir = getWorkspaceDir(workspaceName)
-    const dataPath = `/mock_data/workspaces/${workspaceDir}/sections/${sectionPath}/data.json`
+    const normalizedWorkspaceName = getWorkspaceDir(workspaceName)
+    let active = true
 
-    fetch(dataPath)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to load: ${dataPath}`)
-        }
-        return res.json()
-      })
+    setLoading(true)
+    setError(null)
+
+    loadWorkspaceData<T>(normalizedWorkspaceName, sectionPath)
       .then((jsonData) => {
-        setData(jsonData as T)
+        if (!active) {
+          return
+        }
+
+        setData(jsonData)
         setLoading(false)
       })
       .catch((err) => {
+        if (!active) {
+          return
+        }
+
         setError(err as Error)
         setLoading(false)
       })
+
+    return () => {
+      active = false
+    }
   }, [workspaceName, sectionPath])
 
   return { data, error, loading }

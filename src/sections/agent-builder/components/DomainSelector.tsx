@@ -7,51 +7,6 @@ interface DomainSelectorProps {
   onDomainsChange: (domainIds: string[]) => void
 }
 
-const categoryColors: Record<string, { bg: string; text: string; darkBg: string; darkText: string }> = {
-  Teaching: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
-    darkBg: 'dark:bg-blue-900/20',
-    darkText: 'dark:text-blue-400',
-  },
-  Curriculum: {
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    darkBg: 'dark:bg-emerald-900/20',
-    darkText: 'dark:text-emerald-400',
-  },
-  Assessment: {
-    bg: 'bg-violet-50',
-    text: 'text-violet-700',
-    darkBg: 'dark:bg-violet-900/20',
-    darkText: 'dark:text-violet-400',
-  },
-  Collaboration: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    darkBg: 'dark:bg-amber-900/20',
-    darkText: 'dark:text-amber-400',
-  },
-  Communication: {
-    bg: 'bg-rose-50',
-    text: 'text-rose-700',
-    darkBg: 'dark:bg-rose-900/20',
-    darkText: 'dark:text-rose-400',
-  },
-  'Special Education': {
-    bg: 'bg-cyan-50',
-    text: 'text-cyan-700',
-    darkBg: 'dark:bg-cyan-900/20',
-    darkText: 'dark:text-cyan-400',
-  },
-  Reporting: {
-    bg: 'bg-slate-50',
-    text: 'text-slate-700',
-    darkBg: 'dark:bg-slate-900/20',
-    darkText: 'dark:text-slate-400',
-  },
-}
-
 export function DomainSelector({ domains, selectedDomainIds, onDomainsChange }: DomainSelectorProps) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
 
@@ -93,7 +48,6 @@ export function DomainSelector({ domains, selectedDomainIds, onDomainsChange }: 
         <div className="flex flex-wrap gap-2">
           {domains.map(domain => {
             const isSelected = selectedDomainIds.includes(domain.id)
-            const colors = categoryColors[domain.category] || categoryColors.Teaching
 
             return (
               <button
