@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
-import LandingLayout from '@/chat/LandingLayout'
-import ChatLayout from '@/chat/ChatLayout'
-import StudioLayout from '@/chat/StudioLayout'
+import LandingLayout from '@/shell/LandingLayout'
+import ChatLayout from '@/shell/ChatLayout'
+import StudioLayout from '@/shell/StudioLayout'
 
 export const router = createBrowserRouter([
   // Landing page
