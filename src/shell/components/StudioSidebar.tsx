@@ -10,10 +10,9 @@ import {
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import promptLibraryData from '@/../mock_data/workspaces/education/sections/prompt-library/data.json'
-import agentBuilderData from '@/../mock_data/workspaces/education/sections/agent-builder/data.json'
+import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import logo from '@/assets/logo.png'
-import { WorkspaceSelector, workspaceToSlug } from './WorkspaceSelector'
+import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
 
 type FileSystemNode = {
@@ -52,8 +51,16 @@ type AgentConfig = {
   attachedFlows: Array<{
     flowId: string
     flowName: string
-    slashCommand?: { name: string; commandId: string }
+    slashCommand?: { name: string; commandId: string; enabled?: boolean }
   }>
+}
+
+type PromptLibraryData = {
+  fileSystem: FileSystemNode
+}
+
+type AgentBuilderData = {
+  savedAgentConfigs: AgentConfig[]
 }
 
 export interface StudioSidebarProps {
@@ -81,6 +88,8 @@ export function StudioSidebar({
   const { workspaceName } = useParams<{ workspaceName: string }>()
   const [domainsExpanded, setDomainsExpanded] = useState(true)
   const [agentsExpanded, setAgentsExpanded] = useState(true)
+  const { data: promptLibraryData } = useWorkspaceData<PromptLibraryData>('prompt-library')
+  const { data: agentBuilderData } = useWorkspaceData<AgentBuilderData>('agent-builder')
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
@@ -88,8 +97,8 @@ export function StudioSidebar({
 
   // Extract domains from prompt library data (top-level directories with renderAs='section')
   const domains = useMemo(() => {
-    const fileSystem = (promptLibraryData as any).fileSystem as FileSystemNode
-    if (!fileSystem.children) return []
+    const fileSystem = promptLibraryData?.fileSystem
+    if (!fileSystem?.children) return []
 
     return fileSystem.children
       .filter((child) => child.type === 'directory' && child.config?.renderAs === 'section')
@@ -103,13 +112,13 @@ export function StudioSidebar({
         path: dir.path,
         childCount: dir.children?.filter((c) => c.type === 'directory').length || 0,
       })) as Domain[]
-  }, [])
+  }, [promptLibraryData?.fileSystem])
 
   // Extract agents from agent builder data
   const agents = useMemo(() => {
-    const savedConfigs = (agentBuilderData as any).savedAgentConfigs as AgentConfig[]
+    const savedConfigs = agentBuilderData?.savedAgentConfigs
     return savedConfigs || []
-  }, [])
+  }, [agentBuilderData?.savedAgentConfigs])
 
   const toggleDomains = () => {
     setDomainsExpanded((prev) => !prev)

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import agentRuntimeData from '@/../mock_data/workspaces/education/sections/agent-runtime/data.json'
+import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import logo from '@/assets/logo.png'
 import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
@@ -37,6 +37,11 @@ type Conversation = {
   updatedAt: string
 }
 
+type AgentRuntimeData = {
+  agents?: Agent[]
+  conversations?: Conversation[]
+}
+
 export interface ChatSidebarProps {
   isCollapsed?: boolean
   onToggleCollapse?: () => void
@@ -55,6 +60,7 @@ export function ChatSidebar({
   const location = useLocation()
   const { workspaceName } = useParams<{ workspaceName: string }>()
   const [conversationsExpanded, setConversationsExpanded] = useState(true)
+  const { data } = useWorkspaceData<AgentRuntimeData>('agent-runtime')
 
   // Build workspace-aware path helper
   const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
@@ -62,13 +68,13 @@ export function ChatSidebar({
 
   // Load agents from runtime data (same source as AppShell)
   const agents = useMemo(() => {
-    return (agentRuntimeData.agents || []) as Agent[]
-  }, [])
+    return (data?.agents || []) as Agent[]
+  }, [data?.agents])
 
   // Load conversations from runtime data
   const conversations = useMemo(() => {
-    return (agentRuntimeData.conversations || []) as Conversation[]
-  }, [])
+    return (data?.conversations || []) as Conversation[]
+  }, [data?.conversations])
 
   // Group conversations by agent
   const conversationsByAgent = useMemo(() => {

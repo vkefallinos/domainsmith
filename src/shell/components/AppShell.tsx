@@ -1,11 +1,16 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useCallback, useMemo } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ChatSidebar } from './ChatSidebar'
 import { AgentsDashboard } from './AgentsDashboard'
 import { AgentRuntimeView } from '@/sections/agent-runtime/components'
-import agentRuntimeData from '@/../mock_data/workspaces/education/sections/agent-runtime/data.json'
+import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
 import { DUMMY_WORKSPACES, workspaceToSlug, type Workspace } from './WorkspaceSelector'
+
+type AgentRuntimeData = {
+  agents?: Agent[]
+  conversations?: Conversation[]
+}
 
 // Helper to get workspace from URL param
 function useWorkspace(workspaceName?: string): Workspace {
@@ -48,6 +53,8 @@ export function AppShell({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
   const [isLoading, setIsLoading] = useState(false)
 
+  const { data: agentRuntimeData } = useWorkspaceData<AgentRuntimeData>('agent-runtime')
+
   // Workspace - derived directly from URL
   const currentWorkspace = useWorkspace(workspaceName)
 
@@ -55,8 +62,14 @@ export function AppShell({
   const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
   // Load agents and conversations from runtime data
-  const agents = (agentRuntimeData.agents || []) as Agent[]
-  const allConversations = (agentRuntimeData.conversations || []) as Conversation[]
+  const agents = useMemo(
+    () => (agentRuntimeData?.agents || []) as Agent[],
+    [agentRuntimeData?.agents]
+  )
+  const allConversations = useMemo(
+    () => (agentRuntimeData?.conversations || []) as Conversation[],
+    [agentRuntimeData?.conversations]
+  )
 
   // Get the active agent
   const activeAgent = agentId
@@ -64,9 +77,10 @@ export function AppShell({
     : null
 
   // Get conversations for the active agent
-  const agentConversations = agentId
-    ? allConversations.filter((c) => c.agentId === agentId)
-    : []
+  const agentConversations = useMemo(
+    () => (agentId ? allConversations.filter((c) => c.agentId === agentId) : []),
+    [agentId, allConversations]
+  )
 
   // Create a new temporary conversation when chatId starts with "new-"
   const isNewConversation = chatId?.startsWith('new-') && activeAgent
