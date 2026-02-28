@@ -1,15 +1,14 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   Bot,
   Settings,
   MessageSquare,
-  FolderTree,
-  Zap,
   FileText,
   Workflow,
-  MessageCircle,
   Play,
+  Building2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,33 +18,30 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { DUMMY_WORKSPACES, workspaceToSlug, type Workspace } from './components/WorkspaceSelector'
 import logo from '@/assets/logo.png'
 
 export default function LandingLayout() {
   const navigate = useNavigate()
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
+  const [targetApp, setTargetApp] = useState<'studio' | 'chat'>('studio')
 
-  const features = [
-    {
-      icon: Bot,
-      title: 'No-Code Agent Builder',
-      description: 'Create AI agents using your domain knowledge — no programming required.',
-    },
-    {
-      icon: FolderTree,
-      title: 'Domain Organization',
-      description: 'Structure your expertise into organized domains that mirror your field.',
-    },
-    {
-      icon: MessageSquare,
-      title: 'Interactive Chat',
-      description: 'Test and refine your agents through natural conversation.',
-    },
-    {
-      icon: Zap,
-      title: 'Visual Flow Editor',
-      description: 'Design complex workflows intuitively — drag, drop, and connect.',
-    },
-  ]
+  const openWorkspaceModal = (app: 'studio' | 'chat') => {
+    setTargetApp(app)
+    setIsWorkspaceModalOpen(true)
+  }
+
+  const handleWorkspaceSelect = (workspace: Workspace) => {
+    setIsWorkspaceModalOpen(false)
+    navigate(`/workspace/${workspaceToSlug(workspace.name)}/${targetApp}`)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -91,7 +87,7 @@ export default function LandingLayout() {
                   variant="ghost"
                   size="icon"
                   className="opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={() => navigate('/studio')}
+                  onClick={() => openWorkspaceModal('studio')}
                 >
                   <ArrowRight className="size-5" />
                 </Button>
@@ -109,7 +105,7 @@ export default function LandingLayout() {
               </p>
               <Button
                 className="mt-4 w-full sm:w-auto"
-                onClick={() => navigate('/studio')}
+                onClick={() => openWorkspaceModal('studio')}
               >
                 Open Studio
                 <ArrowRight className="ml-2 size-4" />
@@ -128,7 +124,7 @@ export default function LandingLayout() {
                   variant="ghost"
                   size="icon"
                   className="opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={() => navigate('/chat')}
+                  onClick={() => openWorkspaceModal('chat')}
                 >
                   <ArrowRight className="size-5" />
                 </Button>
@@ -146,7 +142,7 @@ export default function LandingLayout() {
               </p>
               <Button
                 className="mt-4 w-full sm:w-auto"
-                onClick={() => navigate('/chat')}
+                onClick={() => openWorkspaceModal('chat')}
               >
                 Open Chat
                 <ArrowRight className="ml-2 size-4" />
@@ -256,17 +252,53 @@ export default function LandingLayout() {
             Your domain expertise is all you need — no coding required
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
-            <Button size="lg" onClick={() => navigate('/studio')}>
+            <Button size="lg" onClick={() => openWorkspaceModal('studio')}>
               <Settings className="mr-2 size-5" />
               Build in Studio
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/chat')}>
+            <Button size="lg" variant="outline" onClick={() => openWorkspaceModal('chat')}>
               <MessageSquare className="mr-2 size-5" />
               Try Chat First
             </Button>
           </div>
         </div>
       </main>
+
+      <Dialog open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Workspace</DialogTitle>
+            <DialogDescription>
+              Choose a workspace to open {targetApp === 'studio' ? 'Studio' : 'Chat'}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3">
+            {DUMMY_WORKSPACES.map((workspace) => (
+              <button
+                key={workspace.id}
+                type="button"
+                onClick={() => handleWorkspaceSelect(workspace)}
+                className="flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex size-8 items-center justify-center rounded-md"
+                    style={{ backgroundColor: `${workspace.color}20` }}
+                  >
+                    <Building2 className="size-4" style={{ color: workspace.color }} />
+                  </div>
+                  <div>
+                    <p className="font-medium">{workspace.name}</p>
+                    <p className="text-xs text-muted-foreground">/{workspaceToSlug(workspace.name)}</p>
+                  </div>
+                </div>
+                <ArrowRight className="size-4 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="mt-20 border-t py-8">
