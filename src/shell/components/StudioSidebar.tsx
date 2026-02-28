@@ -133,7 +133,7 @@ export function StudioSidebar({
           `}
         >
           <Link
-            to="/studio"
+            to="/"
             className="flex items-center gap-2"
             title="lmthing"
           >

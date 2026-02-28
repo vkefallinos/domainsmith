@@ -100,7 +100,7 @@ export function ChatSidebar({
           `}
         >
           <Link
-            to="/shell"
+            to="/"
             className="flex items-center gap-2"
             title="lmthing"
           >
