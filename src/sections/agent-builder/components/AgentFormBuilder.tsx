@@ -12,7 +12,7 @@ import { DomainSelector } from './DomainSelector'
 import { FormField } from './FormField'
 import { ToolsPanel } from './ToolsPanel'
 import { CommandsPanel } from './CommandsPanel'
-import { PromptPreviewPanel } from './PromptPreviewPanel'
+import { AgentRuntimePreviewModal } from './AgentRuntimePreviewModal'
 import { SaveAgentModal } from './SaveAgentModal'
 
 /**
@@ -31,6 +31,27 @@ function extractFields(node: SchemaNode): SchemaField[] {
  */
 function getDomainFields(domain: Domain): SchemaField[] {
   return extractFields(domain.schema.root)
+}
+
+function resolveFieldOptionFilePaths(field: SchemaField, value: FormFieldValue | undefined): string[] {
+  if (typeof value === 'boolean' || value === undefined || value === '') {
+    return []
+  }
+
+  const selectedValues = Array.isArray(value) ? value : [value]
+
+  return selectedValues
+    .flatMap((selectedValue) =>
+      field.options
+        .filter(
+          (option) =>
+            option.id === selectedValue ||
+            option.value === selectedValue ||
+            option.label === selectedValue
+        )
+        .map((option) => option.filePath)
+    )
+    .filter(Boolean)
 }
 
 /**
@@ -131,8 +152,9 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
   } = props
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'tools' | 'commands' | 'preview'>('commands')
+  const [activeTab, setActiveTab] = useState<'tools' | 'commands'>('commands')
   const [saveModalOpen, setSaveModalOpen] = useState(false)
+  const [runtimePreviewOpen, setRuntimePreviewOpen] = useState(false)
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set(selectedDomainIds))
 
   // Expand newly selected domains
@@ -170,6 +192,28 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
       return acc
     }, {} as Record<string, Domain[]>)
   }, [selectedDomains])
+
+  const selectedDomainFields = useMemo(
+    () =>
+      selectedDomains.flatMap((domain) =>
+        getDomainFields(domain).map((field) => ({ field, domainName: domain.name }))
+      ),
+    [selectedDomains]
+  )
+
+  const runtimeFieldEntries = useMemo(() => {
+    const runtimeFieldIds = new Set(emptyFieldsForRuntime)
+    return selectedDomainFields.filter(
+      ({ field }) => runtimeFieldIds.has(field.variableName) || runtimeFieldIds.has(field.id)
+    )
+  }, [emptyFieldsForRuntime, selectedDomainFields])
+
+  const enabledFilePaths = useMemo(() => {
+    const paths = selectedDomainFields.flatMap(({ field }) =>
+      resolveFieldOptionFilePaths(field, formValues[field.variableName])
+    )
+    return [...new Set(paths)].sort((a, b) => a.localeCompare(b))
+  }, [selectedDomainFields, formValues])
 
   // Build enabled tool mappings with status
   const enabledToolMappings = useMemo(() => {
@@ -241,6 +285,11 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     },
     [onSaveAgent]
   )
+
+  const handleOpenRuntimePreview = useCallback(() => {
+    onGeneratePreview?.()
+    setRuntimePreviewOpen(true)
+  }, [onGeneratePreview])
 
   const hasSelection = selectedDomains.length > 0
 
@@ -436,7 +485,6 @@ These instructions will appear at the top of your agent's system prompt.`}
           {[
             { id: 'commands' as const, label: 'Commands', count: attachedFlows?.filter(f => f.slashCommand.enabled).length || 0 },
             { id: 'tools' as const, label: 'Tools', count: enabledToolMappings.length },
-            { id: 'preview' as const, label: 'Preview', count: null },
           ].map(tab => (
             <button
               key={tab.id}
@@ -494,10 +542,18 @@ These instructions will appear at the top of your agent's system prompt.`}
               onOpenFlowBuilder={onOpenFlowBuilder || (() => {})}
             />
           )}
+        </div>
 
-          {activeTab === 'preview' && (
-            <PromptPreviewPanel promptPreview={promptPreview} onGenerate={onGeneratePreview || (() => {})} />
-          )}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+          <button
+            onClick={handleOpenRuntimePreview}
+            className="w-full px-4 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            Preview Runtime Conversation
+          </button>
         </div>
     </aside>
 
@@ -506,6 +562,18 @@ These instructions will appear at the top of your agent's system prompt.`}
       isOpen={saveModalOpen}
       onClose={() => setSaveModalOpen(false)}
       onSave={handleSaveAgent}
+    />
+
+    <AgentRuntimePreviewModal
+      isOpen={runtimePreviewOpen}
+      onClose={() => setRuntimePreviewOpen(false)}
+      enabledFilePaths={enabledFilePaths}
+      generatedPrompt={promptPreview?.generatedPrompt || ''}
+      runtimeFields={runtimeFieldEntries.map(({ field, domainName }) => ({
+        id: field.variableName,
+        label: field.label,
+        domain: domainName,
+      }))}
     />
     </div>
     </div>
