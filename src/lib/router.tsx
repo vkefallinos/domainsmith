@@ -39,4 +39,6 @@ export const router = createBrowserRouter([
       { path: 'agent/:agentId/commands/:commandId' },
     ],
   },
-])
+],
+  { basename: import.meta.env.BASE_URL }
+)
