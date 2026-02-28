@@ -7,10 +7,16 @@ import { SectionPage } from '@/components/SectionPage'
 import { ScreenDesignPage, ScreenDesignFullscreen } from '@/components/ScreenDesignPage'
 import { ShellDesignPage, ShellDesignFullscreen } from '@/components/ShellDesignPage'
 import { ExportPage } from '@/components/ExportPage'
+import LandingLayout from '@/shell/LandingLayout'
 import ShellLayout from '@/shell/ShellLayout'
 import StudioLayout from '@/shell/StudioLayout'
 
 export const router = createBrowserRouter([
+  // Landing page
+  {
+    path: '/',
+    element: <LandingLayout />,
+  },
   // Shell app with nested routes
   {
     path: '/shell',
@@ -40,10 +46,6 @@ export const router = createBrowserRouter([
       // Agent flow editing view (shows modal)
       { path: 'agent/:agentId/commands/:commandId' },
     ],
-  },
-  {
-    path: '/',
-    element: <ProductPage />,
   },
   {
     path: '/data-shape',

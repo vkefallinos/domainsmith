@@ -1,7 +1,7 @@
 # Application Shell Specification
 
 ## Overview
-DomainSmith uses a chat-focused sidebar layout that provides quick access to agents, conversations, and settings. The shell is persistent across all views and adapts based on context — showing the Agents Dashboard when browsing, and the Chat Interface when in a conversation.
+LMThing uses a chat-focused sidebar layout that provides quick access to agents, conversations, and settings. The shell is persistent across all views and adapts based on context — showing the Agents Dashboard when browsing, and the Chat Interface when in a conversation.
 
 ## Data Sources
 

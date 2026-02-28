@@ -36,7 +36,7 @@ A chat session with an agent, containing messages exchanged between the user and
 
 ### Tool
 
-A function-calling capability that agents can invoke — either a built-in DomainSmith tool or an installed npm package.
+A function-calling capability that agents can invoke — either a built-in LMThing tool or an installed npm package.
 
 ### ToolPackage
 
