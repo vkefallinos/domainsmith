@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:pages": "vite build --config vite.config.pages.ts",
+    "build:pages": "vite build --config vite.config.pages.ts --base=BASE",
     "lint": "eslint .",
     "preview": "vite preview"
   },
