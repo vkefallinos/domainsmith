@@ -11,6 +11,11 @@
 export type MessageRole = "user" | "assistant";
 
 /**
+ * Runtime status of an agent
+ */
+export type AgentStatus = "ready" | "starting" | "stopping" | "error";
+
+/**
  * Type of a runtime field (form control)
  */
 export type RuntimeFieldType = "text" | "textarea" | "select" | "multiselect" | "toggle";
@@ -87,6 +92,8 @@ export interface Agent {
   createdAt: string;
   /** ISO timestamp when this agent was last used for a conversation */
   lastUsedAt: string | null;
+  /** Current runtime status of the agent */
+  status: AgentStatus;
 }
 
 /**
@@ -136,17 +143,33 @@ export interface AgentListProps {
 }
 
 /**
+ * Callbacks for Agent Runtime interactions
+ */
+export interface AgentRuntimeCallbacks {
+  /** Called when an agent is selected */
+  onSelectAgent?: (agentId: string) => void;
+  /** Called when a new message is sent to the agent */
+  onSendMessage?: (content: string) => void;
+  /** Called when the system prompt panel is toggled */
+  onTogglePromptPanel?: () => void;
+  /** Called when the conversation is cleared */
+  onClearConversation?: () => void;
+}
+
+/**
  * Props for the Agent Runtime view (left panel + chat)
  */
-export interface AgentRuntimeProps {
-  /** Currently selected agent */
-  agent: Agent | null;
-  /** All conversations for the selected agent */
-  conversations: Conversation[];
-  /** Currently active conversation ID */
-  activeConversationId: string | null;
+export interface AgentRuntimeProps extends Partial<AgentRuntimeCallbacks> {
+  /** List of all available agents */
+  agents: Agent[];
+  /** Currently selected agent ID (null if none selected) */
+  selectedAgentId: string | null;
+  /** Active conversation for the selected agent (null if none) */
+  conversation: Conversation | null;
+  /** Whether the system prompt panel is expanded */
+  isPromptPanelExpanded: boolean;
   /** Whether a new message is currently being sent */
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
 /**
@@ -185,6 +208,8 @@ export interface ChatPanelProps {
   onCreateConversation?: () => void;
   /** Called when deleting a conversation */
   onDeleteConversation?: (conversationId: string) => void;
+  /** Called when clearing the conversation */
+  onClearConversation?: () => void;
 }
 
 /**

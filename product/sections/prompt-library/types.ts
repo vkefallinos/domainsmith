@@ -214,57 +214,6 @@ export interface ErrorNotification {
 }
 
 /**
- * Props for the Prompt Library screen component
- */
-export interface PromptLibraryProps {
-  /** The complete file system tree structure */
-  fileSystem: Directory;
-  /** Currently selected file (if any) */
-  selectedFile: PromptFragment | null;
-  /** Array of folder paths that should be expanded in the tree */
-  expandedFolders: string[];
-  /** Whether the current editor has unsaved changes */
-  unsavedChanges: boolean;
-  /** Whether a file operation is in progress */
-  isLoading?: boolean;
-  /** Error notification to display (if any) */
-  error?: ErrorNotification | null;
-  /** Validation errors for forms */
-  validationErrors?: ValidationError[];
-  /** Empty state type */
-  emptyState?: 'no-selection' | 'empty-library';
-
-  /** Callback when a file is selected in the tree */
-  onSelectFile: (file: PromptFragment) => void;
-  /** Callback when a folder is expanded/collapsed */
-  onToggleFolder: (path: string) => void;
-  /** Callback when all folders are expanded */
-  onExpandAll: () => void;
-  /** Callback when all folders are collapsed */
-  onCollapseAll: () => void;
-  /** Callback when file content is edited */
-  onEditContent: (content: string) => void;
-  /** Callback when changes are saved */
-  onSave: () => void;
-  /** Callback when unsaved changes dialog action is chosen */
-  onUnsavedChangesAction: (action: UnsavedChangesAction) => void;
-  /** Callback when a new file is created */
-  onCreateFile: (form: NewFileForm) => void;
-  /** Callback when a new folder is created */
-  onCreateFolder: (form: NewFolderForm) => void;
-  /** Callback when a node is renamed */
-  onRename: (nodeId: string, newName: string) => void;
-  /** Callback when a node is moved */
-  onMove: (nodeId: string, newParentPath: string) => void;
-  /** Callback when a node is deleted */
-  onDelete: (nodeId: string) => void;
-  /** Callback when a node is duplicated */
-  onDuplicate: (nodeId: string) => void;
-  /** Callback when error is dismissed */
-  onDismissError: () => void;
-}
-
-/**
  * Supported markdown formatting types for the WYSIWYG editor
  */
 export type MarkdownFormat =
@@ -289,6 +238,9 @@ export interface EditorConfig {
   syntaxHighlighting: boolean;
 }
 
+/**
+ * Props for the Prompt Library screen component
+ */
 export interface PromptLibraryProps {
   /** The complete file system tree structure */
   fileSystem: Directory;

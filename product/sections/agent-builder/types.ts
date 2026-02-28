@@ -137,8 +137,8 @@ export interface AgentSlashCommand {
   description: string;
   /** ID of the flow this command triggers */
   flowId: string;
-  /** Name of the flow (for display) */
-  flowName: string;
+  /** Name of the flow (for display) - optional since it's available on AttachedFlow */
+  flowName?: string;
   /** Whether the command is enabled */
   enabled: boolean;
 }
