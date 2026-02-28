@@ -673,6 +673,7 @@
               ]
             },
             {
+              "type": "field",
               "id": "field-code-organization",
               "fieldType": "multiselect",
               "label": "Code Organization",
