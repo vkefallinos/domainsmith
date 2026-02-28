@@ -69,6 +69,26 @@ export interface EnabledTool {
 }
 
 /**
+ * A slash command that triggers a flow when a user types it in conversation
+ */
+export interface SlashCommand {
+  /** Unique identifier for the slash command */
+  id: string;
+  /** The command trigger (e.g., "summarize", "analyze" - user types /summarize) */
+  commandId: string;
+  /** Human-readable name for the command */
+  name: string;
+  /** Description of what the command does (shown to users) */
+  description: string;
+  /** ID of the flow this command triggers */
+  flowId: string;
+  /** ID of the agent this command belongs to */
+  agentId: string;
+  /** Whether the command is enabled */
+  enabled: boolean;
+}
+
+/**
  * A deployed agent instance configured from Agent Builder
  */
 export interface Agent {
@@ -88,12 +108,14 @@ export interface Agent {
   enabledTools: EnabledTool[];
   /** The full assembled system prompt used by this agent (runtime field values enable prompt fragments) */
   systemPrompt: string;
+  /** Slash commands that trigger flows for this agent */
+  slashCommands: SlashCommand[];
   /** ISO timestamp when this agent was created */
   createdAt: string;
   /** ISO timestamp when this agent was last used for a conversation */
   lastUsedAt: string | null;
   /** Current runtime status of the agent */
-  status: AgentStatus;
+  status?: AgentStatus;
 }
 
 /**
