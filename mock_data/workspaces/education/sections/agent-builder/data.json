@@ -1110,7 +1110,23 @@
           "source": "manual"
         }
       ],
-      "emptyFieldsForRuntime": ["field-unit-focus", "field-topics", "field-essential-questions"],
+      "emptyFieldsForRuntime": [
+        {
+          "id": "field-unit-focus",
+          "label": "Current Unit or Topic Focus",
+          "domain": "/curriculum/unit-focus"
+        },
+        {
+          "id": "field-topics",
+          "label": "Topics to Cover",
+          "domain": "/subjects/topics"
+        },
+        {
+          "id": "field-essential-questions",
+          "label": "Essential Questions to Address",
+          "domain": "/subjects/essential-questions"
+        }
+      ],
       "attachedFlows": [
         {
           "flowId": "flow_lesson_generate",
