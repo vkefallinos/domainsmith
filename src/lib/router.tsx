@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
-import LandingLayout from '@/shell/LandingLayout'
-import ShellLayout from '@/shell/ShellLayout'
-import StudioLayout from '@/shell/StudioLayout'
+import LandingLayout from '@/chat/LandingLayout'
+import ChatLayout from '@/chat/ChatLayout'
+import StudioLayout from '@/chat/StudioLayout'
 
 export const router = createBrowserRouter([
   // Landing page
@@ -9,10 +9,10 @@ export const router = createBrowserRouter([
     path: '/',
     element: <LandingLayout />,
   },
-  // Shell app with nested routes
+  // Chat app with nested routes
   {
-    path: '/shell',
-    element: <ShellLayout />,
+    path: '/chat',
+    element: <ChatLayout />,
     children: [
       // Default dashboard view
       { index: true },

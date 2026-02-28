@@ -81,7 +81,7 @@ export function AppShell({
 
   // Handle back to dashboard
   const handleBackToDashboard = useCallback(() => {
-    navigate('/shell')
+    navigate('/chat')
   }, [navigate])
 
   // Handle runtime field change
@@ -102,12 +102,12 @@ export function AppShell({
   // Handle select conversation
   const handleSelectConversation = useCallback((conversationId: string) => {
     if (agentId) {
-      navigate(`/shell/agent/${agentId}/chat/${conversationId}`)
+      navigate(`/chat/agent/${agentId}/chat/${conversationId}`)
     } else {
       // Find the agent for this conversation
       const conv = allConversations.find(c => c.id === conversationId)
       if (conv) {
-        navigate(`/shell/agent/${conv.agentId}/chat/${conversationId}`)
+        navigate(`/chat/agent/${conv.agentId}/chat/${conversationId}`)
       }
     }
   }, [navigate, agentId, allConversations])
@@ -117,7 +117,7 @@ export function AppShell({
     if (!activeAgent) return
 
     const newChatId = `new-${activeAgent.id}-${Date.now()}`
-    navigate(`/shell/agent/${activeAgent.id}/chat/${newChatId}`)
+    navigate(`/chat/agent/${activeAgent.id}/chat/${newChatId}`)
   }, [activeAgent, navigate])
 
   // Handle delete conversation
@@ -128,16 +128,16 @@ export function AppShell({
       // Switch to another conversation or back to dashboard
       const remaining = agentConversations.filter(c => c.id !== conversationId)
       if (remaining.length > 0) {
-        navigate(`/shell/agent/${agentId}/chat/${remaining[0].id}`)
+        navigate(`/chat/agent/${agentId}/chat/${remaining[0].id}`)
       } else {
-        navigate('/shell')
+        navigate('/chat')
       }
     }
   }, [chatId, agentConversations, agentId, navigate])
 
   // Handle agent selection from dashboard
   const handleOpenAgent = useCallback((agentId: string) => {
-    navigate(`/shell/agent/${agentId}`)
+    navigate(`/chat/agent/${agentId}`)
   }, [navigate])
 
   return (

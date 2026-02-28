@@ -136,7 +136,7 @@ export function ChatSidebar({
               </h2>
               <div className="space-y-0.5">
                 {agents.map((agent) => {
-                  const href = `/shell/agent/${agent.id}`
+                  const href = `/chat/agent/${agent.id}`
                   const isActive = location.pathname === href
 
                   return (
@@ -193,7 +193,7 @@ export function ChatSidebar({
 
                           {/* Conversations for this agent */}
                           {agentConvs.map((conv) => {
-                            const href = `/shell/agent/${agentId}/chat/${conv.id}`
+                            const href = `/chat/agent/${agentId}/chat/${conv.id}`
                             const isActive = location.pathname === href
 
                             return (

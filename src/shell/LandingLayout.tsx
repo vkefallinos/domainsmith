@@ -23,23 +23,23 @@ export default function LandingLayout() {
   const features = [
     {
       icon: Bot,
-      title: 'Agent Builder',
-      description: 'Create and configure AI agents with custom prompts and flows.',
+      title: 'No-Code Agent Builder',
+      description: 'Create AI agents using your domain knowledge — no programming required.',
     },
     {
       icon: FolderTree,
-      title: 'Domain Management',
-      description: 'Organize your agents into domains for better structure.',
+      title: 'Domain Organization',
+      description: 'Structure your expertise into organized domains that mirror your field.',
     },
     {
       icon: MessageSquare,
       title: 'Interactive Chat',
-      description: 'Chat with your agents in real-time with context awareness.',
+      description: 'Test and refine your agents through natural conversation.',
     },
     {
       icon: Zap,
-      title: 'Flow Editor',
-      description: 'Design complex agent workflows with visual flow editor.',
+      title: 'Visual Flow Editor',
+      description: 'Design complex workflows intuitively — drag, drop, and connect.',
     },
   ]
 
@@ -53,7 +53,7 @@ export default function LandingLayout() {
             <h1 className="text-xl font-semibold">lmthing</h1>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Welcome back</span>
+            <span className="text-sm text-muted-foreground">Your expertise, amplified by AI</span>
             <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
               A
             </div>
@@ -65,11 +65,12 @@ export default function LandingLayout() {
       <main className="mx-auto max-w-7xl px-6 py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Build AI Agents with Confidence
+            Turn Domain Expertise into AI Agents
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Design, configure, and interact with powerful AI agents. Organize them into
-            domains, create complex workflows, and bring your ideas to life.
+            No code required. Transform your knowledge into powerful AI agents.
+            Organize them into domains, design workflows visually, and deploy
+            intelligent solutions — all without writing a single line of code.
           </p>
         </div>
 
@@ -93,13 +94,14 @@ export default function LandingLayout() {
               </div>
               <CardTitle className="mt-4 text-2xl">Studio</CardTitle>
               <CardDescription className="text-base">
-                Design and manage your AI agents and domains
+                Where your domain expertise becomes AI agents
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Create new agents, configure their behaviors, organize them into domains,
-                and build complex flows with the visual editor.
+                Build agents that embody your expertise. Configure behaviors through
+                intuitive forms, organize into domains, and visually design workflows —
+                all without code.
               </p>
               <Button
                 className="mt-4 w-full sm:w-auto"
@@ -111,7 +113,7 @@ export default function LandingLayout() {
             </CardContent>
           </Card>
 
-          {/* Shell Card */}
+          {/* Chat Card */}
           <Card className="group cursor-pointer border-2 transition-all hover:border-primary/50 hover:shadow-lg">
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -122,26 +124,27 @@ export default function LandingLayout() {
                   variant="ghost"
                   size="icon"
                   className="opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={() => navigate('/shell')}
+                  onClick={() => navigate('/chat')}
                 >
                   <ArrowRight className="size-5" />
                 </Button>
               </div>
-              <CardTitle className="mt-4 text-2xl">Shell</CardTitle>
+              <CardTitle className="mt-4 text-2xl">Chat</CardTitle>
               <CardDescription className="text-base">
-                Interact with your AI agents in real-time
+                Put your agents to the test
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Chat with your agents, view conversation history, and manage multiple
-                conversations across different workspaces.
+                Interact with your AI agents naturally. Validate their responses,
+                refine their behavior through conversation, and build confidence
+                in your LLM engineering skills.
               </p>
               <Button
                 className="mt-4 w-full sm:w-auto"
-                onClick={() => navigate('/shell')}
+                onClick={() => navigate('/chat')}
               >
-                Open Shell
+                Open Chat
                 <ArrowRight className="ml-2 size-4" />
               </Button>
             </CardContent>
@@ -150,7 +153,7 @@ export default function LandingLayout() {
 
         {/* Features Grid */}
         <div className="mt-20">
-          <h3 className="text-center text-2xl font-semibold">Everything You Need</h3>
+          <h3 className="text-center text-2xl font-semibold">From Expert to Engineer</h3>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature) => (
               <Card key={feature.title} className="text-center">
@@ -170,18 +173,18 @@ export default function LandingLayout() {
 
         {/* Getting Started Section */}
         <div className="mt-20 rounded-2xl bg-muted/50 px-8 py-12 text-center">
-          <h3 className="text-2xl font-semibold">Getting Started</h3>
+          <h3 className="text-2xl font-semibold">Start Building Your AI Agents</h3>
           <p className="mt-2 text-muted-foreground">
-            Choose your path: build in Studio or interact in Shell
+            Your domain expertise is all you need — no coding required
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
             <Button size="lg" onClick={() => navigate('/studio')}>
               <Settings className="mr-2 size-5" />
-              Go to Studio
+              Build in Studio
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/shell')}>
+            <Button size="lg" variant="outline" onClick={() => navigate('/chat')}>
               <MessageSquare className="mr-2 size-5" />
-              Go to Shell
+              Try Chat First
             </Button>
           </div>
         </div>
@@ -190,7 +193,7 @@ export default function LandingLayout() {
       {/* Footer */}
       <footer className="mt-20 border-t py-8">
         <div className="mx-auto max-w-7xl px-6 text-center text-sm text-muted-foreground">
-          <p>lmthing — Build AI Agents with Confidence</p>
+          <p>lmthing — Turn Domain Experts into LLM Engineers</p>
         </div>
       </footer>
     </div>

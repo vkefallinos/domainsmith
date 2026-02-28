@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from './components'
 
-type ShellState = {
+type ChatState = {
   sidebarCollapsed: boolean
 }
 
-const STORAGE_KEY = 'shell-layout-state'
+const STORAGE_KEY = 'chat-layout-state'
 
-const DEFAULT_STATE: ShellState = {
+const DEFAULT_STATE: ChatState = {
   sidebarCollapsed: false,
 }
 
-function loadState(): ShellState {
+function loadState(): ChatState {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
@@ -24,7 +24,7 @@ function loadState(): ShellState {
   return DEFAULT_STATE
 }
 
-function saveState(state: ShellState) {
+function saveState(state: ChatState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
@@ -32,9 +32,9 @@ function saveState(state: ShellState) {
   }
 }
 
-export default function ShellLayout() {
+export default function ChatLayout() {
   const navigate = useNavigate()
-  const [state, setState] = useState<ShellState>(loadState)
+  const [state, setState] = useState<ChatState>(loadState)
 
   // Persist state changes
   useEffect(() => {
