@@ -1,5 +1,4 @@
 import type { Domain } from '@/../product/sections/agent-builder/types'
-import { useState } from 'react'
 
 interface DomainSelectorProps {
   domains: Domain[]
@@ -8,15 +7,6 @@ interface DomainSelectorProps {
 }
 
 export function DomainSelector({ domains, selectedDomainIds, onDomainsChange }: DomainSelectorProps) {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
-
-  // Group domains by category
-  const groupedDomains = domains.reduce((acc, domain) => {
-    if (!acc[domain.category]) acc[domain.category] = []
-    acc[domain.category].push(domain)
-    return acc
-  }, {} as Record<string, Domain[]>)
-
   const toggleDomain = (domainId: string) => {
     const isSelected = selectedDomainIds.includes(domainId)
     const newSelection = isSelected
@@ -30,7 +20,7 @@ export function DomainSelector({ domains, selectedDomainIds, onDomainsChange }: 
       {/* Header */}
       <div className="px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Domains</h2>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Knowledge</h2>
           <span className="text-xs text-slate-400 dark:text-slate-500">
             {selectedDomainIds.length} selected
           </span>
@@ -43,7 +33,7 @@ export function DomainSelector({ domains, selectedDomainIds, onDomainsChange }: 
         </button>
       </div>
 
-      {/* Domain Pills - Scrollable */}
+      {/* Knowledge Pills - Scrollable */}
       <div className="px-6 pb-3">
         <div className="flex flex-wrap gap-2">
           {domains.map(domain => {

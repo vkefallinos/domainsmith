@@ -65,11 +65,11 @@ export default function LandingLayout() {
       <main className="mx-auto max-w-7xl px-6 py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Turn Domain Expertise into AI Agents
+            Turn Knowledge into AI Agents
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             No code required. Transform your knowledge into powerful AI agents.
-            Organize them into domains, design workflows visually, and deploy
+            Organize them into knowledge areas, design workflows visually, and deploy
             intelligent solutions — all without writing a single line of code.
           </p>
         </div>
@@ -94,13 +94,13 @@ export default function LandingLayout() {
               </div>
               <CardTitle className="mt-4 text-2xl">Studio</CardTitle>
               <CardDescription className="text-base">
-                Where your domain expertise becomes AI agents
+                Where your knowledge becomes AI agents
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 Build agents that embody your expertise. Configure behaviors through
-                intuitive forms, organize into domains, and visually design workflows —
+                intuitive forms, organize into knowledge, and visually design workflows —
                 all without code.
               </p>
               <Button
@@ -170,7 +170,7 @@ export default function LandingLayout() {
                 </div>
                 <h4 className="mt-2 text-lg font-semibold">Organize Your Knowledge</h4>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Structure your domain expertise into markdown files in a file tree. Create
+                  Structure your knowledge into markdown files in a file tree. Create
                   folders, documents, and links that mirror your field's natural organization.
                 </p>
               </div>
@@ -191,7 +191,7 @@ export default function LandingLayout() {
                 <h4 className="mt-2 text-lg font-semibold">Build Your Agent</h4>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Use the Agent Builder to create a configurable AI agent. Connect it to your
-                  domain knowledge, set its personality, and define how it should respond.
+                  knowledge, set its personality, and define how it should respond.
                 </p>
               </div>
               <div className="hidden lg:block absolute right-0 top-8 -translate-y-1/2 translate-x-1/2 text-muted-foreground/30">
@@ -231,7 +231,7 @@ export default function LandingLayout() {
                 <h4 className="mt-2 text-lg font-semibold">Chat & Execute</h4>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Interact with your agent through natural conversation. Watch it run commands,
-                  perform tasks, and leverage your domain expertise in real-time.
+                  perform tasks, and leverage your knowledge in real-time.
                 </p>
               </div>
             </div>
@@ -249,7 +249,7 @@ export default function LandingLayout() {
         <div className="mt-20 rounded-2xl bg-muted/50 px-8 py-12 text-center">
           <h3 className="text-2xl font-semibold">Start Building Your AI Agents</h3>
           <p className="mt-2 text-muted-foreground">
-            Your domain expertise is all you need — no coding required
+            Your knowledge is all you need — no coding required
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
             <Button size="lg" onClick={() => openWorkspaceModal('studio')}>
@@ -303,7 +303,7 @@ export default function LandingLayout() {
       {/* Footer */}
       <footer className="mt-20 border-t py-8">
         <div className="mx-auto max-w-7xl px-6 text-center text-sm text-muted-foreground">
-          <p>lmthing — Turn Domain Experts into LLM Engineers</p>
+          <p>lmthing — Turn Knowledge into LLM Engineers</p>
         </div>
       </footer>
     </div>

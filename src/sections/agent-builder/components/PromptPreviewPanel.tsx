@@ -44,7 +44,7 @@ export function PromptPreviewPanel({ promptPreview, onGenerate }: PromptPreviewP
               No preview available
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[200px] mx-auto">
-              Select domains and fill forms to generate the system prompt
+              Select areas and fill forms to generate the system prompt
             </p>
           </div>
         ) : (

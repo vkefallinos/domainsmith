@@ -1222,7 +1222,7 @@ export function PromptLibrary({
                 <span className="w-2 h-2 rounded-full bg-violet-500" />
                 Knowledge Base
               </h2>
-              <p className="text-xs text-slate-500 mt-1">Add the documents, rules, and context your agent needs to understand your specific domain.</p>
+              <p className="text-xs text-slate-500 mt-1">Add the documents, rules, and context your agent needs to understand your specific knowledge.</p>
             </div>
             <div className="flex items-center gap-1">
               <button

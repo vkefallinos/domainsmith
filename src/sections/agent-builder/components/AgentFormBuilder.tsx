@@ -3,14 +3,10 @@ import type {
   Domain,
   SchemaField,
   SchemaNode,
-  SchemaSection,
   FormFieldValue,
-  Tool,
   EnabledToolMapping,
-  AttachedFlow,
-  PromptPreview,
 } from '@/../product/sections/agent-builder/types'
-import type { SchemaFieldType, ToolConfigStatus } from '@/../product/sections/agent-builder/types'
+import type { ToolConfigStatus } from '@/../product/sections/agent-builder/types'
 import { useState, useCallback, useMemo } from 'react'
 import { DomainSelector } from './DomainSelector'
 import { FormField } from './FormField'
@@ -72,6 +68,10 @@ function SchemaNodeRenderer({ node, ...props }: SchemaNodeRendererProps) {
   // node.type === 'section' - render section with nested children
   return (
     <div key={node.id} className="space-y-5">
+      <div className="flex items-center gap-2">
+
+        <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{node.label}</h5>
+      </div>
       {node.description && (
         <p className="text-sm text-slate-500 dark:text-slate-400">{node.description}</p>
       )}
@@ -110,8 +110,6 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     promptPreview,
     validationErrors = {},
     toolLibraryOpen = false,
-    flowBuilderOpen = false,
-    loadedAgentId,
     onDomainsChange,
     onFieldValueChange,
     onEnableFieldForRuntime,
@@ -126,7 +124,6 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     onSaveAgent,
     onNewAgent,
     onOpenFlowBuilder,
-    onCloseFlowBuilder,
     onAttachFlow,
     onDetachFlow,
     onToggleSlashCommand,
@@ -167,8 +164,9 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
   // Group domains by category
   const groupedDomains = useMemo(() => {
     return selectedDomains.reduce((acc, domain) => {
-      if (!acc[domain.category]) acc[domain.category] = []
-      acc[domain.category].push(domain)
+      const area = domain.category || 'General'
+      if (!acc[area]) acc[area] = []
+      acc[area].push(domain)
       return acc
     }, {} as Record<string, Domain[]>)
   }, [selectedDomains])
@@ -269,8 +267,8 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
                   </h1>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     {hasSelection
-                      ? `Building with ${selectedDomains.length} domain${selectedDomains.length > 1 ? 's' : ''}`
-                      : 'Select domains to begin building your agent'}
+                      ? `Building with ${selectedDomains.length} knowledge`
+                      : 'Select knowledge areas to begin building your agent'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -302,7 +300,7 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
                 <span className="text-xs text-slate-400 dark:text-slate-500">(optional)</span>
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 block">
-                Write custom instructions for your agent in markdown. These will be prepended to the domain-specific prompts.
+                Write custom instructions for your agent in markdown. These will be prepended to the knowledge-specific prompts.
               </span>
             </label>
             <textarea
@@ -335,7 +333,7 @@ These instructions will appear at the top of your agent's system prompt.`}
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
-                No domains selected
+                No knowledge selected
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                 Choose expertise areas from the sidebar to configure your agent's capabilities
@@ -343,27 +341,27 @@ These instructions will appear at the top of your agent's system prompt.`}
             </div>
           )}
 
-          {/* Form Sections by Domain Category */}
+          {/* Form Sections by Area */}
           {hasSelection &&
             Object.entries(groupedDomains).map(([category, domains], categoryIdx) => (
               <div key={category} className="mb-10" style={{ animationDelay: `${categoryIdx * 50}ms` }}>
-                {/* Category Header */}
+                {/* Area Header */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent flex-1" />
                   <h3 className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-widest">
-                    {category}
+                    Area · {category}
                   </h3>
                   <div className="h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent flex-1" />
                 </div>
 
-                {/* Domain Cards */}
+                {/* Knowledge Cards */}
                 <div className="space-y-4">
                   {domains.map(domain => (
                     <div
                       key={domain.id}
                       className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-200 hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-lg hover:shadow-violet-100/20 dark:hover:shadow-violet-900/10"
                     >
-                      {/* Domain Header */}
+                      {/* Knowledge Header */}
                       <button
                         onClick={() => toggleDomainExpanded(domain.id)}
                         className="w-full px-6 py-4 flex items-center gap-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
@@ -372,6 +370,7 @@ These instructions will appear at the top of your agent's system prompt.`}
                           {domain.icon}
                         </div>
                         <div className="flex-1 min-w-0">
+                          <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-0.5">Knowledge</p>
                           <h4 className="font-semibold text-slate-800 dark:text-slate-200">
                             {domain.name}
                           </h4>
@@ -386,7 +385,7 @@ These instructions will appear at the top of your agent's system prompt.`}
                               handleEnableAllForRuntime(domain)
                             }}
                             className="mr-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors flex items-center gap-1.5"
-                            title="Enable all fields in this domain for runtime configuration"
+                            title="Enable all fields in this knowledge area for runtime configuration"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -406,11 +405,11 @@ These instructions will appear at the top of your agent's system prompt.`}
                         </svg>
                       </button>
 
-                      {/* Domain Fields */}
+                      {/* Blocks */}
                       {expandedDomains.has(domain.id) && (
                         <div className="px-6 pb-6 border-t border-slate-100 dark:border-slate-800">
                           <div className="pt-5">
-                            <SchemaNodeRenderer
+                                                        <SchemaNodeRenderer
                               node={domain.schema.root}
                               formValues={formValues}
                               validationErrors={validationErrors}

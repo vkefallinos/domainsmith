@@ -279,7 +279,7 @@ export function AgentRuntime({
                         {selectedAgent.domains.join(', ')}
                       </>
                     ) : (
-                      'No domains'
+                      'No knowledge'
                     )}
                   </span>
                 </div>

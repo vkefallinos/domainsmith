@@ -62,10 +62,10 @@ export function ConfigurationForm({
           </div>
 
           <h3 className="text-lg font-semibold text-slate-300 mb-2">
-            No Domains Selected
+            No Knowledge Areas Selected
           </h3>
           <p className="text-sm text-slate-500">
-            Select one or more domains from the catalog to begin configuring your agent.
+            Select one or more knowledge areas from the catalog to begin configuring your agent.
           </p>
         </div>
       </div>

@@ -33,7 +33,7 @@ export function PromptPreview({
             </svg>
           </div>
           <p className="text-sm text-slate-500">
-            Select domains and configure options to preview the generated prompt
+            Select knowledge and configure options to preview the generated prompt
           </p>
         </div>
       </div>
@@ -71,7 +71,7 @@ export function PromptPreview({
         <>
           {/* Selected domains tags */}
           <div className="p-4 border-b border-slate-800">
-            <p className="text-xs text-slate-500 mb-2">Selected domains</p>
+            <p className="text-xs text-slate-500 mb-2">Selected knowledge</p>
             <div className="flex flex-wrap gap-1.5">
               {selectedDomains.map(domain => (
                 <span

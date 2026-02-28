@@ -579,7 +579,7 @@ export function StudioShell({
             <div className="p-6">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                  Manage domains and agents
+                  Manage knowledge and agents
                 </h2>
               </div>
 
@@ -588,13 +588,13 @@ export function StudioShell({
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <Folder className="w-5 h-5 text-emerald-500" />
-                    Domains
+                    Knowledge
                   </h3>
                   <button
                     onClick={handleCreateDomain}
                     className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
                   >
-                    + Create Domain
+                    + Create Knowledge Area
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -684,7 +684,7 @@ export function StudioShell({
                           {agent.description}
                         </p>
                         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-500">
-                          <span>{agent.selectedDomains.length} domains</span>
+                          <span>{agent.selectedDomains.length} knowledge areas</span>
                           <span>{agent.enabledTools?.length || 0} tools</span>
                           <span>{agent.attachedFlows?.length || 0} flows</span>
                         </div>

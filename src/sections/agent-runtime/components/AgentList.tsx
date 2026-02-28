@@ -51,7 +51,7 @@ function AgentCard({ agent, onClick }: AgentCardProps) {
       <div className="flex items-center justify-between text-xs">
         {/* Domains */}
         <div className="flex items-center gap-2">
-          <span className="text-slate-500 dark:text-slate-400">Domains:</span>
+          <span className="text-slate-500 dark:text-slate-400">Knowledge:</span>
           <div className="flex items-center gap-1">
             {agent.domains.slice(0, 2).map((domain) => (
               <span

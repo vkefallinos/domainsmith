@@ -68,7 +68,7 @@ function CheckIcon() {
   )
 }
 
-const iconMap: Record<string, () => JSX.Element> = {
+const iconMap: Record<string, () => ReactElement> = {
   shield: ShieldIcon,
   cloud: CloudIcon,
   lock: LockIcon,
@@ -106,10 +106,10 @@ export function DomainCatalog({
     <aside className="w-72 bg-slate-900/50 border-r border-slate-800 overflow-y-auto">
       <div className="p-4 border-b border-slate-800">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-          Domain Catalog
+          Knowledge
         </h2>
         <p className="text-xs text-slate-500 mt-1">
-          {selectedDomainIds.length} domain{selectedDomainIds.length !== 1 ? 's' : ''} selected
+          {selectedDomainIds.length} selected
         </p>
       </div>
 
@@ -121,7 +121,7 @@ export function DomainCatalog({
             </h3>
             <div className="space-y-1">
               {categoryDomains.map(domain => {
-                const Icon = iconMap[domain.icon] || ShieldIcon
+                const Icon = iconMap[domain.icon ?? ''] || ShieldIcon
                 const isSelected = selectedDomainIds.includes(domain.id)
 
                 const buttonClasses = clsx(
@@ -177,7 +177,7 @@ export function DomainCatalog({
                       </p>
                       {/* Tags */}
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {domain.tags.slice(0, 3).map(tag => (
+                        {(domain.tags ?? []).slice(0, 3).map(tag => (
                           <span
                             key={tag}
                             className={tagClasses(isSelected)}
@@ -198,7 +198,7 @@ export function DomainCatalog({
       {/* Footer info */}
       <div className="p-4 border-t border-slate-800">
         <p className="text-xs text-slate-600">
-          Select domains to generate configuration form
+          Select knowledge to generate areas and blocks
         </p>
       </div>
     </aside>
