@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { StudioSidebar } from './StudioSidebar'
 import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
@@ -434,7 +434,9 @@ export function StudioShell({
   const handleDeleteDomainClick = useCallback((domainId: string) => {
     onDeleteDomain?.(domainId)
   }, [onDeleteDomain])
-
+  useEffect(() => {
+    handleExpandAll()
+  },[domainFileSystem])
   // Prompt preview from data
   const promptPreview = (agentBuilderData as any).promptPreview
 
