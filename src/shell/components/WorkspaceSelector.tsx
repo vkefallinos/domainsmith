@@ -17,10 +17,10 @@ export type Workspace = {
 
 // Dummy workspaces
 export const DUMMY_WORKSPACES: Workspace[] = [
-  { id: 'workspace-1', name: 'Personal', color: '#10b981' },
-  { id: 'workspace-2', name: 'Team Alpha', color: '#8b5cf6' },
-  { id: 'workspace-3', name: 'Team Beta', color: '#f59e0b' },
-  { id: 'workspace-4', name: 'Company', color: '#3b82f6' },
+  { id: 'workspace-1', name: 'Education', color: '#10b981' },
+  { id: 'workspace-2', name: 'Web development', color: '#8b5cf6' },
+  { id: 'workspace-3', name: 'Personal', color: '#f59e0b' },
+  { id: 'workspace-4', name: 'Company ', color: '#3b82f6' },
 ]
 
 export interface WorkspaceSelectorProps {

@@ -6,6 +6,10 @@ import {
   MessageSquare,
   FolderTree,
   Zap,
+  FileText,
+  Workflow,
+  MessageCircle,
+  Play,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -151,23 +155,97 @@ export default function LandingLayout() {
           </Card>
         </div>
 
-        {/* Features Grid */}
+        
+        {/* How It Works Section */}
         <div className="mt-20">
-          <h3 className="text-center text-2xl font-semibold">From Expert to Engineer</h3>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => (
-              <Card key={feature.title} className="text-center">
-                <CardContent className="pt-6">
-                  <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <feature.icon className="size-6" />
-                  </div>
-                  <h4 className="mt-4 font-semibold">{feature.title}</h4>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+          <h3 className="text-center text-2xl font-semibold">How It Works</h3>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">
+            Build AI agents in four simple steps — from knowledge to action
+          </p>
+          <div className="mt-12 grid gap-8 lg:grid-cols-4">
+            {/* Step 1 */}
+            <div className="relative">
+              <div className="flex flex-col items-center text-center">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <FileText className="size-8" />
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-sm font-semibold text-primary">Step 1</span>
+                </div>
+                <h4 className="mt-2 text-lg font-semibold">Organize Your Knowledge</h4>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Structure your domain expertise into markdown files in a file tree. Create
+                  folders, documents, and links that mirror your field's natural organization.
+                </p>
+              </div>
+              <div className="hidden lg:block absolute right-0 top-8 -translate-y-1/2 translate-x-1/2 text-muted-foreground/30">
+                <ArrowRight className="size-6" />
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="relative">
+              <div className="flex flex-col items-center text-center">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Bot className="size-8" />
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-sm font-semibold text-primary">Step 2</span>
+                </div>
+                <h4 className="mt-2 text-lg font-semibold">Build Your Agent</h4>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Use the Agent Builder to create a configurable AI agent. Connect it to your
+                  domain knowledge, set its personality, and define how it should respond.
+                </p>
+              </div>
+              <div className="hidden lg:block absolute right-0 top-8 -translate-y-1/2 translate-x-1/2 text-muted-foreground/30">
+                <ArrowRight className="size-6" />
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="relative">
+              <div className="flex flex-col items-center text-center">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Workflow className="size-8" />
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-sm font-semibold text-primary">Step 3</span>
+                </div>
+                <h4 className="mt-2 text-lg font-semibold">Add Task Flows</h4>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Create commands as task flows that your agent can execute. Define step-by-step
+                  actions using the visual flow editor — no coding required.
+                </p>
+              </div>
+              <div className="hidden lg:block absolute right-0 top-8 -translate-y-1/2 translate-x-1/2 text-muted-foreground/30">
+                <ArrowRight className="size-6" />
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="relative">
+              <div className="flex flex-col items-center text-center">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                  <Play className="size-8" />
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-sm font-semibold text-primary-foreground">Step 4</span>
+                </div>
+                <h4 className="mt-2 text-lg font-semibold">Chat & Execute</h4>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Interact with your agent through natural conversation. Watch it run commands,
+                  perform tasks, and leverage your domain expertise in real-time.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile connector arrows */}
+          <div className="mt-8 flex justify-center lg:hidden">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground/30">
+              <ArrowRight className="size-6 rotate-90" />
+            </div>
           </div>
         </div>
 
