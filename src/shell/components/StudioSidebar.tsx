@@ -51,7 +51,7 @@ type AgentConfig = {
   attachedFlows: Array<{
     flowId: string
     flowName: string
-    slashCommand?: { name: string; commandId: string; enabled?: boolean }
+    slashAction?: { name: string; actionId: string; enabled?: boolean }
   }>
 }
 
@@ -255,8 +255,8 @@ export function StudioSidebar({
                   {agents.map((agent) => {
                     const href = `${studioPath}/agent/${agent.id}`
                     const isActive = location.pathname === href || activeAgentId === agent.id
-                    const hasSlashCommand = agent.attachedFlows?.some(
-                      (f) => f.slashCommand?.enabled
+                    const hasSlashAction = agent.attachedFlows?.some(
+                      (f) => f.slashAction?.enabled
                     )
 
                     return (
@@ -275,7 +275,7 @@ export function StudioSidebar({
                         <div className="flex-1 min-w-0">
                           <div className="truncate font-medium flex items-center gap-2">
                             {agent.name}
-                            {hasSlashCommand && (
+                            {hasSlashAction && (
                               <span className="px-1.5 py-0.5 text-[10px] font-medium bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-300 rounded">
                                 /
                               </span>

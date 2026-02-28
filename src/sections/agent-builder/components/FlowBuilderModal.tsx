@@ -6,7 +6,7 @@ interface FlowBuilderModalProps {
   onClose: () => void
   agentId: string
   availableFlows: Array<{ id: string; name: string; description: string; taskCount: number }>
-  onAttachFlow: (flowId: string, commandId: string, name: string, description: string) => void
+  onAttachFlow: (flowId: string, actionId: string, name: string, description: string) => void
   onCreateNewFlow: () => void
 }
 
@@ -19,9 +19,9 @@ export function FlowBuilderModal({
   onCreateNewFlow,
 }: FlowBuilderModalProps) {
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null)
-  const [commandId, setCommandId] = useState('')
-  const [commandName, setCommandName] = useState('')
-  const [commandDescription, setCommandDescription] = useState('')
+  const [actionId, setActionId] = useState('')
+  const [actionName, setActionName] = useState('')
+  const [actionDescription, setActionDescription] = useState('')
   const [mode, setMode] = useState<'select' | 'create'>('select')
 
   if (!isOpen) return null
@@ -29,20 +29,20 @@ export function FlowBuilderModal({
   const selectedFlow = availableFlows.find(f => f.id === selectedFlowId)
 
   const handleAttachFlow = () => {
-    if (!selectedFlowId || !commandId.trim()) return
+    if (!selectedFlowId || !actionId.trim()) return
 
     onAttachFlow(
       selectedFlowId,
-      commandId.trim().toLowerCase().replace(/\s+/g, '-'),
-      commandName || selectedFlow?.name || commandId,
-      commandDescription || selectedFlow?.description || ''
+      actionId.trim().toLowerCase().replace(/\s+/g, '-'),
+      actionName || selectedFlow?.name || actionId,
+      actionDescription || selectedFlow?.description || ''
     )
 
     // Reset form
     setSelectedFlowId(null)
-    setCommandId('')
-    setCommandName('')
-    setCommandDescription('')
+    setActionId('')
+    setActionName('')
+    setActionDescription('')
     setMode('select')
     onClose()
   }
@@ -69,7 +69,7 @@ export function FlowBuilderModal({
               Attach Flow to Agent
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Select a flow and configure its slash command trigger
+              Select a flow and configure its slash action trigger
             </p>
           </div>
           <button
@@ -154,7 +154,7 @@ export function FlowBuilderModal({
                   </div>
                 </div>
 
-                {/* Slash command configuration */}
+                {/* Slash action configuration */}
                 {selectedFlow && (
                   <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
                     <div className="p-3 bg-violet-50 dark:bg-violet-950/30 rounded-lg">
@@ -165,7 +165,7 @@ export function FlowBuilderModal({
 
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Command Trigger
+                        Action Trigger
                       </label>
                       <div className="flex items-center">
                         <span className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-r-0 border-slate-300 dark:border-slate-700 rounded-l-lg text-slate-500 font-mono">
@@ -173,25 +173,25 @@ export function FlowBuilderModal({
                         </span>
                         <input
                           type="text"
-                          value={commandId}
-                          onChange={(e) => setCommandId(e.target.value)}
+                          value={actionId}
+                          onChange={(e) => setActionId(e.target.value)}
                           placeholder="summarize"
                           className="flex-1 px-3 py-2.5 rounded-r-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
                         />
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                        Users will type <span className="font-mono">/{commandId || 'command'}</span> to trigger this flow
+                        Users will type <span className="font-mono">/{actionId || 'action'}</span> to trigger this flow
                       </p>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Command Name
+                        Action Name
                       </label>
                       <input
                         type="text"
-                        value={commandName}
-                        onChange={(e) => setCommandName(e.target.value)}
+                        value={actionName}
+                        onChange={(e) => setActionName(e.target.value)}
                         placeholder={selectedFlow?.name}
                         className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
                       />
@@ -202,8 +202,8 @@ export function FlowBuilderModal({
                         Description
                       </label>
                       <textarea
-                        value={commandDescription}
-                        onChange={(e) => setCommandDescription(e.target.value)}
+                        value={actionDescription}
+                        onChange={(e) => setActionDescription(e.target.value)}
                         placeholder={selectedFlow?.description}
                         rows={2}
                         className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
@@ -215,15 +215,15 @@ export function FlowBuilderModal({
                       <div className="text-xs text-slate-500 dark:text-slate-500 mb-2">Preview:</div>
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded bg-violet-500 text-white text-sm font-mono">
-                          /{commandId || 'command'}
+                          /{actionId || 'action'}
                         </span>
                         <span className="text-sm text-slate-700 dark:text-slate-300">
-                          {commandName || selectedFlow?.name}
+                          {actionName || selectedFlow?.name}
                         </span>
                       </div>
-                      {commandDescription || selectedFlow?.description ? (
+                      {actionDescription || selectedFlow?.description ? (
                         <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 ml-1">
-                          {commandDescription || selectedFlow?.description}
+                          {actionDescription || selectedFlow?.description}
                         </p>
                       ) : null}
                     </div>
@@ -246,7 +246,7 @@ export function FlowBuilderModal({
                   Create a New Flow
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                  Build a custom flow with tasks, then configure its slash command trigger for this agent.
+                  Build a custom flow with tasks, then configure its slash action trigger for this agent.
                 </p>
                 <button
                   onClick={handleCreateNewFlow}
@@ -278,7 +278,7 @@ export function FlowBuilderModal({
           </button>
           <button
             onClick={handleAttachFlow}
-            disabled={!selectedFlowId || !commandId.trim()}
+            disabled={!selectedFlowId || !actionId.trim()}
             className="px-5 py-2.5 rounded-lg font-medium bg-violet-500 text-white hover:bg-violet-600 transition-colors shadow-lg shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Attach Flow

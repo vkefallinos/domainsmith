@@ -48,15 +48,15 @@ A workspace-level configuration value (API keys, endpoints, secrets) that tools 
 
 ### Flow
 
-A sequential task flow that can be attached to an agent, consisting of multiple tasks that execute in order. Tasks share a mutable flow output object that accumulates data across execution. Flows are triggered by slash commands during conversations.
+A sequential task flow that can be attached to an agent, consisting of multiple tasks that execute in order. Tasks share a mutable flow output object that accumulates data across execution. Flows are triggered by slash actions during conversations.
 
 ### Task
 
 A single step within a flow of type updateFlowOutput or executeTask. updateFlowOutput tasks store structured LLM output at a target field in the flow state. executeTask tasks perform operations (tool calls, prompt fragments) without adding structured LLM output to the flow state. Both task types can enable prompt fragments, enable tools, and define task instructions.
 
-### SlashCommand
+### SlashAction
 
-A custom command trigger (e.g., `/summarize`, `/analyze`) that users can type in conversation to invoke an attached flow on an agent.
+A custom action trigger (e.g., `/summarize`, `/analyze`) that users can type in conversation to invoke an attached flow on an agent.
 
 ## Relationships
 
@@ -75,20 +75,20 @@ A custom command trigger (e.g., `/summarize`, `/analyze`) that users can type in
 - AgentConfig has many configured Tools 
 - AgentConfig has one MainInstruction
 - AgentConfig has many RuntimeFields
-- AgentConfig has many SlashCommand
-- SlashCommand has one Flow
+- AgentConfig has many SlashAction
+- SlashAction has one Flow
 - AgentConfig generates one Agent
 - Agent belongs to one Workspace
 - Agent has many Conversations
 - Agent has many Tools 
-- Agent has many SlashCommands 
+- Agent has many SlashActions 
 - Flow belongs to one Workspace
 - Flow can be attached to many Agents (reusable)
 - Flow has many Tasks in sequence
 - Task has type updateFlowOutput or executeTask
 - Task receives input from the previous Task in the Flow
-- SlashCommand belongs to one Agent
-- SlashCommand triggers one Flow
+- SlashAction belongs to one Agent
+- SlashAction triggers one Flow
 - Conversation belongs to one Agent
 - User belongs to many Workspaces
 - Tool belongs to one ToolPackage

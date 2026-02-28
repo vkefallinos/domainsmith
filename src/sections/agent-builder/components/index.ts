@@ -7,7 +7,7 @@ export { AgentFormBuilder } from './AgentFormBuilder'
 export { DomainSelector } from './DomainSelector'
 export { FormField } from './FormField'
 export { ToolsPanel } from './ToolsPanel'
-export { CommandsPanel } from './CommandsPanel'
+export { ActionsPanel } from './ActionsPanel'
 export { PromptPreviewPanel } from './PromptPreviewPanel'
 export { SaveAgentModal } from './SaveAgentModal'
 
@@ -18,7 +18,7 @@ export { FlowEditorModal } from './FlowEditorModal'
 
 // Other components
 export { SavedAgentsList } from './SavedAgentsList'
-export { SlashCommandCard } from './SlashCommandCard'
+export { SlashActionCard } from './SlashActionCard'
 export { PromptPreview } from './PromptPreview'
 
 // Legacy (may be deprecated)

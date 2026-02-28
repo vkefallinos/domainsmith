@@ -57,10 +57,10 @@
         }
       ],
       "systemPrompt": "You are a practical indoor plant assistant. Prioritize safe, low-risk actions, simple checks, and clear scheduling recommendations.",
-      "slashCommands": [
+      "slashActions": [
         {
           "id": "sc_plants_careplan",
-          "commandId": "careplan",
+          "actionId": "careplan",
           "name": "Generate Care Plan",
           "description": "Create a weekly care routine",
           "flowId": "flow-generate-care-plan",
@@ -96,8 +96,8 @@
           "role": "user",
           "content": "/careplan --roomTemperature \"22°C\" --currentSymptoms \"yellow lower leaves\"",
           "timestamp": "2026-02-27T18:02:00Z",
-          "slashCommand": {
-            "command": "careplan",
+          "slashAction": {
+            "action": "careplan",
             "agentId": "agent_plants_001",
             "flowId": "flow-generate-care-plan",
             "parameters": {

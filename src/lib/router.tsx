@@ -36,7 +36,7 @@ export const router = createBrowserRouter([
       // Agent detail view
       { path: 'agent/:agentId' },
       // Agent flow editing view (shows modal)
-      { path: 'agent/:agentId/commands/:commandId' },
+      { path: 'agent/:agentId/actions/:actionId' },
     ],
   },
 ],

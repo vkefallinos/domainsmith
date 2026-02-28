@@ -377,7 +377,7 @@ export function StudioShell({
 
   const handleAttachFlow = useCallback((
     flowId: string,
-    commandId: string,
+    actionId: string,
     name: string,
     description: string
   ) => {
@@ -385,9 +385,9 @@ export function StudioShell({
       flowId,
       flowName: name,
       flowDescription: description,
-      slashCommand: {
+      slashAction: {
         id: `sc_${Date.now()}`,
-        commandId,
+        actionId,
         name,
         description,
         flowId,
@@ -398,33 +398,33 @@ export function StudioShell({
     setAttachedFlows(prev => [...prev, newAttachedFlow])
   }, [])
 
-  const handleDetachFlow = useCallback((slashCommandId: string) => {
-    setAttachedFlows(prev => prev.filter(af => af.slashCommand?.id !== slashCommandId))
+  const handleDetachFlow = useCallback((slashActionId: string) => {
+    setAttachedFlows(prev => prev.filter(af => af.slashAction?.id !== slashActionId))
   }, [])
 
-  const handleToggleSlashCommand = useCallback((slashCommandId: string, enabled: boolean) => {
+  const handleToggleSlashAction = useCallback((slashActionId: string, enabled: boolean) => {
     setAttachedFlows(prev =>
       prev.map(af => {
-        if (af.slashCommand?.id === slashCommandId) {
-          return { ...af, slashCommand: { ...af.slashCommand, enabled } }
+        if (af.slashAction?.id === slashActionId) {
+          return { ...af, slashAction: { ...af.slashAction, enabled } }
         }
         return af
       })
     )
   }, [])
 
-  const handleEditSlashCommand = useCallback((
-    slashCommandId: string
+  const handleEditSlashAction = useCallback((
+    slashActionId: string
   ) => {
-    // Find the attached flow to get the commandId
-    const attachedFlow = attachedFlows.find(af => af.slashCommand?.id === slashCommandId)
+    // Find the attached flow to get the actionId
+    const attachedFlow = attachedFlows.find(af => af.slashAction?.id === slashActionId)
     if (!attachedFlow) {
-      console.log('Flow not found for slash command:', slashCommandId)
+      console.log('Flow not found for slash action:', slashActionId)
       return
     }
 
     // Navigate to the agent flow editing route
-    navigate(`${studioPath}/agent/${agentId}/commands/${attachedFlow.slashCommand.commandId}`)
+    navigate(`${studioPath}/agent/${agentId}/actions/${attachedFlow.slashAction.actionId}`)
   }, [navigate, agentId, attachedFlows, studioPath])
 
   // Navigation helpers
@@ -512,8 +512,8 @@ export function StudioShell({
     onCloseFlowBuilder: handleCloseFlowBuilder,
     onAttachFlow: handleAttachFlow,
     onDetachFlow: handleDetachFlow,
-    onToggleSlashCommand: handleToggleSlashCommand,
-    onEditSlashCommand: handleEditSlashCommand,
+    onToggleSlashAction: handleToggleSlashAction,
+    onEditSlashAction: handleEditSlashAction,
   }
 
   return (
@@ -650,7 +650,7 @@ export function StudioShell({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {agents.map((agent) => {
-                    const slashCommand = agent.attachedFlows?.find((f) => f.slashCommand?.enabled)
+                    const slashAction = agent.attachedFlows?.find((f) => f.slashAction?.enabled)
                     return (
                       <Link
                         key={agent.id}
@@ -662,9 +662,9 @@ export function StudioShell({
                             <Bot className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                           </div>
                           <div className="flex items-center gap-2">
-                            {slashCommand && (
+                            {slashAction && (
                               <span className="px-2 py-1 text-xs font-medium bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-300 rounded-full">
-                                /{slashCommand.slashCommand?.name}
+                                /{slashAction.slashAction?.name}
                               </span>
                             )}
                             <svg

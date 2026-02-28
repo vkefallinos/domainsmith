@@ -11,7 +11,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { DomainSelector } from './DomainSelector'
 import { FormField } from './FormField'
 import { ToolsPanel } from './ToolsPanel'
-import { CommandsPanel } from './CommandsPanel'
+import { ActionsPanel } from './ActionsPanel'
 import { AgentRuntimePreviewModal } from './AgentRuntimePreviewModal'
 import { SaveAgentModal } from './SaveAgentModal'
 
@@ -112,7 +112,7 @@ function SchemaNodeRenderer({ node, ...props }: SchemaNodeRendererProps) {
  * - Auto-generated form fields grouped by domain
  * - Runtime field configuration mode
  * - Tool management with configuration status
- * - Slash command attachment for flows
+ * - Slash action attachment for flows
  * - Live system prompt preview
  *
  * @props AgentBuilderScreenProps - All data and callbacks passed as props
@@ -147,12 +147,12 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     onOpenFlowBuilder,
     onAttachFlow,
     onDetachFlow,
-    onToggleSlashCommand,
-    onEditSlashCommand,
+    onToggleSlashAction,
+    onEditSlashAction,
   } = props
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'tools' | 'commands'>('commands')
+  const [activeTab, setActiveTab] = useState<'tools' | 'actions'>('actions')
   const [saveModalOpen, setSaveModalOpen] = useState(false)
   const [runtimePreviewOpen, setRuntimePreviewOpen] = useState(false)
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set(selectedDomainIds))
@@ -478,12 +478,12 @@ These instructions will appear at the top of your agent's system prompt.`}
         </div>
       </main>
 
-    {/* Right Panel - Commands, Tools & Preview */}
+    {/* Right Panel - Actions, Tools & Preview */}
     <aside className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
       {/* Tabs */}
       <div className="flex border-b border-slate-200 dark:border-slate-800">
           {[
-            { id: 'commands' as const, label: 'Commands', count: attachedFlows?.filter(f => f.slashCommand.enabled).length || 0 },
+            { id: 'actions' as const, label: 'Actions', count: attachedFlows?.filter(f => f.slashAction.enabled).length || 0 },
             { id: 'tools' as const, label: 'Tools', count: enabledToolMappings.length },
           ].map(tab => (
             <button
@@ -531,12 +531,12 @@ These instructions will appear at the top of your agent's system prompt.`}
             />
           )}
 
-          {activeTab === 'commands' && (
-            <CommandsPanel
+          {activeTab === 'actions' && (
+            <ActionsPanel
               attachedFlows={attachedFlows || []}
               availableFlows={availableFlows || []}
-              onToggleEnabled={onToggleSlashCommand || (() => {})}
-              onEditCommand={(id) => onEditSlashCommand?.(id)}
+              onToggleEnabled={onToggleSlashAction || (() => {})}
+              onEditAction={(id) => onEditSlashAction?.(id)}
               onDetachFlow={onDetachFlow || (() => {})}
               onAttachFlow={onAttachFlow || (() => {})}
               onOpenFlowBuilder={onOpenFlowBuilder || (() => {})}

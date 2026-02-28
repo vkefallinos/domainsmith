@@ -95,10 +95,10 @@
         }
       ],
       "systemPrompt": "# Lesson Planning Assistant\n\nYou are an expert lesson planning assistant for teachers. You create comprehensive, standards-aligned lesson plans customized to the teacher's classroom context, teaching style, and student needs.\n\n## Your Approach\n1. Always consider the specific grade level and student needs\n2. Align all activities to the specified curriculum framework\n3. Include differentiation strategies for diverse learners\n4. Suggest formative and summative assessments\n5. Provide timing guidance and pacing\n6. Recommend resources that match available classroom technology\n\n## Lesson Plan Structure\n- Learning objectives aligned to standards\n- Essential questions\n- Materials and preparation needed\n- Lesson sequence with timing\n- Differentiation strategies\n- Assessment methods\n- Extension activities for early finishers",
-      "slashCommands": [
+      "slashActions": [
         {
           "id": "sc_lesson_generate",
-          "commandId": "generate",
+          "actionId": "generate",
           "name": "Generate Lesson",
           "description": "Create a complete lesson plan based on your specifications",
           "flowId": "flow_lesson_generate",
@@ -194,10 +194,10 @@
         }
       ],
       "systemPrompt": "# Assessment Design Assistant\n\nYou are an expert assessment designer. You create valid, reliable assessments that measure student learning aligned to standards.\n\n## Your Approach\n1. Align all items to specific learning objectives and standards\n2. Use Webb's Depth of Knowledge for cognitive complexity\n3. Include multiple question formats (selected response, constructed response, performance)\n4. Provide accommodations and modifications for diverse learners\n5. Create clear, user-friendly rubrics for performance tasks\n6. Ensure items are unbiased and accessible\n\n## Assessment Design Principles\n- Begin with the end in mind (backwards design)\n- Balance recall, application, and critical thinking\n- Include both scaffolded and extension items\n- Provide clear instructions and examples\n- Consider timing and appropriate length",
-      "slashCommands": [
+      "slashActions": [
         {
           "id": "sc_assessment_generate",
-          "commandId": "generate",
+          "actionId": "generate",
           "name": "Generate Assessment",
           "description": "Create a complete assessment with items and rubric",
           "flowId": "flow_assessment_generate",
@@ -284,10 +284,10 @@
         }
       ],
       "systemPrompt": "# Team Building & Collaboration Assistant\n\nYou are an expert in designing collaborative learning experiences that build classroom community and develop social-emotional skills.\n\n## Your Approach\n1. Design activities appropriate for grade level and group size\n2. Focus on specific collaboration skills (communication, trust, problem-solving)\n3. Include clear roles and responsibilities within groups\n4. Provide debrief questions for reflection\n5. Suggest grouping strategies based on student dynamics\n6. Consider physical space and available resources\n\n## Activity Design Elements\n- Icebreaker/getting to know you activities\n- Problem-solving challenges\n- Communication-building exercises\n- Trust-building activities\n- Reflection and debrief prompts\n- Extensions and variations",
-      "slashCommands": [
+      "slashActions": [
         {
           "id": "sc_teambuild_generate",
-          "commandId": "generate",
+          "actionId": "generate",
           "name": "Generate Session",
           "description": "Create a complete team-building session plan",
           "flowId": "flow_teambuild_generate",
@@ -322,8 +322,8 @@
           "role": "user",
           "content": "/generate --unitFocus \"Introduction to Fractions\" --lessonLength 60 --essentialQuestions \"How do fractions represent parts of a whole?\"",
           "timestamp": "2025-02-20T14:31:30Z",
-          "slashCommand": {
-            "command": "generate",
+          "slashAction": {
+            "action": "generate",
             "agentId": "agent_001",
             "flowId": "flow_lesson_generate",
             "parameters": {
@@ -424,8 +424,8 @@
           "role": "user",
           "content": "/generate --assessmentType Quiz --learningObjectives \"Solve linear equations in one variable\" --pointValue 100",
           "timestamp": "2025-02-18T11:17:00Z",
-          "slashCommand": {
-            "command": "generate",
+          "slashAction": {
+            "action": "generate",
             "agentId": "agent_002",
             "flowId": "flow_assessment_generate",
             "parameters": {
@@ -542,8 +542,8 @@
           "role": "user",
           "content": "/generate --activityDuration \"30-45\" --groupSize \"Groups of 4\" --sessionGoal \"Improve communication and trust among students\"",
           "timestamp": "2025-02-15T16:47:00Z",
-          "slashCommand": {
-            "command": "generate",
+          "slashAction": {
+            "action": "generate",
             "agentId": "agent_003",
             "flowId": "flow_teambuild_generate",
             "parameters": {

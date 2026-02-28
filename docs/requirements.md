@@ -6,7 +6,7 @@ Design OS runs locally on your machine. You'll need:
 
 - **Node.js** (v18 or higher)
 - **npm** (comes with Node.js)
-- **An AI coding assistant** — Design OS uses slash commands to guide the design process. Claude Code is recommended, but you can invoke the Design OS commands from any AI coding tool that supports custom commands or prompts (Cursor, Windsurf, Codex, etc.)
+- **An AI coding assistant** — Design OS uses slash actions to guide the design process. Claude Code is recommended, but you can invoke the Design OS actions from any AI coding tool that supports custom actions or prompts (Cursor, Windsurf, Codex, etc.)
 
 ## Installing Your Exported Components
 

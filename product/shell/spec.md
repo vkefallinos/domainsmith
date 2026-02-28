@@ -20,7 +20,7 @@ interface SavedAgentConfig {
   formValues: Record<string, any>
   enabledTools: Array<{ toolId: string, source: string }>
   emptyFieldsForRuntime: string[]
-  attachedFlows: Array<{ flowId: string, flowName: string, slashCommand: { ... } }>
+  attachedFlows: Array<{ flowId: string, flowName: string, slashAction: { ... } }>
   createdAt: string
   updatedAt: string
 }

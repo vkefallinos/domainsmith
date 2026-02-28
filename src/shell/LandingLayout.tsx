@@ -210,7 +210,7 @@ export default function LandingLayout() {
                 </div>
                 <h4 className="mt-2 text-lg font-semibold">Add Task Flows</h4>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Create commands as task flows that your agent can execute. Define step-by-step
+                  Create actions as task flows that your agent can execute. Define step-by-step
                   actions using the visual flow editor — no coding required.
                 </p>
               </div>
@@ -230,7 +230,7 @@ export default function LandingLayout() {
                 </div>
                 <h4 className="mt-2 text-lg font-semibold">Chat & Execute</h4>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Interact with your agent through natural conversation. Watch it run commands,
+                  Interact with your agent through natural conversation. Watch it run actions,
                   perform tasks, and leverage your knowledge in real-time.
                 </p>
               </div>

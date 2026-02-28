@@ -3,7 +3,7 @@
  *
  * Data structures for the Flow Builder feature within Agent Builder,
  * enabling users to create sequential task flows with various task types.
- * Flows can be attached to agents and triggered by slash commands.
+ * Flows can be attached to agents and triggered by slash actions.
  */
 
 /**
@@ -39,22 +39,22 @@ export type PriorityLevel = "P1" | "P2" | "P3";
 export type UrgencyLevel = "low" | "medium" | "high" | "critical";
 
 /**
- * A slash command that triggers a flow when a user types it in conversation
+ * A slash action that triggers a flow when a user types it in conversation
  */
-export interface SlashCommand {
-  /** Unique identifier for the slash command */
+export interface SlashAction {
+  /** Unique identifier for the slash action */
   id: string;
-  /** The command trigger (e.g., "summarize", "analyze" - user types /summarize) */
-  commandId: string;
-  /** Human-readable name for the command */
+  /** The action trigger (e.g., "summarize", "analyze" - user types /summarize) */
+  actionId: string;
+  /** Human-readable name for the action */
   name: string;
-  /** Description of what the command does (shown to users) */
+  /** Description of what the action does (shown to users) */
   description: string;
-  /** ID of the flow this command triggers */
+  /** ID of the flow this action triggers */
   flowId: string;
-  /** ID of the agent this command belongs to */
+  /** ID of the agent this action belongs to */
   agentId: string;
-  /** Whether the command is enabled */
+  /** Whether the action is enabled */
   enabled: boolean;
 }
 

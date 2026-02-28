@@ -14,7 +14,7 @@ https://buildermethods.com/design-os
 - Renamed `data-model/` to `data-shapes/` in the export package, with a new `overview.ts` that aggregates all section types as a combined reference.
 - Simplified export prompt files — replaced prescriptive backend question categories with lighter, open-ended clarifying questions.
 - Refocused export test specs (`tests.md`) on UI behavior only — removed backend testing guidance.
-- Renamed `/data-model` to `/data-shape` throughout. The command, UI, routes, and all references now use "data shape" to emphasize this step is about sketching the general shape of data, not defining a final data model.
+- Renamed `/data-model` to `/data-shape` throughout. The action, UI, routes, and all references now use "data shape" to emphasize this step is about sketching the general shape of data, not defining a final data model.
 - Switched to date-based version numbers.
 
 ## [0.1.2] - 2025-12-19

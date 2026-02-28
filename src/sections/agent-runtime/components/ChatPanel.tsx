@@ -9,8 +9,8 @@ function formatTime(isoString: string): string {
   })
 }
 
-// Slash command badge for user messages
-function SlashCommandBadge({ command, parameters }: { command: string; parameters?: Record<string, string> }) {
+// Slash action badge for user messages
+function SlashActionBadge({ action, parameters }: { action: string; parameters?: Record<string, string> }) {
   return (
     <div className="mb-3 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800">
       <div className="flex items-center gap-2 mb-2">
@@ -18,7 +18,7 @@ function SlashCommandBadge({ command, parameters }: { command: string; parameter
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
         <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-          /{command}
+          /{action}
         </span>
       </div>
       {parameters && Object.keys(parameters).length > 0 && (
@@ -173,16 +173,16 @@ function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
           : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-md'
         }
       `}>
-        {/* Slash command indicator for user messages */}
-        {isUser && message.slashCommand && (
-          <SlashCommandBadge
-            command={message.slashCommand.command}
-            parameters={message.slashCommand.parameters}
+        {/* Slash action indicator for user messages */}
+        {isUser && message.slashAction && (
+          <SlashActionBadge
+            action={message.slashAction.action}
+            parameters={message.slashAction.parameters}
           />
         )}
 
-        {/* Message content - hide if slash command (shown in badge instead) */}
-        {(!isUser || !message.slashCommand) && (
+        {/* Message content - hide if slash action (shown in badge instead) */}
+        {(!isUser || !message.slashAction) && (
           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
             {message.content}
             {isStreaming && (

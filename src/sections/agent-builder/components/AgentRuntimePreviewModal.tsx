@@ -57,7 +57,7 @@ export function AgentRuntimePreviewModal({
       })),
       enabledTools: [],
       systemPrompt: generatedPrompt,
-      slashCommands: [],
+      slashActions: [],
       createdAt: new Date().toISOString(),
       lastUsedAt: null,
       status: 'ready',

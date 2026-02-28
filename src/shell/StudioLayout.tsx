@@ -53,7 +53,7 @@ function saveState(state: StudioState) {
 }
 
 export default function StudioLayout() {
-  const { agentId, commandId } = useParams()
+  const { agentId, actionId } = useParams()
   const [state, setState] = useState<StudioState>(loadState)
 
   // Load workspace data dynamically
@@ -75,14 +75,14 @@ export default function StudioLayout() {
 
   // Handle URL parameter for flow editing
   useEffect(() => {
-    if (!flowBuilderData || !commandId) {
+    if (!flowBuilderData || !actionId) {
       setCurrentEditingFlow(null)
       setCurrentEditingTasks([])
       return
     }
 
-    // Find the attached flow with this command ID
-    const attachedFlow = attachedFlows.find(af => af.slashCommand?.commandId === commandId)
+    // Find the attached flow with this action ID
+    const attachedFlow = attachedFlows.find(af => af.slashAction?.actionId === actionId)
     if (!attachedFlow) {
       setCurrentEditingFlow(null)
       setCurrentEditingTasks([])
@@ -103,7 +103,7 @@ export default function StudioLayout() {
     setCurrentEditingFlow(fullFlow)
     setCurrentEditingTasks(flowTasks)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commandId, attachedFlows, flowBuilderData])
+  }, [actionId, attachedFlows, flowBuilderData])
 
   const handleCloseFlowEditor = useCallback(() => {
     setCurrentEditingFlow(null)

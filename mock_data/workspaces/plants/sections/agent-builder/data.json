@@ -292,9 +292,9 @@
           "flowName": "Generate Care Plan",
           "flowDescription": "Creates a personalized plant care plan",
           "taskCount": 3,
-          "slashCommand": {
+          "slashAction": {
             "id": "sc-care-plan",
-            "commandId": "careplan",
+            "actionId": "careplan",
             "name": "Generate Care Plan",
             "description": "Create a customized care plan for the selected plant",
             "flowId": "flow-generate-care-plan",

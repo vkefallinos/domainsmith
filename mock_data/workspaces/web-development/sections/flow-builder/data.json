@@ -3,14 +3,14 @@
     "models": {
       "Flow": "A sequential development workflow for multi-step coding and configuration tasks.",
       "Task": "A single step in a development flow that generates a specific section of the output.",
-      "SlashCommand": "A command trigger (e.g., /generate) that invokes a development flow.",
+      "SlashAction": "A action trigger (e.g., /generate) that invokes a development flow.",
       "FlowTaskConfig": "Configuration for development task operations including output schema and task instructions."
     },
     "relationships": [
       "Flow belongs to one Workspace",
       "Flow can be attached to many development Agents",
       "Flow has many Tasks in sequence",
-      "SlashCommand belongs to one Agent and triggers one Flow",
+      "SlashAction belongs to one Agent and triggers one Flow",
       "Each task generates a specific section of the structured output"
     ]
   },

@@ -5,7 +5,7 @@
  * specialized agents by selecting domains from the Prompt Library,
  * filling out auto-generated forms based on the directory structure,
  * enabling tools from the tool library, setting fields to be
- * configured at runtime, and attaching flows with slash commands.
+ * configured at runtime, and attaching flows with slash actions.
  *
  * DOMAINS ARE DERIVED FROM PROMPT LIBRARY DIRECTORY STRUCTURE:
  * - Top-level directories = domains
@@ -124,27 +124,27 @@ export type ToolConfigStatus = 'installed' | 'needs-config' | 'ready';
 export type ToolCategory = 'Curriculum' | 'Teaching' | 'Assessment' | 'Special Education' | 'Communication' | 'Collaboration' | 'Reporting';
 
 /**
- * A slash command attached to an agent that triggers a flow
+ * A slash action attached to an agent that triggers a flow
  */
-export interface AgentSlashCommand {
-  /** Unique identifier for the slash command */
+export interface AgentSlashAction {
+  /** Unique identifier for the slash action */
   id: string;
-  /** The command trigger (e.g., "summarize" - user types /summarize) */
-  commandId: string;
-  /** Human-readable name for the command */
+  /** The action trigger (e.g., "summarize" - user types /summarize) */
+  actionId: string;
+  /** Human-readable name for the action */
   name: string;
-  /** Description of what the command does */
+  /** Description of what the action does */
   description: string;
-  /** ID of the flow this command triggers */
+  /** ID of the flow this action triggers */
   flowId: string;
   /** Name of the flow (for display) - optional since it's available on AttachedFlow */
   flowName?: string;
-  /** Whether the command is enabled */
+  /** Whether the action is enabled */
   enabled: boolean;
 }
 
 /**
- * A flow attached to an agent with its slash command configuration
+ * A flow attached to an agent with its slash action configuration
  */
 export interface AttachedFlow {
   /** ID of the flow */
@@ -155,8 +155,8 @@ export interface AttachedFlow {
   flowDescription: string;
   /** Number of tasks in the flow */
   taskCount: number;
-  /** Slash command that triggers this flow */
-  slashCommand: AgentSlashCommand;
+  /** Slash action that triggers this flow */
+  slashAction: AgentSlashAction;
 }
 
 /**
@@ -264,7 +264,7 @@ export interface AgentConfig {
   enabledTools: EnabledTool[];
   /** Field IDs that will be configured at runtime (empty placeholders in builder) */
   emptyFieldsForRuntime: string[];
-  /** Flows attached to this agent with slash commands */
+  /** Flows attached to this agent with slash actions */
   attachedFlows?: AttachedFlow[];
   /** When the config was created */
   createdAt: string;
@@ -306,7 +306,7 @@ export interface AgentBuilderProps {
   enabledTools?: EnabledTool[];
   /** Fields enabled for runtime configuration (shown as placeholders, not editable) */
   emptyFieldsForRuntime?: string[];
-  /** Flows attached to this agent with slash commands */
+  /** Flows attached to this agent with slash actions */
   attachedFlows?: AttachedFlow[];
   /** Available flows that can be attached to the agent */
   availableFlows?: Array<{ id: string; name: string; description: string; taskCount: number }>;
@@ -366,14 +366,14 @@ export interface AgentBuilderCallbacks {
   onOpenFlowBuilder: () => void;
   /** Called to close the flow builder modal */
   onCloseFlowBuilder: () => void;
-  /** Called to attach a flow with a slash command */
-  onAttachFlow: (flowId: string, commandId: string, name: string, description: string) => void;
+  /** Called to attach a flow with a slash action */
+  onAttachFlow: (flowId: string, actionId: string, name: string, description: string) => void;
   /** Called to detach a flow from the agent */
-  onDetachFlow: (slashCommandId: string) => void;
-  /** Called to toggle a slash command enabled/disabled */
-  onToggleSlashCommand: (slashCommandId: string, enabled: boolean) => void;
-  /** Called to edit an existing slash command - receives the slash command ID */
-  onEditSlashCommand: (slashCommandId: string) => void;
+  onDetachFlow: (slashActionId: string) => void;
+  /** Called to toggle a slash action enabled/disabled */
+  onToggleSlashAction: (slashActionId: string, enabled: boolean) => void;
+  /** Called to edit an existing slash action - receives the slash action ID */
+  onEditSlashAction: (slashActionId: string) => void;
 }
 
 /**

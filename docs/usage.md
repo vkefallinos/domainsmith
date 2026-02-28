@@ -1,6 +1,6 @@
 # Usage
 
-Design OS uses slash commands to guide you through the design process. Each command is a conversation—the AI asks questions, you provide direction, and together you shape your product.
+Design OS uses slash actions to guide you through the design process. Each action is a conversation—the AI asks questions, you provide direction, and together you shape your product.
 
 ## The Design Workflow
 
@@ -14,7 +14,7 @@ Before designing any screens, establish the foundation:
 2. **Design Tokens** — Choose colors and typography
 3. **Application Shell** — Design navigation and layout
 
-See [Product Planning](product-planning.md) for details on each command.
+See [Product Planning](product-planning.md) for details on each action.
 
 ### Phase 2: Section Design
 
@@ -26,7 +26,7 @@ Once the foundation is set, work through each section:
 
 Repeat for each section in your roadmap.
 
-See [Designing Sections](design-section.md) for details on each command.
+See [Designing Sections](design-section.md) for details on each action.
 
 ### Phase 3: Export
 
@@ -38,7 +38,7 @@ See [Export](export.md) for details on what's included and how to use it.
 
 ## Quick Reference
 
-| Command | Purpose |
+| Action | Purpose |
 |---------|---------|
 | `/product-vision` | Define product overview, roadmap sections, and data shape |
 | `/design-tokens` | Choose colors and typography |
@@ -55,5 +55,5 @@ See [Export](export.md) for details on what's included and how to use it.
 
 - **Follow the sequence** — Each step builds on the previous. Don't skip ahead.
 - **Be specific** — The more detail you provide, the better the output.
-- **Iterate** — Each command is a conversation. Refine until you're happy.
+- **Iterate** — Each action is a conversation. Refine until you're happy.
 - **Restart the dev server** — After creating new components, restart to see changes.

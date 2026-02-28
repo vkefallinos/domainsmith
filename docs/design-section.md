@@ -93,7 +93,7 @@ If the spec implies multiple views (list view, detail view, form, etc.), you'll 
 
 Take screenshots of your screen designs for documentation. Screenshots are saved alongside the spec and data files.
 
-This command:
+This action:
 1. Starts the dev server automatically
 2. Navigates to your screen design
 3. Hides the Design OS navigation bar

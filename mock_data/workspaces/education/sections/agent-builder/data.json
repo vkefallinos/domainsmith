@@ -1133,9 +1133,9 @@
           "flowName": "Generate Lesson Plan",
           "flowDescription": "Creates a complete lesson plan with 8 gradual section generation tasks",
           "taskCount": 8,
-          "slashCommand": {
+          "slashAction": {
             "id": "sc_lesson_generate",
-            "commandId": "generate",
+            "actionId": "generate",
             "name": "Generate Lesson",
             "description": "Create a complete lesson plan with structured sections",
             "flowId": "flow_lesson_generate",
@@ -1193,9 +1193,9 @@
           "flowName": "Generate Assessment",
           "flowDescription": "Creates a complete assessment with 6 gradual section generation tasks",
           "taskCount": 6,
-          "slashCommand": {
+          "slashAction": {
             "id": "sc_assessment_generate",
-            "commandId": "generate",
+            "actionId": "generate",
             "name": "Generate Assessment",
             "description": "Create a complete assessment with structured sections",
             "flowId": "flow_assessment_generate",

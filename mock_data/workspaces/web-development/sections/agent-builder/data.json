@@ -843,9 +843,9 @@
           "flowName": "Generate Component",
           "flowDescription": "Creates a complete React component with props, types, and tests",
           "taskCount": 5,
-          "slashCommand": {
+          "slashAction": {
             "id": "sc_component_generate",
-            "commandId": "generate",
+            "actionId": "generate",
             "name": "Generate Component",
             "description": "Create a complete component with tests",
             "flowId": "flow_component_generate",

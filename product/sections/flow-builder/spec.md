@@ -1,7 +1,7 @@
 # Flow Builder Specification
 
 ## Overview
-A visual flow editor within Agent Builder that allows users to create sequential task flows. Flows have exactly two task types: `updateFlowOutput` which updates a specific key in the flow output with structured LLM output, and `executeTask` which performs operations without adding structured output to the flow state. All tasks share a mutable flow output object that accumulates data across task execution. Tasks can define output schemas with target field names, push to array fields, enable prompt fragments based on field values, enable tools, and set task instructions. Flows can be standalone or attached to agents (a single flow can be attached to multiple agents). When attached to an agent, flows are triggered by slash commands (e.g., `/summarize`, `/analyze`) that users type during conversation.
+A visual flow editor within Agent Builder that allows users to create sequential task flows. Flows have exactly two task types: `updateFlowOutput` which updates a specific key in the flow output with structured LLM output, and `executeTask` which performs operations without adding structured output to the flow state. All tasks share a mutable flow output object that accumulates data across task execution. Tasks can define output schemas with target field names, push to array fields, enable prompt fragments based on field values, enable tools, and set task instructions. Flows can be standalone or attached to agents (a single flow can be attached to multiple agents). When attached to an agent, flows are triggered by slash actions (e.g., `/summarize`, `/analyze`) that users type during conversation.
 
 ### Task Types
 
@@ -36,12 +36,12 @@ Performs operations without adding structured LLM output to the flow state. Use 
 - **Shared flow state** — All tasks read from and write to a mutable flow output object that accumulates across execution
 - **Data passing** — updateFlowOutput tasks store their LLM output at the specified targetFieldName in the flow state; executeTask tasks do not add LLM output but can use tools for side effects
 - **Failure handling** — If a task fails, it retries with configurable backoff. If all retries are exhausted, the flow stops and shows an error to the user
-- **Slash command triggering** — When a user types a slash command, the flow receives the full conversation context as input and runs synchronously with progress indication
+- **Slash action triggering** — When a user types a slash action, the flow receives the full conversation context as input and runs synchronously with progress indication
 - **Flow scope and reusability** — A single flow can be attached to multiple agents; standalone flows can be attached to agents later
 
 ## Template Variables
 Available in taskInstructions and other text fields:
-- `{{input}}` — Full conversation context passed to the flow when triggered by slash command
+- `{{input}}` — Full conversation context passed to the flow when triggered by slash action
 - `{{previousTask.taskId.fieldName}}` — Reference output from a specific previous task by task ID and field path
 - `{{flow.output.fieldName}}` — Reference any field in the accumulated flow output state
 - `{{now}}` — Current timestamp
@@ -51,7 +51,7 @@ Available in taskInstructions and other text fields:
 ## User Flows
 - **Browse flows** — View a list of all flows in the current workspace with summary info
 - **Create a new flow** — Start with a blank canvas and add the first task
-- **Create flow for agent** — When building an agent, create a flow specifically for that agent with a slash command trigger
+- **Create flow for agent** — When building an agent, create a flow specifically for that agent with a slash action trigger
 - **Add tasks to a flow** — Insert tasks of type updateFlowOutput or executeTask
 - **Configure task details** — Define output schemas with target field names, array push behavior, enabled tools, prompt fragments, and task instructions
 - **Reorder tasks** — Drag and drop tasks to change the execution sequence
@@ -59,10 +59,10 @@ Available in taskInstructions and other text fields:
 - **Edit flow metadata** — Set flow name, description, and tags
 - **Save a flow** — Persist the flow configuration
 - **View data connections** — See how tasks are connected; updateFlowOutput tasks show which target fields they populate in the flow state
-- **Attach flow to agent** — Select a flow and define a slash command (command ID, name, description) to trigger it. A single flow can be attached to multiple agents.
-- **Configure slash command** — Set the command trigger (e.g., "summarize" → `/summarize`), display name, and description shown to users. One-to-one mapping: one flow = one slash command per agent.
-- **Toggle slash commands** — Enable/disable individual slash commands on an agent
-- **Detach flow from agent** — Remove a flow and its slash command from an agent (does not delete the flow, only removes the association)
+- **Attach flow to agent** — Select a flow and define a slash action (action ID, name, description) to trigger it. A single flow can be attached to multiple agents.
+- **Configure slash action** — Set the action trigger (e.g., "summarize" → `/summarize`), display name, and description shown to users. One-to-one mapping: one flow = one slash action per agent.
+- **Toggle slash actions** — Enable/disable individual slash actions on an agent
+- **Detach flow from agent** — Remove a flow and its slash action from an agent (does not delete the flow, only removes the association)
 
 ## UI Requirements
 - **Flow list view** — Table or card grid showing all flows with name, description, task count, last modified date, status, and scope (standalone/agent-specific)
@@ -78,7 +78,7 @@ Available in taskInstructions and other text fields:
   - Action buttons (edit, delete, duplicate) on each card
   - "Add task" button between tasks and at the end of the list
   - Task type selector when adding new tasks (updateFlowOutput vs executeTask)
-  - Slash command configuration (when in agent context): command ID input, name, description
+  - Slash action configuration (when in agent context): action ID input, name, description
 - **Task configuration panel** — Modal or slide-out panel for editing task details:
   - Task type selector (updateFlowOutput/executeTask)
   - Name and description fields
@@ -92,9 +92,9 @@ Available in taskInstructions and other text fields:
   - Model selector (defaults to agent's model)
   - Temperature control (defaults to agent's temperature)
   - Validation feedback (real-time schema and reference checking)
-- **Slash command card** — Compact display showing:
-  - Command trigger with slash prefix (e.g., `/summarize`)
-  - Command name and description
+- **Slash action card** — Compact display showing:
+  - Action trigger with slash prefix (e.g., `/summarize`)
+  - Action name and description
   - Associated flow name and task count
   - Enable/disable toggle
   - Edit and detach actions

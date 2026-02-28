@@ -3,14 +3,14 @@
     "models": {
       "Flow": "A sequential educational workflow for multi-step teaching and administrative tasks.",
       "Task": "A single step in an educational flow that generates a specific section of the output.",
-      "SlashCommand": "A command trigger (e.g., /generate) that invokes an educational flow.",
+      "SlashAction": "A action trigger (e.g., /generate) that invokes an educational flow.",
       "FlowTaskConfig": "Configuration for educational task operations including output schema and task instructions."
     },
     "relationships": [
       "Flow belongs to one Workspace",
       "Flow can be attached to many educational Agents",
       "Flow has many Tasks in sequence",
-      "SlashCommand belongs to one Agent and triggers one Flow",
+      "SlashAction belongs to one Agent and triggers one Flow",
       "Each task generates a specific section of the structured output"
     ]
   },

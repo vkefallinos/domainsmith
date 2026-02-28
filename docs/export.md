@@ -18,7 +18,7 @@ You can export at any point—it doesn't have to be "complete." Exporting genera
 /export-product
 ```
 
-The export command:
+The export action:
 
 1. **Checks prerequisites** — Verifies required files exist
 2. **Gathers all design assets** — Components, types, data, tokens

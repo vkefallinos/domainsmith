@@ -25,7 +25,7 @@ Each step is a conversation. The AI asks questions, you provide direction, and t
 
 Design OS is its own separate codebase—a design environment you use *before* building. When you're done, you export components and assets to import into your actual product's codebase.
 
-You interact with Design OS through slash commands. Each command walks you through a specific part of the process:
+You interact with Design OS through slash actions. Each action walks you through a specific part of the process:
 
 - `/product-vision` — Define your product, break it into sections, and sketch the data shape — all in one flow
 - `/design-tokens` — Choose your color palette and typography

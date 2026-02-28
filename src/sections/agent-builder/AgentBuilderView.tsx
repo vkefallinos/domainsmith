@@ -199,7 +199,7 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
   }, [])
 
   const handleAttachFlow = useCallback(
-    (flowId: string, commandId: string, name: string, description: string) => {
+    (flowId: string, actionId: string, name: string, description: string) => {
       const flow = availableFlows.find(f => f.id === flowId)
       if (!flow) return
 
@@ -208,9 +208,9 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
         flowName: flow.name,
         flowDescription: flow.description,
         taskCount: flow.taskCount,
-        slashCommand: {
+        slashAction: {
           id: `sc_${Date.now()}`,
-          commandId,
+          actionId,
           name,
           description,
           flowId,
@@ -220,32 +220,32 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
       }
 
       setAttachedFlows(prev => [...prev, newAttachedFlow])
-      console.log('Attach flow:', flowId, 'as command:', commandId)
+      console.log('Attach flow:', flowId, 'as action:', actionId)
     },
     [availableFlows]
   )
 
-  const handleDetachFlow = useCallback((slashCommandId: string) => {
-    setAttachedFlows(prev => prev.filter(af => af.slashCommand.id !== slashCommandId))
-    console.log('Detach flow with command:', slashCommandId)
+  const handleDetachFlow = useCallback((slashActionId: string) => {
+    setAttachedFlows(prev => prev.filter(af => af.slashAction.id !== slashActionId))
+    console.log('Detach flow with action:', slashActionId)
   }, [])
 
-  const handleToggleSlashCommand = useCallback((slashCommandId: string, enabled: boolean) => {
+  const handleToggleSlashAction = useCallback((slashActionId: string, enabled: boolean) => {
     setAttachedFlows(prev =>
       prev.map(af => {
-        if (af.slashCommand.id === slashCommandId) {
-          return { ...af, slashCommand: { ...af.slashCommand, enabled } }
+        if (af.slashAction.id === slashActionId) {
+          return { ...af, slashAction: { ...af.slashAction, enabled } }
         }
         return af
       })
     )
-    console.log('Toggle command:', slashCommandId, 'enabled:', enabled)
+    console.log('Toggle action:', slashActionId, 'enabled:', enabled)
   }, [])
 
-  // Find the attached flow by slash command ID
-  const handleEditSlashCommand = useCallback(
-    (slashCommandId: string) => {
-      const attachedFlow = attachedFlows.find(af => af.slashCommand.id === slashCommandId)
+  // Find the attached flow by slash action ID
+  const handleEditSlashAction = useCallback(
+    (slashActionId: string) => {
+      const attachedFlow = attachedFlows.find(af => af.slashAction.id === slashActionId)
       if (!attachedFlow) return
 
       // Get the full flow data from flow builder data
@@ -259,8 +259,8 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
       setCurrentEditingTasks(flowTasks)
       setFlowEditorOpen(true)
 
-      // Navigate to a route based on the command name
-      navigate(`/agent-builder/flow/${attachedFlow.slashCommand.commandId}`)
+      // Navigate to a route based on the action name
+      navigate(`/agent-builder/flow/${attachedFlow.slashAction.actionId}`)
 
       console.log('Edit flow:', attachedFlow.flowName, 'with', flowTasks.length, 'tasks')
     },
@@ -367,8 +367,8 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
     onCloseFlowBuilder: handleCloseFlowBuilder,
     onAttachFlow: handleAttachFlow,
     onDetachFlow: handleDetachFlow,
-    onToggleSlashCommand: handleToggleSlashCommand,
-    onEditSlashCommand: handleEditSlashCommand,
+    onToggleSlashAction: handleToggleSlashAction,
+    onEditSlashAction: handleEditSlashAction,
   }
 
   const agentsProps = {
