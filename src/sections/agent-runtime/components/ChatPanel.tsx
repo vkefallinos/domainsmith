@@ -1,5 +1,5 @@
-import type { Agent, Message, ChatPanelProps } from '@/../product/sections/agent-runtime/types'
-import { useState, useRef, useEffect } from 'react'
+import type { Message, ChatPanelProps } from '@/../product/sections/agent-runtime/types'
+import { useState, useRef, useEffect, useMemo } from 'react'
 
 // Format timestamp for display
 function formatTime(isoString: string): string {
@@ -7,6 +7,152 @@ function formatTime(isoString: string): string {
     hour: 'numeric',
     minute: '2-digit'
   })
+}
+
+// Slash command badge for user messages
+function SlashCommandBadge({ command, parameters }: { command: string; parameters?: Record<string, string> }) {
+  return (
+    <div className="mb-3 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800">
+      <div className="flex items-center gap-2 mb-2">
+        <svg className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+          /{command}
+        </span>
+      </div>
+      {parameters && Object.keys(parameters).length > 0 && (
+        <div className="flex flex-col gap-1 ml-5">
+          {Object.entries(parameters).map(([key, value]) => (
+            <div key={key} className="flex items-center gap-2 text-xs">
+              <span className="font-medium text-slate-600 dark:text-slate-400">{key}:</span>
+              <span className="font-mono text-slate-900 dark:text-slate-200 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Beautified YAML-like display for structured output
+function StructuredOutputDisplay({ output }: { output: Record<string, unknown> }) {
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  // Recursively render a value with appropriate styling
+  function renderValue(value: unknown, depth = 0): React.ReactNode {
+    const indent = depth * 16
+
+    if (value === null) {
+      return <span className="text-slate-400 dark:text-slate-500">null</span>
+    }
+
+    if (typeof value === 'boolean') {
+      return <span className="text-violet-600 dark:text-violet-400">{String(value)}</span>
+    }
+
+    if (typeof value === 'number') {
+      return <span className="text-amber-600 dark:text-amber-400">{String(value)}</span>
+    }
+
+    if (typeof value === 'string') {
+      return <span className="text-green-600 dark:text-green-400">"{value}"</span>
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return <span className="text-slate-400 dark:text-slate-500">[]</span>
+      }
+      return (
+        <div className="text-slate-600 dark:text-slate-400">
+          [
+          {value.map((item, i) => (
+            <div key={i} style={{ paddingLeft: `${indent + 12}px` }} className="py-0.5">
+              <span className="text-slate-400 dark:text-slate-500">-</span>
+              {' '}
+              {renderValue(item, depth + 1)}
+              {i < value.length - 1 && ','}
+            </div>
+          ))}
+          <div style={{ paddingLeft: `${indent}px` }}>]</div>
+        </div>
+      )
+    }
+
+    if (typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>)
+      if (entries.length === 0) {
+        return <span className="text-slate-400 dark:text-slate-500">
+          {'{}'}
+        </span>
+      }
+      return (
+        <div>
+          <div className="text-slate-600 dark:text-slate-400">
+            {'{'}
+          </div>
+          {entries.map(([key, val], i) => (
+            <div key={key} style={{ paddingLeft: `${indent + 12}px` }} className="py-0.5">
+              <span className="text-cyan-600 dark:text-cyan-400">{key}</span>
+              <span className="text-slate-400 dark:text-slate-500">: </span>
+              {renderValue(val, depth + 1)}
+              {i < entries.length - 1 && <span className="text-slate-400 dark:text-slate-500">,</span>}
+            </div>
+          ))}
+          <div style={{ paddingLeft: `${indent}px` }}>
+            {'}'}
+          </div>
+        </div>
+      )
+    }
+
+    return <span className="text-slate-500">{String(value)}</span>
+  }
+
+  // Extract display info from output
+  const type = output.type as string | undefined
+  const version = output.version as string | undefined
+
+  return (
+    <div className="mt-3 rounded-xl border border-violet-200 dark:border-violet-800 overflow-hidden">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-50 to-amber-50 dark:from-violet-950/50 dark:to-amber-950/50
+          hover:from-violet-100 hover:to-amber-100 dark:hover:from-violet-900/50 dark:hover:to-amber-900/50
+          transition-colors"
+      >
+        <svg className="w-4 h-4 text-violet-500 dark:text-violet-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span className="text-sm font-medium text-violet-700 dark:text-violet-300 capitalize">
+          {type?.replace(/([A-Z])/g, ' $1').trim() || 'Structured Output'}
+        </span>
+        {version && (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            v{version}
+          </span>
+        )}
+        <svg
+          className={`w-4 h-4 text-slate-400 dark:text-slate-500 ml-auto transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isExpanded && (
+        <div className="p-4 bg-white dark:bg-slate-900 max-h-96 overflow-auto animate-in slide-in-from-top-2 duration-200">
+          <pre className="text-xs font-mono leading-relaxed">
+            {renderValue(output)}
+          </pre>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Message bubble component
@@ -27,12 +173,30 @@ function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
           : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-md'
         }
       `}>
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-          {message.content}
-          {isStreaming && (
-            <span className="inline-block w-1 h-4 bg-violet-400 ml-1 animate-pulse" />
-          )}
-        </p>
+        {/* Slash command indicator for user messages */}
+        {isUser && message.slashCommand && (
+          <SlashCommandBadge
+            command={message.slashCommand.command}
+            parameters={message.slashCommand.parameters}
+          />
+        )}
+
+        {/* Message content - hide if slash command (shown in badge instead) */}
+        {(!isUser || !message.slashCommand) && (
+          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+            {message.content}
+            {isStreaming && (
+              <span className="inline-block w-1 h-4 bg-violet-400 ml-1 animate-pulse" />
+            )}
+          </p>
+        )}
+
+        {/* Structured output for assistant messages */}
+        {!isUser && message.structuredOutput && (
+          <StructuredOutputDisplay output={message.structuredOutput as Record<string, unknown>} />
+        )}
+
+        {/* Timestamp */}
         {!isStreaming && (
           <span className={`text-[10px] mt-1 block ${
             isUser ? 'text-violet-200' : 'text-slate-400 dark:text-slate-500'
@@ -149,19 +313,13 @@ function MessageInput({ agentName, onSend, isLoading = false }: MessageInputProp
 // Main Chat Panel component
 export function ChatPanel({
   agent,
-  conversations,
   activeConversation,
   isLoading = false,
   isStreaming = false,
-  onSendMessage,
-  onSelectConversation,
-  onCreateConversation,
-  onDeleteConversation,
-  onClearConversation
+  onSendMessage
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const messages = activeConversation?.messages || []
+  const messages = useMemo(() => activeConversation?.messages ?? [], [activeConversation?.messages])
   const hasMessages = messages.length > 0
 
   // Auto-scroll to bottom when new messages arrive
@@ -169,7 +327,6 @@ export function ChatPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
-  // Handle send message
   const handleSendMessage = (content: string) => {
     onSendMessage?.(content)
   }
@@ -183,12 +340,11 @@ export function ChatPanel({
         ) : (
           <div className="space-y-4">
             {messages.map((message, idx) => (
-              <div key={message.id}>
-                <MessageBubble
-                  message={message}
-                  isStreaming={isStreaming && idx === messages.length - 1}
-                />
-              </div>
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isStreaming={isStreaming && idx === messages.length - 1}
+              />
             ))}
             {isLoading && !isStreaming && <LoadingIndicator />}
             <div ref={messagesEndRef} />

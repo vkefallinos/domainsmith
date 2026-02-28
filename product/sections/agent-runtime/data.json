@@ -316,6 +316,87 @@
           "role": "assistant",
           "content": "I'll create a fractions lesson plan designed for your 5th grade class with ELL students. Let me align it to Common Core standards.\n\n## Lesson: Understanding Fractions as Numbers\n\n**Standards:** 5.NF.A.1 - Add and subtract fractions with unlike denominators\n\n**Learning Objectives:**\n- Students will understand fractions as numbers on the number line\n- Students will visualize fractions using area models\n- Students will compare fractions with unlike denominators\n\n**Essential Question:** How can we represent parts of a whole and compare them?\n\n**Differentiation for ELL:**\n- Visual supports with fraction tiles and manipulatives\n- Vocabulary bank with pictures (numerator, denominator, equivalent)\n- Sentence frames for mathematical discourse\n- Partner work with mixed-language pairing\n\nWould you like me to expand any section or add specific activities?",
           "timestamp": "2025-02-20T14:30:45Z"
+        },
+        {
+          "id": "msg_001_3",
+          "role": "user",
+          "content": "/generate --unitFocus \"Introduction to Fractions\" --lessonLength 60 --essentialQuestions \"How do fractions represent parts of a whole?\"",
+          "timestamp": "2025-02-20T14:31:30Z",
+          "slashCommand": {
+            "command": "generate",
+            "agentId": "agent_001",
+            "flowId": "flow_lesson_generate",
+            "parameters": {
+              "unitFocus": "Introduction to Fractions",
+              "lessonLength": "60",
+              "essentialQuestions": "How do fractions represent parts of a whole?"
+            }
+          }
+        },
+        {
+          "id": "msg_001_4",
+          "role": "assistant",
+          "content": "Generating lesson plan structure...",
+          "timestamp": "2025-02-20T14:31:31Z",
+          "structuredOutput": {
+            "type": "lessonPlan",
+            "version": "1.0",
+            "metadata": {
+              "generatedAt": "2025-02-20T14:31:31Z",
+              "generatedBy": "LessonPlanAgent",
+              "agentId": "agent_001"
+            },
+            "lessonPlan": {
+              "title": "Introduction to Fractions",
+              "gradeLevel": "5th Grade",
+              "duration": 60,
+              "standards": ["5.NF.A.1", "5.NF.A.2"],
+              "objectives": [
+                "Identify numerator and denominator",
+                "Represent fractions using area models",
+                "Compare fractions with like denominators"
+              ],
+              "materials": ["Fraction tiles", "Graph paper", "Whiteboard", "Worksheets"],
+              "segments": [
+                {
+                  "id": "warmup",
+                  "title": "Warm-Up (10 min)",
+                  "activities": ["Fraction vocabulary review", "Quick fraction identifier game"]
+                },
+                {
+                  "id": "instruction",
+                  "title": "Direct Instruction (15 min)",
+                  "activities": ["Introduction to fraction notation", "Area model demonstration"]
+                },
+                {
+                  "id": "guided",
+                  "title": "Guided Practice (20 min)",
+                  "activities": ["Hands-on fraction tiles", "Partner work with manipulatives"]
+                },
+                {
+                  "id": "closure",
+                  "title": "Closure (15 min)",
+                  "activities": ["Exit ticket", "Student reflection"]
+                }
+              ],
+              "differentiation": {
+                "ell": {
+                  "visualSupports": true,
+                  "vocabularyBank": true,
+                  "sentenceFrames": true,
+                  "nativeLanguagePairs": true
+                },
+                "gifted": {
+                  "extension": "Equivalent fractions exploration",
+                  "challenge": "Design your own fraction model"
+                }
+              },
+              "assessment": {
+                "formative": ["Observation during practice", "Whiteboard responses"],
+                "summative": ["Exit ticket (5 questions)"]
+              }
+            }
+          }
         }
       ],
       "createdAt": "2025-02-20T14:30:00Z",
@@ -337,6 +418,103 @@
           "role": "assistant",
           "content": "I'll create a linear equations quiz with appropriate accommodations.\n\n## Linear Equations Quiz (8th Grade)\n\n**Standards:** 8.EE.C.7 - Solve linear equations in one variable\n\n### Questions (10 points total)\n\n1. Solve: 3x + 5 = 20 (2 pts)\n2. Solve: 2(x - 4) = 18 (2 pts)\n3. Write an equation for: Five more than twice a number is 23 (2 pts)\n4. Solve and graph: x - 7 ≤ -3 (2 pts)\n5. Word problem: A phone plan costs $15 plus $0.10 per minute. Write an equation and find cost for 100 minutes. (2 pts)\n\n### Accommodations for IEP/504:\n- **Reduced items**: Provide 5 key questions instead of 10\n- **Calculator**: Allow for all computation\n- **Formula sheet**: Provide equation-solving steps reference\n- **Extended time**: 1.5x time allowance\n- **Read aloud**: Test items read to student\n- **Scribe**: Student responds orally, scribe records\n\n### Modified Version (Alternative Assessment):\nFor students requiring significant modification, consider a performance task where students demonstrate solving one multi-step equation with verbal explanation of each step.\n\nWould you like a rubric for the word problem or additional modifications?",
           "timestamp": "2025-02-18T11:16:00Z"
+        },
+        {
+          "id": "msg_002_3",
+          "role": "user",
+          "content": "/generate --assessmentType Quiz --learningObjectives \"Solve linear equations in one variable\" --pointValue 100",
+          "timestamp": "2025-02-18T11:17:00Z",
+          "slashCommand": {
+            "command": "generate",
+            "agentId": "agent_002",
+            "flowId": "flow_assessment_generate",
+            "parameters": {
+              "assessmentType": "Quiz",
+              "learningObjectives": "Solve linear equations in one variable",
+              "pointValue": "100"
+            }
+          }
+        },
+        {
+          "id": "msg_002_4",
+          "role": "assistant",
+          "content": "Generating assessment structure...",
+          "timestamp": "2025-02-18T11:17:01Z",
+          "structuredOutput": {
+            "type": "assessment",
+            "version": "1.0",
+            "metadata": {
+              "generatedAt": "2025-02-18T11:17:01Z",
+              "generatedBy": "AssessmentAgent",
+              "agentId": "agent_002"
+            },
+            "assessment": {
+              "title": "Linear Equations Quiz",
+              "gradeLevel": "8th Grade",
+              "assessmentType": "Quiz",
+              "pointValue": 100,
+              "standards": ["8.EE.C.7", "8.EE.C.7a", "8.EE.C.7b"],
+              "duration": 45,
+              "items": [
+                {
+                  "id": "q1",
+                  "type": "multiple-choice",
+                  "points": 10,
+                  "dokLevel": 1,
+                  "question": "Solve for x: 3x + 5 = 20",
+                  "options": ["x = 3", "x = 5", "x = 7", "x = 15"],
+                  "correctAnswer": "x = 5",
+                  "standard": "8.EE.C.7"
+                },
+                {
+                  "id": "q2",
+                  "type": "constructed-response",
+                  "points": 15,
+                  "dokLevel": 2,
+                  "question": "Solve: 2(x - 4) = 18. Show your work.",
+                  "rubric": {
+                    "fullCredit": "Correct answer (x = 13) with complete work shown",
+                    "partialCredit": "Correct answer with partial work OR correct process with calculation error",
+                    "noCredit": "Incorrect answer with no work"
+                  },
+                  "standard": "8.EE.C.7b"
+                },
+                {
+                  "id": "q3",
+                  "type": "constructed-response",
+                  "points": 15,
+                  "dokLevel": 3,
+                  "question": "Write an equation for: Five more than twice a number is 23. Then solve it.",
+                  "rubric": {
+                    "fullCredit": "Correct equation (2x + 5 = 23) and solution (x = 9)",
+                    "partialCredit": "Correct equation or correct solution only",
+                    "noCredit": "Incorrect equation and solution"
+                  },
+                  "standard": "8.EE.C.7a"
+                }
+              ],
+              "accommodations": {
+                "iep": {
+                  "reducedItems": 5,
+                  "calculator": true,
+                  "formulaSheet": true,
+                  "extendedTime": 1.5,
+                  "readAloud": true,
+                  "scribe": true
+                },
+                "ell": {
+                  "translatedGlossary": true,
+                  "extendedTime": 1.25,
+                  "bilingualDictionary": true
+                }
+              },
+              "answerKey": {
+                "q1": "x = 5",
+                "q2": "x = 13",
+                "q3": "2x + 5 = 23, x = 9"
+              }
+            }
+          }
         }
       ],
       "createdAt": "2025-02-18T11:15:00Z",
@@ -358,6 +536,123 @@
           "role": "assistant",
           "content": "Here are some team-building activities perfect for 6th graders:\n\n## Activity 1: The Human Knot (15-20 minutes)\n**Skills:** Communication, problem-solving, patience\n\n**Setup:** Groups of 6-8 students stand in circle, reach hands across to grab random hands\n\n**Goal:** Untangle the knot without letting go\n\n**Debrief Questions:**\n- What strategies did your group try?\n- How did you handle disagreements?\n- What role did each person play?\n\n## Activity 2: Common Ground (10-15 minutes)\n**Skills:** Finding connections, active listening\n\n**Setup:** Groups of 4\n\n**Goal:** Find 10 things everyone in the group has in common (cannot be visible traits)\n\n## Activity 3: Build a Tower (20-30 minutes)\n**Skills:** Collaboration, planning, roles\n\n**Materials:** Straws, tape, string\n\n**Goal:** Build the tallest free-standing tower\n\n**Suggested Roles:**\n- Planner (reads instructions)\n- Builder (constructs)\n- Material manager (gets supplies)\n- Timekeeper/cheerleader\n\nWould you like detailed instructions for any of these or activities targeting a specific skill?",
           "timestamp": "2025-02-15T16:46:00Z"
+        },
+        {
+          "id": "msg_003_3",
+          "role": "user",
+          "content": "/generate --activityDuration \"30-45\" --groupSize \"Groups of 4\" --sessionGoal \"Improve communication and trust among students\"",
+          "timestamp": "2025-02-15T16:47:00Z",
+          "slashCommand": {
+            "command": "generate",
+            "agentId": "agent_003",
+            "flowId": "flow_teambuild_generate",
+            "parameters": {
+              "activityDuration": "30-45",
+              "groupSize": "Groups of 4",
+              "sessionGoal": "Improve communication and trust among students"
+            }
+          }
+        },
+        {
+          "id": "msg_003_4",
+          "role": "assistant",
+          "content": "Generating team-building session plan...",
+          "timestamp": "2025-02-15T16:47:01Z",
+          "structuredOutput": {
+            "type": "teamBuildingSession",
+            "version": "1.0",
+            "metadata": {
+              "generatedAt": "2025-02-15T16:47:01Z",
+              "generatedBy": "TeamBuildingAgent",
+              "agentId": "agent_003"
+            },
+            "session": {
+              "title": "Communication & Trust Building Session",
+              "gradeLevel": "6th Grade",
+              "duration": 45,
+              "groupSize": "Groups of 4",
+              "sessionGoal": "Improve communication and trust among students",
+              "targetSkills": ["Communication", "Trust", "Active Listening", "Collaboration"],
+              "activities": [
+                {
+                  "id": "activity_1",
+                  "name": "Two Truths and a Lie",
+                  "duration": 15,
+                  "setup": {
+                    "materials": ["Index cards", "Pencils"],
+                    "space": "Classroom desks arranged in groups"
+                  },
+                  "instructions": [
+                    "Each student writes three statements about themselves",
+                    "Two statements are true, one is false",
+                    "Group members guess which is the lie",
+                    "Student reveals the answer and shares a story"
+                  ],
+                  "targetSkills": ["Active Listening", "Getting to Know Each Other"],
+                  "debriefQuestions": [
+                    "What was surprising about your group members?",
+                    "How did you decide which statement was the lie?"
+                  ]
+                },
+                {
+                  "id": "activity_2",
+                  "name": "Blindfolded Obstacle Course",
+                  "duration": 20,
+                  "setup": {
+                    "materials": ["Blindfolds", "Cones/obstacles", "Open space"],
+                    "space": "Gym or outdoor area"
+                  },
+                  "instructions": [
+                    "One student is blindfolded",
+                    "Other group members guide them through obstacles using only words",
+                    "Rotate roles so everyone has a chance to be guided",
+                    "No touching - only verbal directions allowed"
+                  ],
+                  "targetSkills": ["Communication", "Trust", "Clear Directions"],
+                  "safetyNotes": "Clear area of hazards, have spotters",
+                  "debriefQuestions": [
+                    "How did it feel to be blindfolded?",
+                    "What made directions helpful or confusing?",
+                    "How did trust affect your experience?"
+                  ]
+                },
+                {
+                  "id": "activity_3",
+                  "name": "Group Reflection Circle",
+                  "duration": 10,
+                  "setup": {
+                    "materials": ["Talking piece (optional)", "Journal prompts"],
+                    "space": "Open circle formation"
+                  },
+                  "instructions": [
+                    "Sit in a circle",
+                    "Pass talking piece for sharing",
+                    "Reflect on today's activities",
+                    "Share one thing learned about the group"
+                  ],
+                  "targetSkills": ["Reflection", "Community Building"],
+                  "reflectionPrompts": [
+                    "What skill do you want to improve?",
+                    "How can we work better together?",
+                    "What was your favorite moment today?"
+                  ]
+                }
+              ],
+              "groupingStrategy": {
+                "method": "Mixed-ability grouping",
+                "considerations": ["Mix social dynamics", "Balance leadership", "Include all skill levels"],
+                "roles": ["Facilitator", "Timekeeper", "Materials Manager", "Encourager"]
+              },
+              "extensions": {
+                "followUp": ["Weekly check-ins", "Graduated challenge activities"],
+                "variations": ["Solo reflection journal", "Pair shares", "Whole class discussion"]
+              },
+              "assessment": {
+                "observationCriteria": ["Participation level", "Communication quality", "Trust behaviors"],
+                "studentReflection": "Exit ticket: What did you contribute to your group today?"
+              }
+            }
+          }
         }
       ],
       "createdAt": "2025-02-15T16:45:00Z",
