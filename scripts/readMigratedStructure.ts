@@ -134,7 +134,7 @@ function parseFrontmatter<T = Record<string, any>>(content: string): { frontmatt
 
     // Remove quotes if present
     if ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))) {
+      (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
 
@@ -158,7 +158,7 @@ function parseFrontmatter<T = Record<string, any>>(content: string): { frontmatt
 // ============================================================================
 
 const SLASH_ACTION_REGEX =
-  /<slash_action\s+name="([^"]+)"\s+description="([^"]+)"\s+flowId="([^"]+)">\n\/([^\n]+)\n<\/slash_action>/g;
+  /<slash_action\s+name="([^"]+)"\s+description="([^"]+)"\s+flowId="([^"]+)">\s*\/([^\s\n]+)\s*<\/slash_action>/g;
 
 function parseSlashActions(content: string): SlashAction[] {
   const actions: SlashAction[] = [];
@@ -252,8 +252,8 @@ async function extractWorkspaceData(workspacePath: string): Promise<WorkspaceDat
         const instructContent = await fs.readFile(instructPath, 'utf8');
         const { frontmatter, body } = parseFrontmatter<AgentInstructFrontmatter>(instructContent);
         agent.frontmatter = frontmatter;
-        agent.mainInstruction = body;
-        agent.slashActions = parseSlashActions(instructContent);
+        agent.slashActions = parseSlashActions(body);
+        agent.mainInstruction = body.replace(SLASH_ACTION_REGEX, '').trim();
       } catch (err: any) {
         console.warn(`Could not read instruct.md for agent ${agentId}: ${err.message}`);
       }
@@ -461,12 +461,14 @@ async function main() {
   console.log(JSON.stringify(data, null, 2));
 
   // Also write to file
-  const outputPath = path.resolve('./extracted_data_structure.json');
+  const outputPath = path.resolve('./src/extracted_data_structure.json');
   await fs.writeFile(outputPath, JSON.stringify(data, null, 2));
   console.log(`\nData written to: ${outputPath}`);
 }
 
-if (require.main === module) {
+const isMain = process.argv[1] && (process.argv[1].endsWith('readMigratedStructure.ts') || process.argv[1].endsWith('readMigratedStructure'));
+
+if (isMain) {
   main().catch(err => {
     console.error('Error:', err);
     process.exit(1);
