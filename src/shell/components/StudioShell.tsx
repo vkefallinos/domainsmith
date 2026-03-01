@@ -18,17 +18,27 @@ import type {
   FormFieldValue,
   AttachedFlow,
 } from '@/../product/sections/agent-builder/types'
-import { DUMMY_WORKSPACES, workspaceToSlug, type Workspace } from './WorkspaceSelector'
+import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
+import { useWorkspaces } from '@/hooks/useWorkspaces'
 
 // Helper to get workspace from URL param
 function useWorkspace(workspaceName?: string): Workspace {
+  const { data: workspaces } = useWorkspaces()
+
   return useMemo(() => {
+    const defaultWorkspace = { id: 'default', name: workspaceName || 'Workspace', color: '#10b981' }
+    if (!workspaces) return defaultWorkspace
+
     if (workspaceName) {
-      const found = DUMMY_WORKSPACES.find(w => workspaceToSlug(w.name) === workspaceName)
-      return found || DUMMY_WORKSPACES[0]
+      const found = workspaces.find(w => workspaceToSlug(w.name) === workspaceName)
+      if (found) {
+        return { id: found.id.toString(), name: found.name, color: '#10b981' }
+      }
     }
-    return DUMMY_WORKSPACES[0]
-  }, [workspaceName])
+
+    const first = workspaces[0]
+    return first ? { id: first.id.toString(), name: first.name, color: '#10b981' } : defaultWorkspace
+  }, [workspaceName, workspaces])
 }
 
 type StudioState = {
@@ -119,8 +129,8 @@ export function StudioShell({
   const navigate = useNavigate()
 
   // Load workspace data dynamically
-  const { data: promptLibraryData, loading: loadingPromptLibrary } = useWorkspaceData<any>('prompt-library')
-  const { data: agentBuilderData, loading: loadingAgentBuilder } = useWorkspaceData<any>('agent-builder')
+  const { data: promptLibraryData, isLoading: loadingPromptLibrary } = useWorkspaceData<any>('prompt-library')
+  const { data: agentBuilderData, isLoading: loadingAgentBuilder } = useWorkspaceData<any>('agent-builder')
 
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
@@ -457,7 +467,7 @@ export function StudioShell({
   }, [onDeleteDomain])
   useEffect(() => {
     handleExpandAll()
-  },[domainFileSystem])
+  }, [domainFileSystem])
   // Show loading state while data loads
   if (loadingPromptLibrary || loadingAgentBuilder) {
     return (

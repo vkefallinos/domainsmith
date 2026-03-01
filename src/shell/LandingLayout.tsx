@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -25,13 +25,60 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { DUMMY_WORKSPACES, workspaceToSlug, type Workspace } from './components/WorkspaceSelector'
+import { workspaceToSlug, type Workspace } from './components/WorkspaceSelector'
+import { useWorkspaces } from '@/hooks/useWorkspaces'
+import { GithubLoginButton } from '@/components/GithubLoginButton'
+import { useGithub } from '@/lib/github/GithubContext'
+import { useQueryClient } from '@tanstack/react-query'
+import { Input } from '@/components/ui/input'
 import logo from '@/assets/logo.png'
+
+const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444', '#84cc16']
 
 export default function LandingLayout() {
   const navigate = useNavigate()
+  const { data: githubWorkspaces, isLoading } = useWorkspaces()
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
   const [targetApp, setTargetApp] = useState<'studio' | 'chat'>('studio')
+
+  const { octokit } = useGithub()
+  const queryClient = useQueryClient()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+
+  const availableWorkspaces = useMemo(() => {
+    if (!githubWorkspaces) return []
+    return githubWorkspaces.map((repo, idx) => ({
+      id: repo.id.toString(),
+      name: repo.name,
+      color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+    }))
+  }, [githubWorkspaces])
+
+  const filteredWorkspaces = useMemo(() => {
+    if (!searchQuery) return availableWorkspaces.slice(0, 5)
+    const query = searchQuery.toLowerCase()
+    return availableWorkspaces.filter(w => w.name.toLowerCase().includes(query))
+  }, [availableWorkspaces, searchQuery])
+
+  const handleCreateWorkspace = async () => {
+    if (!octokit || !searchQuery) return
+    setIsCreating(true)
+    try {
+      await octokit.rest.repos.createForAuthenticatedUser({
+        name: searchQuery,
+        private: true,
+        auto_init: true
+      })
+      await queryClient.invalidateQueries({ queryKey: ['github-workspaces'] })
+      handleWorkspaceSelect({ id: 'new', name: searchQuery, color: WORKSPACE_COLORS[0] })
+    } catch (e) {
+      console.error(e)
+      alert("Failed to create repository. It might already exist or you don't have permissions.")
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   const openWorkspaceModal = (app: 'studio' | 'chat') => {
     setTargetApp(app)
@@ -53,10 +100,8 @@ export default function LandingLayout() {
             <h1 className="text-xl font-semibold">lmthing</h1>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Your expertise, amplified by AI</span>
-            <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-              A
-            </div>
+            <span className="hidden sm:inline-block text-sm text-muted-foreground mr-2">Your expertise, amplified by AI</span>
+            <GithubLoginButton />
           </div>
         </div>
       </header>
@@ -151,7 +196,7 @@ export default function LandingLayout() {
           </Card>
         </div>
 
-        
+
         {/* How It Works Section */}
         <div className="mt-20">
           <h3 className="text-center text-2xl font-semibold">How It Works</h3>
@@ -274,28 +319,64 @@ export default function LandingLayout() {
           </DialogHeader>
 
           <div className="grid gap-3">
-            {DUMMY_WORKSPACES.map((workspace) => (
-              <button
-                key={workspace.id}
-                type="button"
-                onClick={() => handleWorkspaceSelect(workspace)}
-                className="flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex size-8 items-center justify-center rounded-md"
-                    style={{ backgroundColor: `${workspace.color}20` }}
-                  >
-                    <Building2 className="size-4" style={{ color: workspace.color }} />
+            <Input
+              placeholder="Search or create repository..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mb-2"
+            />
+            {isLoading && <div className="text-center text-sm p-4 text-muted-foreground">Loading repositories...</div>}
+
+            <div className="max-h-[300px] overflow-y-auto grid gap-2">
+              {filteredWorkspaces.map((workspace: Workspace) => (
+                <button
+                  key={workspace.id}
+                  type="button"
+                  onClick={() => handleWorkspaceSelect(workspace)}
+                  className="flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex size-8 items-center justify-center rounded-md"
+                      style={{ backgroundColor: `${workspace.color}20` }}
+                    >
+                      <Building2 className="size-4" style={{ color: workspace.color }} />
+                    </div>
+                    <div>
+                      <p className="font-medium truncate max-w-[180px]">{workspace.name}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">/{workspaceToSlug(workspace.name)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{workspace.name}</p>
-                    <p className="text-xs text-muted-foreground">/{workspaceToSlug(workspace.name)}</p>
-                  </div>
+                  <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+                </button>
+              ))}
+
+              {!isLoading && filteredWorkspaces.length === 0 && (
+                <div className="text-center p-4">
+                  <p className="text-sm text-muted-foreground mb-3">No repositories found matching "{searchQuery}"</p>
                 </div>
-                <ArrowRight className="size-4 text-muted-foreground" />
-              </button>
-            ))}
+              )}
+            </div>
+
+            {!searchQuery && availableWorkspaces.length > 5 && (
+              <p className="text-xs text-center text-muted-foreground mt-1">
+                Showing recent {Math.min(5, availableWorkspaces.length)} of {availableWorkspaces.length}. Search to see more.
+              </p>
+            )}
+
+            {searchQuery && !filteredWorkspaces.find(w => w.name.toLowerCase() === searchQuery.toLowerCase()) && (
+              <Button
+                onClick={handleCreateWorkspace}
+                className="w-full mt-2"
+                disabled={isCreating}
+              >
+                {isCreating ? 'Creating...' : `Create "${searchQuery}"`}
+              </Button>
+            )}
+
+            {!isLoading && availableWorkspaces.length === 0 && !searchQuery && (
+              <div className="text-center text-sm p-4 text-muted-foreground">No repositories found. Type to create one.</div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

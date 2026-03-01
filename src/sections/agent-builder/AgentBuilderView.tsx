@@ -45,31 +45,45 @@ type AgentBuilderPreviewContentProps = {
  * and pass your own data via props.
  */
 export default function AgentBuilderPreview() {
-  const { data, loading, error } = useWorkspaceData<AgentBuilderData>('agent-builder')
+  // In the real Github structure, 'agents' is a directory. 
+  // We'll query it and handle the structure later; 
+  // for the preview let's adapt to what would be returned.
+  const { data: agentsData, isLoading: agentsLoading, error: agentsError } = useWorkspaceData<any[]>('agents')
+
   const {
     data: flowBuilderData,
-    loading: flowBuilderLoading,
+    isLoading: flowBuilderLoading,
     error: flowBuilderError,
-  } = useWorkspaceData<FlowBuilderData>('flow-builder')
-  const firstAgent = data?.savedAgentConfigs?.[0]
+  } = useWorkspaceData<FlowBuilderData>('flow-builder') // Can be scoped to flows/ later
 
-  if (loading || flowBuilderLoading) {
+  // For the preview, we'll construct the expected AgentBuilderData shape 
+  // from whatever 'agents' folder returns, or fallback to empty.
+  const firstAgent = agentsData?.[0]?.config // Assuming data is mapped to have config
+
+  if (agentsLoading || flowBuilderLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
-  if (error || flowBuilderError || !data || !flowBuilderData) {
-    return <div className="flex items-center justify-center h-screen text-red-500">Error loading data</div>
+  if (agentsError || flowBuilderError || !flowBuilderData) {
+    return <div className="flex items-center justify-center flex-col h-screen text-red-500">
+      <p>Error loading data from GitHub</p>
+      <p className="text-sm mt-2">Ensure the repository has an <code className="bg-red-100 px-1">agents/</code> folder.</p>
+    </div>
   }
 
-  if (!firstAgent) {
-    return <div className="flex items-center justify-center h-screen text-slate-500">No agents found</div>
+  // Construct a fallback data object since we aren't loading the full mock bundle anymore
+  const fallbackData: AgentBuilderData = {
+    domains: [],
+    toolLibrary: [],
+    savedAgentConfigs: agentsData ? agentsData.map(a => a.config).filter(Boolean) : [],
+    promptPreview: { agentId: 'preview-agent', domains: [], generatedPrompt: '', tokenCount: 0, lastGenerated: new Date().toISOString() }
   }
 
   return (
     <AgentBuilderPreviewContent
-      data={data}
+      data={fallbackData}
       flowBuilderData={flowBuilderData}
-      firstAgent={firstAgent}
+      firstAgent={firstAgent || { selectedDomains: [], formValues: {}, enabledTools: [], emptyFieldsForRuntime: [] } as unknown as AgentConfig}
     />
   )
 }
@@ -388,21 +402,19 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
         <div className="flex items-center gap-1 px-4">
           <button
             onClick={() => setView('builder')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              view === 'builder'
-                ? 'text-violet-600 dark:text-violet-400 border-violet-600'
-                : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
-            }`}
+            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${view === 'builder'
+              ? 'text-violet-600 dark:text-violet-400 border-violet-600'
+              : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
+              }`}
           >
             Agent Builder
           </button>
           <button
             onClick={() => setView('agents')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              view === 'agents'
-                ? 'text-violet-600 dark:text-violet-400 border-violet-600'
-                : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
-            }`}
+            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${view === 'agents'
+              ? 'text-violet-600 dark:text-violet-400 border-violet-600'
+              : 'text-slate-500 dark:text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-400'
+              }`}
           >
             Saved Agents ({data.savedAgentConfigs.length})
           </button>

@@ -13,5 +13,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      '/github-proxy': {
+        target: 'https://github.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/github-proxy/, '')
+      }
+    }
   },
 })

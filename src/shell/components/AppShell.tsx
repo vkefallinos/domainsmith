@@ -5,7 +5,8 @@ import { AgentsDashboard } from './AgentsDashboard'
 import { AgentRuntimeView } from '@/sections/agent-runtime/components'
 import { useWorkspaceData } from '@/hooks/useWorkspaceData'
 import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
-import { DUMMY_WORKSPACES, workspaceToSlug, type Workspace } from './WorkspaceSelector'
+import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
+import { useWorkspaces } from '@/hooks/useWorkspaces'
 
 type AgentRuntimeData = {
   agents?: Agent[]
@@ -14,13 +15,22 @@ type AgentRuntimeData = {
 
 // Helper to get workspace from URL param
 function useWorkspace(workspaceName?: string): Workspace {
+  const { data: workspaces } = useWorkspaces()
+
   return useMemo(() => {
+    const defaultWorkspace = { id: 'default', name: workspaceName || 'Workspace', color: '#10b981' }
+    if (!workspaces) return defaultWorkspace
+
     if (workspaceName) {
-      const found = DUMMY_WORKSPACES.find(w => workspaceToSlug(w.name) === workspaceName)
-      return found || DUMMY_WORKSPACES[0]
+      const found = workspaces.find(w => workspaceToSlug(w.name) === workspaceName)
+      if (found) {
+        return { id: found.id.toString(), name: found.name, color: '#10b981' }
+      }
     }
-    return DUMMY_WORKSPACES[0]
-  }, [workspaceName])
+
+    const first = workspaces[0]
+    return first ? { id: first.id.toString(), name: first.name, color: '#10b981' } : defaultWorkspace
+  }, [workspaceName, workspaces])
 }
 
 export interface AppShellProps {

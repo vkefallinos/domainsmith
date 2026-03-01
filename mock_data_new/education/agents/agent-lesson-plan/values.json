@@ -1,0 +1,42 @@
+{
+  "gradeLevel": "opt-5th-grade",
+  "classSize": "opt-medium",
+  "studentNeeds": [
+    "opt-ell",
+    "opt-gifted"
+  ],
+  "learningModel": "opt-in-person",
+  "resourcesAvailable": [
+    "opt-1to1",
+    "opt-interactive-whiteboard"
+  ],
+  "yearsExperience": "opt-beginning",
+  "subjectExpertise": [
+    "opt-math",
+    "opt-science"
+  ],
+  "teachingStyle": [
+    "opt-differentiated",
+    "opt-pbl"
+  ],
+  "certifications": [
+    "opt-elementary"
+  ],
+  "professionalGoals": "Improve engagement through hands-on activities",
+  "curriculumFramework": "opt-common-core",
+  "assessmentMethods": [
+    "opt-formative",
+    "opt-project-based-assessment"
+  ],
+  "pacingGuide": true,
+  "differentiationRequired": true,
+  "unitFocus": "",
+  "primarySubject": "opt-math-subject",
+  "topics": [],
+  "skillLevel": "opt-developing",
+  "crossCurricular": [
+    "opt-real-world",
+    "opt-technology"
+  ],
+  "essentialQuestions": ""
+}
