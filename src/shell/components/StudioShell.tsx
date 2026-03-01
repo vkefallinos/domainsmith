@@ -120,21 +120,22 @@ type Domain = {
 function knowledgeNodeToFileSystem(node: KnowledgeNode): Directory | PromptFragment {
   if (node.type === 'file') {
     const fileName = node.path.split('/').pop() || node.path
+    const rawFrontmatter = (node.frontmatter || {}) as Record<string, unknown>
     return {
       id: node.path,
       name: fileName,
       type: 'file',
       path: node.path,
       content: node.content || '',
-      frontmatter: node.frontmatter
-        ? {
-          title: node.frontmatter.title as string | undefined,
-          description: node.frontmatter.description as string | undefined,
-          order: node.frontmatter.order !== undefined
-            ? Number(node.frontmatter.order)
+      frontmatter: {
+        ...rawFrontmatter,
+        title: rawFrontmatter.title as string | undefined,
+        description: rawFrontmatter.description as string | undefined,
+        order:
+          rawFrontmatter.order !== undefined
+            ? Number(rawFrontmatter.order)
             : undefined,
-        }
-        : undefined,
+      },
     } as PromptFragment
   }
 
