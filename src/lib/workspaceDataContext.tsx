@@ -166,6 +166,30 @@ function toKnowledgeItem(node: KnowledgeNode): KnowledgeItem {
 
 import staticData from '@/extracted_data_structure.json'
 
+const WORKSPACE_DATA_STORAGE_KEY = 'domainsmith-workspace-data'
+
+function loadPersistedWorkspaceData(): ExtractedDataStructure | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.localStorage.getItem(WORKSPACE_DATA_STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as ExtractedDataStructure
+  } catch {
+    return null
+  }
+}
+
+function persistWorkspaceData(data: ExtractedDataStructure) {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(WORKSPACE_DATA_STORAGE_KEY, JSON.stringify(data))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export function WorkspaceDataProvider({
   children,
 }: WorkspaceDataProviderProps) {
@@ -181,7 +205,8 @@ export function WorkspaceDataProvider({
       setIsLoading(true)
       setError(null)
 
-      const jsonData = staticData as unknown as ExtractedDataStructure
+      const persistedData = loadPersistedWorkspaceData()
+      const jsonData = (persistedData || (staticData as unknown as ExtractedDataStructure))
       setData(jsonData)
       // Do NOT pick a default workspace here — let the consumer (layout) decide
     } catch (err) {
@@ -197,6 +222,11 @@ export function WorkspaceDataProvider({
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (!data) return
+    persistWorkspaceData(data)
+  }, [data])
 
   const updateCurrentWorkspace = useCallback(
     (updater: (workspace: WorkspaceData) => WorkspaceData) => {
