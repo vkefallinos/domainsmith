@@ -1,28 +1,34 @@
 {
-  "gradeLevel": "opt-8th-grade",
-  "classSize": "opt-large",
-  "studentNeeds": [
-    "opt-reading-intervention",
-    "opt-special-ed"
-  ],
-  "learningModel": "opt-in-person",
-  "resourcesAvailable": [
-    "opt-1to1"
-  ],
-  "curriculumFramework": "opt-common-core",
-  "assessmentMethods": [
-    "opt-formative",
-    "opt-summative",
-    "opt-performance"
-  ],
-  "pacingGuide": true,
-  "differentiationRequired": true,
-  "unitFocus": "Linear Equations",
-  "primarySubject": "opt-math-subject",
-  "topics": [],
-  "skillLevel": "opt-proficient",
-  "crossCurricular": [
-    "opt-real-world"
-  ],
-  "essentialQuestions": "How can we represent real-world situations with equations?"
+  "classroom": {
+    "grade-level": "8th-grade",
+    "class-size": "large",
+    "student-needs": [
+      "reading-intervention",
+      "special-education"
+    ],
+    "learning-model": "in-person",
+    "resources": [
+      "1to1-devices"
+    ]
+  },
+  "curriculum": {
+    "framework": "common-core",
+    "assessment-methods": [
+      "formative",
+      "summative",
+      "performance-tasks"
+    ],
+    "pacing-guide": true,
+    "differentiation-required": true,
+    "unit-focus": "Linear Equations"
+  },
+  "subjects": {
+    "primary-subject": "mathematics",
+    "topics": [],
+    "skill-level": "proficient",
+    "cross-curricular": [
+      "real-world-applications"
+    ],
+    "essential-questions": "How can we represent real-world situations with equations?"
+  }
 }

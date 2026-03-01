@@ -1,27 +1,22 @@
 {
-  "projectType": "opt-spa",
-  "frontendFramework": "opt-react",
-  "cssFramework": "opt-tailwind",
-  "stateManagement": "opt-zustand",
-  "buildTool": "opt-vite",
-  "testingFramework": [
-    "vitest",
-    "testing-library"
-  ],
-  "experienceLevel": "opt-intermediate",
-  "specialization": [
-    "opt-frontend"
-  ],
-  "codingStyle": [
-    "opt-functional",
-    "opt-typescript"
-  ],
-  "learningGoals": "Advanced React patterns",
-  "architecturePattern": "opt-component-based",
-  "designPatterns": [],
-  "codeOrganization": [
-    "opt-feature-based"
-  ],
-  "featureType": "opt-component",
-  "featureDescription": ""
+  "project": {
+    "project-type": "spa",
+    "frontend-framework": "react",
+    "css-framework": "tailwind",
+    "state-management": "zustand",
+    "testing-framework": [
+      "vitest",
+      "testing-library"
+    ]
+  },
+  "developer": {
+    "experience-level": "intermediate",
+    "specialization": [
+      "frontend"
+    ],
+    "coding-style": [
+      "functional",
+      "typescript"
+    ]
+  }
 }
