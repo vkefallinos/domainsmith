@@ -401,18 +401,20 @@ function NewFileModal({ isOpen, onClose, onSubmit, directories, parentPath, vali
   useEffect(() => {
     if (isOpen) {
       setFilename('')
-      setSelectedParent(parentPath)
+      const initialParent = parentPath === '/' ? (directories[0]?.path || '/') : parentPath
+      setSelectedParent(initialParent)
     }
-  }, [isOpen, parentPath])
+  }, [isOpen, parentPath, directories])
 
   if (!isOpen) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (filename.trim()) {
+      const parent = selectedParent || directories[0]?.path || '/'
       onSubmit({
         filename: filename.trim().endsWith('.md') ? filename.trim() : `${filename.trim()}.md`,
-        parentPath: selectedParent,
+        parentPath: parent,
       })
     }
   }
@@ -527,18 +529,20 @@ function NewFolderModal({ isOpen, onClose, onSubmit, directories, parentPath, va
   useEffect(() => {
     if (isOpen) {
       setFolderName('')
-      setSelectedParent(parentPath)
+      const initialParent = parentPath === '/' ? (directories[0]?.path || '/') : parentPath
+      setSelectedParent(initialParent)
     }
-  }, [isOpen, parentPath])
+  }, [isOpen, parentPath, directories])
 
   if (!isOpen) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (folderName.trim()) {
+      const parent = selectedParent || directories[0]?.path || '/'
       onSubmit({
         folderName: folderName.trim().toLowerCase().replace(/\s+/g, '-'),
-        parentPath: selectedParent,
+        parentPath: parent,
       })
     }
   }
@@ -1197,7 +1201,7 @@ export function PromptLibrary({
   const [pendingFileId, setPendingFileId] = useState<string | null>(null)
   const [editorContent, setEditorContent] = useState(selectedFile?.content || '')
   const [searchQuery, setSearchQuery] = useState('')
-  const [newFileParentPath, setNewFileParentPath] = useState('/')
+  const [newFileParentPath, setNewFileParentPath] = useState(fileSystem.path || '/')
   const [showMetadata, setShowMetadata] = useState(false)
   const [localFrontmatter, setLocalFrontmatter] = useState<PromptFrontmatter | undefined>(selectedFile?.frontmatter)
   const [selectedDirectory, setSelectedDirectory] = useState<Directory | null>(null)
@@ -1320,13 +1324,29 @@ export function PromptLibrary({
 
   const handleCreateFile = useCallback((form: NewFileForm) => {
     setShowNewFileModal(false)
-    onCreateFile(form)
-  }, [onCreateFile])
+    const parentPath =
+      form.parentPath === '/' && fileSystem.path && fileSystem.path !== '/'
+        ? fileSystem.path
+        : form.parentPath
+
+    onCreateFile({
+      ...form,
+      parentPath,
+    })
+  }, [onCreateFile, fileSystem.path])
 
   const handleCreateFolder = useCallback((form: NewFolderForm) => {
     setShowNewFolderModal(false)
-    onCreateFolder(form)
-  }, [onCreateFolder])
+    const parentPath =
+      form.parentPath === '/' && fileSystem.path && fileSystem.path !== '/'
+        ? fileSystem.path
+        : form.parentPath
+
+    onCreateFolder({
+      ...form,
+      parentPath,
+    })
+  }, [onCreateFolder, fileSystem.path])
 
   const handleFrontmatterChange = useCallback((frontmatter: PromptFrontmatter) => {
     setLocalFrontmatter(frontmatter)
@@ -1348,6 +1368,12 @@ export function PromptLibrary({
       setLocalFrontmatter(undefined)
     }
   }, [selectedFile])
+
+  useEffect(() => {
+    if (newFileParentPath === '/' && fileSystem.path && fileSystem.path !== '/') {
+      setNewFileParentPath(fileSystem.path)
+    }
+  }, [fileSystem.path, newFileParentPath])
 
   useEffect(() => {
     if (!selectedDirectory) {

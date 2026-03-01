@@ -1,12 +1,16 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { StudioShell } from './components'
 import { useWorkspaceData } from '@/lib/workspaceDataContext'
 import { FlowEditorModal } from '@/sections/agent-builder/components/FlowEditorModal'
+import { CreateDomainModal } from './components/CreateDomainModal'
+import { CreateAgentModal } from './components/CreateAgentModal'
 import { useAgents, useFlows } from '@/lib/workspaceContext'
+import { toWorkspaceRouteParam } from '@/lib/workspaces'
 import type {
   PromptFragment,
   NewFileForm,
+  NewFolderForm
 } from '@/../product/sections/prompt-library/types'
 import type { Flow, Task } from '@/../product/sections/flow-builder/types'
 import type { AttachedFlow } from '@/../product/sections/agent-builder/types'
@@ -15,6 +19,8 @@ import type {
   Agent as WorkspaceAgent,
   TaskFrontmatter,
   TaskOutputSchema,
+  KnowledgeNode,
+  Agent,
 } from '@/types/workspace-data'
 
 type StudioState = {
@@ -47,10 +53,31 @@ function saveState(state: StudioState) {
   }
 }
 
+function normalizeKnowledgeParentPath(path: string | null | undefined): string | null {
+  if (!path || path === 'root' || path === '/') {
+    return null
+  }
+
+  return path
+}
+
 export default function StudioLayout() {
   const { agentId, actionId, workspaceName } = useParams()
+  const navigate = useNavigate()
   const [state, setState] = useState<StudioState>(loadState)
-  const { setCurrentWorkspace, upsertFlow, upsertAgent } = useWorkspaceData()
+  const {
+    setCurrentWorkspace,
+    upsertFlow,
+    upsertAgent,
+    addKnowledgeNode,
+    updateKnowledgeNodePath,
+    deleteKnowledgeNode,
+    duplicateKnowledgeNode
+  } = useWorkspaceData()
+
+  const studioPath = workspaceName
+    ? `/workspace/${toWorkspaceRouteParam(workspaceName)}/studio`
+    : '/studio'
 
   // Sync URL workspace param into the data context
   useEffect(() => {
@@ -68,6 +95,9 @@ export default function StudioLayout() {
   const [currentEditingTasks, setCurrentEditingTasks] = useState<Task[]>([])
   const currentEditingFlowRef = useRef<Flow | null>(null)
   const currentEditingTasksRef = useRef<Task[]>([])
+
+  const [isCreateDomainModalOpen, setIsCreateDomainModalOpen] = useState(false)
+  const [isCreateAgentModalOpen, setIsCreateAgentModalOpen] = useState(false)
 
   useEffect(() => {
     currentEditingFlowRef.current = currentEditingFlow
@@ -231,10 +261,10 @@ export default function StudioLayout() {
           slashActions: (existingAgent.slashActions || []).map((sa) =>
             sa.actionId === actionId
               ? {
-                  ...sa,
-                  name: updates.name ?? sa.name,
-                  description: updates.description ?? sa.description,
-                }
+                ...sa,
+                name: updates.name ?? sa.name,
+                description: updates.description ?? sa.description,
+              }
               : sa
           ),
         }
@@ -352,28 +382,63 @@ export default function StudioLayout() {
   }, [])
 
   const handleCreateFile = useCallback((form: NewFileForm) => {
-    console.log('Create file:', form.filename, 'in', form.parentPath)
-  }, [])
+    const parent = normalizeKnowledgeParentPath(form.parentPath)
+    const newPath = parent ? `${parent}/${form.filename}` : form.filename
+    const label = form.filename
 
-  const handleCreateFolder = useCallback((form: NewFileForm) => {
-    console.log('Create folder:', form.filename, 'in', form.parentPath)
-  }, [])
+    const newNode: KnowledgeNode = {
+      path: newPath,
+      type: 'file',
+      content: '',
+      frontmatter: { title: label },
+      config: {
+        label,
+        renderAs: 'file'
+      }
+    }
+
+    addKnowledgeNode(parent, newNode)
+  }, [addKnowledgeNode])
+
+  const handleCreateFolder = useCallback((form: NewFolderForm) => {
+    const parent = normalizeKnowledgeParentPath(form.parentPath)
+    const newPath = parent ? `${parent}/${form.folderName}` : form.folderName
+
+    const newNode: KnowledgeNode = {
+      path: newPath,
+      type: 'directory',
+      children: [],
+      config: {
+        label: form.folderName,
+        renderAs: 'section'
+      }
+    }
+
+    addKnowledgeNode(parent, newNode)
+  }, [addKnowledgeNode])
 
   const handleRename = useCallback((nodeId: string, newName: string) => {
-    console.log('Rename node:', nodeId, 'to', newName)
-  }, [])
+    const parts = nodeId.split('/')
+    parts.pop()
+    const parentPath = parts.join('/')
+    const newPath = parentPath ? `${parentPath}/${newName}` : newName
+    updateKnowledgeNodePath(nodeId, newPath)
+  }, [updateKnowledgeNodePath])
 
   const handleMove = useCallback((nodeId: string, newParentPath: string) => {
-    console.log('Move node:', nodeId, 'to', newParentPath)
-  }, [])
+    const normalizedParent = normalizeKnowledgeParentPath(newParentPath)
+    const name = nodeId.split('/').pop() || ''
+    const newPath = normalizedParent ? `${normalizedParent}/${name}` : name
+    updateKnowledgeNodePath(nodeId, newPath)
+  }, [updateKnowledgeNodePath])
 
   const handleDelete = useCallback((nodeId: string) => {
-    console.log('Delete node:', nodeId)
-  }, [])
+    deleteKnowledgeNode(nodeId)
+  }, [deleteKnowledgeNode])
 
   const handleDuplicate = useCallback((nodeId: string) => {
-    console.log('Duplicate node:', nodeId)
-  }, [])
+    duplicateKnowledgeNode(nodeId)
+  }, [duplicateKnowledgeNode])
 
   return (
     <>
@@ -387,10 +452,10 @@ export default function StudioLayout() {
           )
         }
         onOpenSettings={() => console.log('Open settings')}
-        onCreateDomain={() => console.log('Create domain')}
+        onCreateDomain={() => setIsCreateDomainModalOpen(true)}
         onEditDomain={(id) => console.log('Edit domain:', id)}
         onDeleteDomain={(id) => console.log('Delete domain:', id)}
-        onCreateAgent={() => console.log('Create agent')}
+        onCreateAgent={() => setIsCreateAgentModalOpen(true)}
         onEditAgent={(id) => console.log('Edit agent:', id)}
         onDeleteAgent={(id) => console.log('Delete agent:', id)}
         onSelectFile={handleSelectFile}
@@ -423,6 +488,57 @@ export default function StudioLayout() {
           onReorderTasks={handleReorderTasks}
         />
       )}
+
+      <CreateDomainModal
+        isOpen={isCreateDomainModalOpen}
+        onClose={() => setIsCreateDomainModalOpen(false)}
+        onSubmit={(name: string, description: string) => {
+          const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+          const newId = slug
+          const newNode: KnowledgeNode = {
+            path: newId,
+            type: 'directory',
+            config: {
+              label: name,
+              description: description,
+              color: '#10b981',
+              icon: 'folder',
+              renderAs: 'section'
+            },
+            children: []
+          }
+          addKnowledgeNode(null, newNode)
+          setIsCreateDomainModalOpen(false)
+          navigate(`${studioPath}/domain/${newId}`)
+        }}
+      />
+
+      <CreateAgentModal
+        isOpen={isCreateAgentModalOpen}
+        onClose={() => setIsCreateAgentModalOpen(false)}
+        onSubmit={(name: string, description: string) => {
+          const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+          const newId = `agent-${slug}-${Date.now()}` // optionally just use slug or slug + Date.now for uniqueness
+          const newAgent: Agent = {
+            id: newId,
+            frontmatter: {
+              name: name,
+              description: description,
+              selectedDomains: []
+            },
+            mainInstruction: '',
+            slashActions: [],
+            config: {
+              emptyFieldsForRuntime: []
+            },
+            formValues: {},
+            conversations: []
+          }
+          upsertAgent(newAgent)
+          setIsCreateAgentModalOpen(false)
+          navigate(`${studioPath}/agent/${newId}`)
+        }}
+      />
     </>
   )
 }

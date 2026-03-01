@@ -155,7 +155,7 @@ export interface StudioShellProps {
   onEditDirectoryConfig?: (directoryPath: string, config: DirectoryConfig) => void
   onSave?: () => void
   onCreateFile?: (form: NewFileForm) => void
-  onCreateFolder?: (form: NewFileForm) => void
+  onCreateFolder?: (form: NewFolderForm) => void
   onRename?: (nodeId: string, newName: string) => void
   onMove?: (nodeId: string, newParentPath: string) => void
   onDelete?: (nodeId: string) => void
@@ -681,12 +681,28 @@ export function StudioShell({
   }, [flushPendingKnowledgeEdits, onSave])
 
   const handleCreateFile = useCallback((form: NewFileForm) => {
-    onCreateFile?.(form)
-  }, [onCreateFile])
+    const parentPath =
+      form.parentPath === '/' && activeDomain?.path
+        ? activeDomain.path
+        : form.parentPath
 
-  const handleCreateFolder = useCallback((form: NewFileForm) => {
-    onCreateFolder?.(form)
-  }, [onCreateFolder])
+    onCreateFile?.({
+      ...form,
+      parentPath,
+    })
+  }, [onCreateFile, activeDomain?.path])
+
+  const handleCreateFolder = useCallback((form: NewFolderForm) => {
+    const parentPath =
+      form.parentPath === '/' && activeDomain?.path
+        ? activeDomain.path
+        : form.parentPath
+
+    onCreateFolder?.({
+      ...form,
+      parentPath,
+    })
+  }, [onCreateFolder, activeDomain?.path])
 
   const handleRename = useCallback((nodeId: string, newName: string) => {
     onRename?.(nodeId, newName)
@@ -864,8 +880,8 @@ export function StudioShell({
     const nextConversations =
       existingIndex >= 0
         ? currentConversations.map((item, index) =>
-            index === existingIndex ? persistedConversation : item
-          )
+          index === existingIndex ? persistedConversation : item
+        )
         : [...currentConversations, persistedConversation]
 
     upsertAgent({
@@ -977,10 +993,10 @@ export function StudioShell({
         conversations: (existingAgent.conversations || []).map((c) =>
           c.id === conversationId
             ? {
-                ...updatedConversation,
-                messages: [...(updatedConversation.messages || []), assistantMessage],
-                updatedAt: assistantNow,
-              }
+              ...updatedConversation,
+              messages: [...(updatedConversation.messages || []), assistantMessage],
+              updatedAt: assistantNow,
+            }
             : c
         ),
       })

@@ -54,7 +54,97 @@ interface WorkspaceDataContextValue {
   updateKnowledgeFileContent: (filePath: string, content: string) => void
   updateKnowledgeFileFrontmatter: (filePath: string, frontmatter: Record<string, unknown>) => void
   updateKnowledgeDirectoryConfig: (directoryPath: string, config: Record<string, unknown>) => void
+  addKnowledgeNode: (parentNodePath: string | null, node: KnowledgeNode) => void
+  updateKnowledgeNodePath: (oldPath: string, newPath: string) => void
+  deleteKnowledgeNode: (nodePath: string) => void
+  duplicateKnowledgeNode: (nodePath: string) => void
   reload: () => Promise<void>
+}
+
+// Add helper functions for node manipulation
+function addNodeToChildren(
+  nodes: KnowledgeNode[],
+  parentPath: string | null,
+  newNode: KnowledgeNode
+): KnowledgeNode[] {
+  if (!parentPath) {
+    return [...nodes, newNode]
+  }
+
+  return nodes.map((node) => {
+    if (node.path === parentPath && node.type === 'directory') {
+      return {
+        ...node,
+        children: [...(node.children || []), newNode],
+      }
+    }
+    if (node.children) {
+      return {
+        ...node,
+        children: addNodeToChildren(node.children, parentPath, newNode),
+      }
+    }
+    return node
+  })
+}
+
+function updateNodePathRec(
+  nodes: KnowledgeNode[],
+  oldPath: string,
+  newPath: string
+): KnowledgeNode[] {
+  return nodes.map((node) => {
+    if (node.path === oldPath) {
+      // Create a function that determines the new child path properly
+      const updateChildPaths = (children: KnowledgeNode[], parentOld: string, parentNew: string): KnowledgeNode[] => {
+        return children.map(child => {
+          const childNewPath = child.path.replace(parentOld, parentNew)
+          return {
+            ...child,
+            path: childNewPath,
+            children: child.children ? updateChildPaths(child.children, child.path, childNewPath) : undefined
+          }
+        })
+      }
+      return {
+        ...node,
+        path: newPath,
+        children: node.children ? updateChildPaths(node.children, oldPath, newPath) : undefined,
+      }
+    }
+    if (node.children) {
+      return {
+        ...node,
+        children: updateNodePathRec(node.children, oldPath, newPath),
+      }
+    }
+    return node
+  })
+}
+
+function deleteNodeFromChildren(nodes: KnowledgeNode[], targetPath: string): KnowledgeNode[] {
+  return nodes
+    .filter((node) => node.path !== targetPath)
+    .map((node) => {
+      if (node.children) {
+        return {
+          ...node,
+          children: deleteNodeFromChildren(node.children, targetPath),
+        }
+      }
+      return node
+    })
+}
+
+function findNodeByPath(nodes: KnowledgeNode[], path: string): KnowledgeNode | null {
+  for (const node of nodes) {
+    if (node.path === path) return node
+    if (node.children) {
+      const found = findNodeByPath(node.children, path)
+      if (found) return found
+    }
+  }
+  return null
 }
 
 function updateKnowledgeNodeContent(
@@ -438,6 +528,71 @@ export function WorkspaceDataProvider({
     [updateCurrentWorkspace]
   )
 
+  const addKnowledgeNode = useCallback(
+    (parentNodePath: string | null, node: KnowledgeNode) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        knowledge: addNodeToChildren(workspace.knowledge, parentNodePath, node),
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
+  const updateKnowledgeNodePath = useCallback(
+    (oldPath: string, newPath: string) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        knowledge: updateNodePathRec(workspace.knowledge, oldPath, newPath),
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
+  const deleteKnowledgeNode = useCallback(
+    (nodePath: string) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        knowledge: deleteNodeFromChildren(workspace.knowledge, nodePath),
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
+  const duplicateKnowledgeNode = useCallback(
+    (nodePath: string) => {
+      updateCurrentWorkspace((workspace) => {
+        const nodeToDuplicate = findNodeByPath(workspace.knowledge, nodePath)
+        if (!nodeToDuplicate) return workspace
+
+        const parts = nodePath.split('/')
+        const oldName = parts.pop() || ''
+        const parentPath = parts.length > 0 ? parts.join('/') : null
+        const extMatch = oldName.match(/(\.[^.]+)$/)
+        const ext = extMatch ? extMatch[1] : ''
+        const base = extMatch ? oldName.slice(0, -ext.length) : oldName
+        const newName = `${base} (copy)${ext}`
+        const newPath = parentPath ? `${parentPath}/${newName}` : newName
+
+        const deepCloneAndUpdatePaths = (node: KnowledgeNode, oldP: string, newP: string): KnowledgeNode => {
+          const newChildPath = node.path.replace(oldP, newP)
+          return {
+            ...node,
+            path: newChildPath,
+            children: node.children ? node.children.map(c => deepCloneAndUpdatePaths(c, oldP, newP)) : undefined
+          }
+        }
+
+        const newNode = deepCloneAndUpdatePaths(nodeToDuplicate, nodePath, newPath)
+
+        return {
+          ...workspace,
+          knowledge: addNodeToChildren(workspace.knowledge, parentPath, newNode)
+        }
+      })
+    },
+    [updateCurrentWorkspace]
+  )
+
   // Computed values
   const workspaceData: WorkspaceData | null = useMemo(
     () => {
@@ -481,6 +636,10 @@ export function WorkspaceDataProvider({
     updateKnowledgeFileContent,
     updateKnowledgeFileFrontmatter,
     updateKnowledgeDirectoryConfig,
+    addKnowledgeNode,
+    updateKnowledgeNodePath,
+    deleteKnowledgeNode,
+    duplicateKnowledgeNode,
     reload: loadData,
   }
 
