@@ -5,6 +5,8 @@ import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
 import { useAgents, useKnowledgeSections } from '@/lib/workspaceContext'
+import { useWorkspaceData } from '@/lib/workspaceDataContext'
+import type { KnowledgeNode } from '@/types/workspace-data'
 import type {
   PromptLibraryProps,
   FileSystemNode,
@@ -84,6 +86,44 @@ type Domain = {
   icon: string
   color: string
   path: string
+}
+
+/**
+ * Recursively convert a raw KnowledgeNode (from workspace JSON) into the
+ * Directory | PromptFragment shape required by PromptLibrary.
+ * File nodes carry markdown `content`; directory nodes carry nested children.
+ */
+function knowledgeNodeToFileSystem(node: KnowledgeNode): Directory | PromptFragment {
+  if (node.type === 'file') {
+    const fileName = node.path.split('/').pop() || node.path
+    return {
+      id: node.path,
+      name: fileName,
+      type: 'file',
+      path: node.path,
+      content: node.content || '',
+      frontmatter: node.frontmatter
+        ? {
+          title: node.frontmatter.title as string | undefined,
+          description: node.frontmatter.description as string | undefined,
+          order: node.frontmatter.order !== undefined
+            ? Number(node.frontmatter.order)
+            : undefined,
+        }
+        : undefined,
+    } as PromptFragment
+  }
+
+  // Directory node
+  const dirName = node.path.split('/').pop() || node.path
+  return {
+    id: node.path,
+    name: node.config?.label || dirName,
+    type: 'directory',
+    path: node.path,
+    config: node.config,
+    children: (node.children || []).map(knowledgeNodeToFileSystem),
+  } as Directory
 }
 
 type AgentConfig = {
@@ -272,25 +312,27 @@ export function StudioShell({
       ? 'domain-detail'
       : 'list'
 
+  // Access raw knowledge nodes (which include markdown content on file nodes)
+  const { knowledge: rawKnowledge } = useWorkspaceData()
+
   // Get filtered file system for the selected domain
-  // Note: For now, this returns null as the detailed file structure isn't in extracted_data_structure.json
-  // This would need to be populated from the actual knowledge tree structure
+  // knowledgeNodeToFileSystem is a module-level pure function – no useCallback needed
   const domainFileSystem = useMemo(() => {
     if (!activeDomain) return null
 
-    // Find the knowledge section matching this domain
-    const section = knowledgeSections.find(s => s.path === activeDomain.path)
+    // Find the raw knowledge section (contains content on file nodes)
+    const section = rawKnowledge.find(s => s.path === activeDomain.path)
     if (!section) return null
 
-    // Build a Directory structure from the knowledge section
+    // Build a root Directory wrapping the section
     return {
       id: 'root',
       name: 'root',
       type: 'directory' as const,
       path: '/',
-      children: [section as unknown as Directory],
+      children: [knowledgeNodeToFileSystem(section)],
     } as Directory
-  }, [activeDomain, knowledgeSections])
+  }, [activeDomain, rawKnowledge])
 
   // Available flows (empty for now, would come from flow builder data)
   const availableFlows: any[] = []
