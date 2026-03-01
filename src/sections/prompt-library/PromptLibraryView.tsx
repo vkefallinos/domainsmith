@@ -64,7 +64,7 @@ export default function PromptLibraryPreview() {
   }
 
   const handleEditContent = (content: string) => {
-    console.log('Edit content, length:', content.length)
+    // console.log('Edit content, length:', content.length)
   }
 
   const handleSave = () => {

@@ -1193,7 +1193,16 @@ export function PromptLibrary({
       if (node.type === 'file') return 1
       return 1 + (node.children?.reduce((sum, child) => sum + count(child), 0) || 0)
     }
-    return (fileSystem.children?.reduce((sum, child) => sum + count(child), 0) || 0) - 1
+
+    const total = fileSystem.children?.reduce((sum, child) => sum + count(child), 0) || 0
+
+    // If there is a single top-level directory wrapper, exclude it from the count.
+    const hasSingleWrapperDirectory =
+      fileSystem.path === '/' &&
+      (fileSystem.children?.length || 0) === 1 &&
+      fileSystem.children?.[0]?.type === 'directory'
+
+    return hasSingleWrapperDirectory ? total - 1 : total
   }, [fileSystem])
 
   return (

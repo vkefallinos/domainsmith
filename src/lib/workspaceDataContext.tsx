@@ -42,6 +42,8 @@ interface WorkspaceDataContextValue {
   setCurrentWorkspace: (workspaceId: string) => void
   upsertAgent: (agent: Agent) => void
   deleteAgent: (agentId: string) => void
+  upsertFlow: (flow: Flow) => void
+  deleteFlow: (flowId: string) => void
   updateKnowledgeFileContent: (filePath: string, content: string) => void
   updateKnowledgeFileFrontmatter: (filePath: string, frontmatter: Record<string, unknown>) => void
   reload: () => Promise<void>
@@ -277,6 +279,33 @@ export function WorkspaceDataProvider({
     [updateCurrentWorkspace]
   )
 
+  const upsertFlow = useCallback(
+    (flow: Flow) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        flows: {
+          ...workspace.flows,
+          [flow.id]: flow,
+        },
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
+  const deleteFlow = useCallback(
+    (flowId: string) => {
+      updateCurrentWorkspace((workspace) => {
+        const remainingFlows = { ...workspace.flows }
+        delete remainingFlows[flowId]
+        return {
+          ...workspace,
+          flows: remainingFlows,
+        }
+      })
+    },
+    [updateCurrentWorkspace]
+  )
+
   const updateKnowledgeFileContent = useCallback(
     (filePath: string, content: string) => {
       updateCurrentWorkspace((workspace) => ({
@@ -331,6 +360,8 @@ export function WorkspaceDataProvider({
     setCurrentWorkspace,
     upsertAgent,
     deleteAgent,
+    upsertFlow,
+    deleteFlow,
     updateKnowledgeFileContent,
     updateKnowledgeFileFrontmatter,
     reload: loadData,

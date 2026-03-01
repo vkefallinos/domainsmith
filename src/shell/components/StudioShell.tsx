@@ -223,6 +223,10 @@ export function StudioShell({
   const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>([])
   const hydratedAgentIdRef = useRef<string | null>(null)
   const lastAutoSavedSnapshotRef = useRef<string>('')
+  const contentEditDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const frontmatterEditDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingContentEditRef = useRef<{ path: string; content: string } | null>(null)
+  const pendingFrontmatterEditRef = useRef<{ path: string; frontmatter: Record<string, unknown> } | null>(null)
 
   // Extract domains from knowledge sections
   const domains = useMemo(() => {
@@ -381,13 +385,15 @@ export function StudioShell({
     const section = rawKnowledge.find(s => s.path === activeDomain.path)
     if (!section) return null
 
-    // Build a root Directory wrapping the section
+    // Build a root Directory using section children directly.
+    // This avoids showing the selected domain as an extra top-level folder
+    // inside PromptLibrary.
     return {
       id: 'root',
       name: 'root',
       type: 'directory' as const,
       path: '/',
-      children: [knowledgeNodeToFileSystem(section)],
+      children: (section.children || []).map(knowledgeNodeToFileSystem),
     } as Directory
   }, [activeDomain, rawKnowledge])
 
@@ -432,7 +438,22 @@ export function StudioShell({
 
   const handleEditContent = useCallback((content: string) => {
     if (selectedFile?.path) {
-      updateKnowledgeFileContent(selectedFile.path, content)
+      pendingContentEditRef.current = { path: selectedFile.path, content }
+
+      if (contentEditDebounceRef.current) {
+        clearTimeout(contentEditDebounceRef.current)
+      }
+
+      contentEditDebounceRef.current = setTimeout(() => {
+        if (pendingContentEditRef.current) {
+          updateKnowledgeFileContent(
+            pendingContentEditRef.current.path,
+            pendingContentEditRef.current.content
+          )
+          pendingContentEditRef.current = null
+        }
+      }, 200)
+
       setSelectedFile((prev) => (prev ? { ...prev, content } : prev))
     }
     setUnsavedChanges(false)
@@ -441,15 +462,67 @@ export function StudioShell({
 
   const handleEditFrontmatter = useCallback((frontmatter: PromptFrontmatter) => {
     if (selectedFile?.path) {
-      updateKnowledgeFileFrontmatter(selectedFile.path, frontmatter as Record<string, unknown>)
+      pendingFrontmatterEditRef.current = {
+        path: selectedFile.path,
+        frontmatter: frontmatter as Record<string, unknown>,
+      }
+
+      if (frontmatterEditDebounceRef.current) {
+        clearTimeout(frontmatterEditDebounceRef.current)
+      }
+
+      frontmatterEditDebounceRef.current = setTimeout(() => {
+        if (pendingFrontmatterEditRef.current) {
+          updateKnowledgeFileFrontmatter(
+            pendingFrontmatterEditRef.current.path,
+            pendingFrontmatterEditRef.current.frontmatter
+          )
+          pendingFrontmatterEditRef.current = null
+        }
+      }, 200)
+
       setSelectedFile((prev) => (prev ? { ...prev, frontmatter } : prev))
     }
   }, [selectedFile, updateKnowledgeFileFrontmatter])
 
+  const flushPendingKnowledgeEdits = useCallback(() => {
+    if (contentEditDebounceRef.current) {
+      clearTimeout(contentEditDebounceRef.current)
+      contentEditDebounceRef.current = null
+    }
+    if (frontmatterEditDebounceRef.current) {
+      clearTimeout(frontmatterEditDebounceRef.current)
+      frontmatterEditDebounceRef.current = null
+    }
+
+    if (pendingContentEditRef.current) {
+      updateKnowledgeFileContent(
+        pendingContentEditRef.current.path,
+        pendingContentEditRef.current.content
+      )
+      pendingContentEditRef.current = null
+    }
+
+    if (pendingFrontmatterEditRef.current) {
+      updateKnowledgeFileFrontmatter(
+        pendingFrontmatterEditRef.current.path,
+        pendingFrontmatterEditRef.current.frontmatter
+      )
+      pendingFrontmatterEditRef.current = null
+    }
+  }, [updateKnowledgeFileContent, updateKnowledgeFileFrontmatter])
+
+  useEffect(() => {
+    return () => {
+      flushPendingKnowledgeEdits()
+    }
+  }, [flushPendingKnowledgeEdits])
+
   const handleSave = useCallback(() => {
+    flushPendingKnowledgeEdits()
     setUnsavedChanges(false)
     onSave?.()
-  }, [onSave])
+  }, [flushPendingKnowledgeEdits, onSave])
 
   const handleCreateFile = useCallback((form: NewFileForm) => {
     onCreateFile?.(form)
