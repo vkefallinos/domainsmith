@@ -13,31 +13,47 @@ export interface GithubWorkspace {
 }
 
 export function useWorkspaces() {
-    const { octokit, isAuthenticated } = useGithub()
+    const { octokit, isAuthenticated, selectedWorkspaceRepos, isLoadingRepoSelections } = useGithub()
 
     return useQuery({
         // Only run the query if we are authenticated and have an octokit instance
-        enabled: isAuthenticated && !!octokit,
-        queryKey: ['github-workspaces'],
+        enabled: isAuthenticated && !!octokit && !isLoadingRepoSelections,
+        queryKey: ['github-workspaces', selectedWorkspaceRepos],
         queryFn: async (): Promise<GithubWorkspace[]> => {
             if (!octokit) throw new Error('Octokit not initialized')
+            if (!selectedWorkspaceRepos.length) return []
 
-            // Fetch repositories the authenticated user has access to
-            const response = await octokit.rest.repos.listForAuthenticatedUser({
-                sort: 'updated',
-                per_page: 50,
-            })
+            const settled = await Promise.allSettled(
+                selectedWorkspaceRepos.map(async (fullName) => {
+                    const [owner, ...repoParts] = fullName.split('/')
+                    const repo = repoParts.join('/')
 
-            return response.data.map(repo => ({
-                id: repo.id,
-                name: `${repo.owner.login}/${repo.name}`,
-                ownerLogin: repo.owner.login,
-                repoName: repo.name,
-                fullName: repo.full_name,
-                description: repo.description,
-                ownerAvatarUrl: repo.owner.avatar_url,
-                updatedAt: repo.updated_at || new Date().toISOString()
-            }))
+                    if (!owner || !repo) {
+                        throw new Error(`Invalid repository reference: ${fullName}`)
+                    }
+
+                    const { data: repoData } = await octokit.rest.repos.get({ owner, repo })
+
+                    return {
+                        id: repoData.id,
+                        name: `${repoData.owner.login}/${repoData.name}`,
+                        ownerLogin: repoData.owner.login,
+                        repoName: repoData.name,
+                        fullName: repoData.full_name,
+                        description: repoData.description,
+                        ownerAvatarUrl: repoData.owner.avatar_url,
+                        updatedAt: repoData.updated_at || new Date().toISOString()
+                    } satisfies GithubWorkspace
+                })
+            )
+
+            const availableRepos = settled
+                .filter((result): result is PromiseFulfilledResult<GithubWorkspace> => result.status === 'fulfilled')
+                .map((result) => result.value)
+
+            return availableRepos.sort((a, b) =>
+                new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            )
         },
         staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     })

@@ -49,7 +49,7 @@ export default function LandingLayout() {
   const { workspaces: jsonWorkspaces } = useWorkspaceDataContext()
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
 
-  const { octokit, user } = useGithub()
+  const { octokit, user, addSelectedWorkspaceRepo } = useGithub()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -117,6 +117,7 @@ export default function LandingLayout() {
         private: true,
         auto_init: true
       })
+      await addSelectedWorkspaceRepo(toWorkspaceName(data.owner.login, data.name))
       await queryClient.invalidateQueries({ queryKey: ['github-workspaces'] })
       handleWorkspaceSelect({
         id: data.id.toString(),
