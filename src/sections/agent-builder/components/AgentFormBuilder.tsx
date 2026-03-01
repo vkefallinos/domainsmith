@@ -36,6 +36,16 @@ function getDomainFields(domain: Domain): SchemaField[] {
 function getFormFieldValue(values: any, id: string, variableName: string): any {
   if (!values) return undefined
 
+  // Prefer direct key lookup first (supports flat keys like "section/field")
+  if (Object.prototype.hasOwnProperty.call(values, id)) {
+    return values[id]
+  }
+
+  // Fallback to direct variableName key (legacy/current mixed storage)
+  if (Object.prototype.hasOwnProperty.call(values, variableName)) {
+    return values[variableName]
+  }
+
   // Try path-based resolution (e.g., classroom/class-size)
   const parts = id.split('/')
   let current = values
@@ -50,8 +60,7 @@ function getFormFieldValue(values: any, id: string, variableName: string): any {
 
   if (current !== undefined) return current
 
-  // Fallback to variableName
-  return values[variableName]
+  return undefined
 }
 
 function resolveFieldOptionFilePaths(field: SchemaField, values: any): string[] {
