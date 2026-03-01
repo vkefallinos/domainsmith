@@ -240,7 +240,6 @@ export function StudioShell({
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
-  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
   // Prompt Library state
   const [selectedFile, setSelectedFile] = useState<PromptFragment | null>(null)
@@ -1163,18 +1162,7 @@ export function StudioShell({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to={chatPath}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors text-violet-700 dark:text-violet-300"
-              title="Chat"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m0 0l3-3 3m-3 3V9" />
-              </svg>
-              <span className="text-sm font-medium">Chat</span>
-            </Link>
-          </div>
+          <div className="flex items-center gap-2" />
         </header>
 
         {/* Content Area */}

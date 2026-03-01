@@ -91,7 +91,6 @@ export function StudioSidebar({
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
-  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
   // Map knowledge sections to domain format
   const domains = useMemo(() => {
@@ -423,29 +422,9 @@ export function StudioSidebar({
         )}
       </div>
 
-      {/* Bottom Section: Chat, Settings & Collapse */}
+      {/* Bottom Section: Settings & Collapse */}
       <div className="p-3 border-t border-slate-200 dark:border-slate-800">
         <div className="flex flex-col gap-1">
-          {/* Chat */}
-          <Link
-            to={chatPath}
-            className={`
-              flex items-center gap-3
-              text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300
-              hover:bg-violet-50 dark:hover:bg-violet-950/30
-              rounded-lg transition-colors
-              ${isCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
-            `}
-            title={isCollapsed ? 'Go to Chat' : ''}
-          >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m0 0l3-3 3m-3 3V9" />
-            </svg>
-            {!isCollapsed && (
-              <span className="text-sm font-medium">Chat</span>
-            )}
-          </Link>
-
           {/* Settings */}
           <button
             onClick={onOpenSettings}
