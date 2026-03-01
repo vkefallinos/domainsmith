@@ -316,7 +316,9 @@ export function ChatPanel({
   activeConversation,
   isLoading = false,
   isStreaming = false,
-  onSendMessage
+  onSendMessage,
+  onSaveConversation,
+  canSaveConversation = false,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messages = useMemo(() => activeConversation?.messages ?? [], [activeConversation?.messages])
@@ -333,6 +335,23 @@ export function ChatPanel({
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-slate-950 overflow-hidden relative">
+      {/* Chat Actions */}
+      <div className="flex-shrink-0 border-b border-slate-200 dark:border-slate-800 px-6 py-3 bg-slate-50 dark:bg-slate-900/30">
+        <div className="flex items-center justify-end">
+          <button
+            onClick={() => onSaveConversation?.()}
+            disabled={!canSaveConversation}
+            className="inline-flex items-center gap-2 rounded-lg border border-violet-300 dark:border-violet-700 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title={canSaveConversation ? 'Save conversation to workspace' : 'Save is available for saved agents only'}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Save Conversation
+          </button>
+        </div>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {!hasMessages ? (

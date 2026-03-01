@@ -21,6 +21,7 @@ import type {
   FormFieldValue,
   AttachedFlow,
 } from '@/../product/sections/agent-builder/types'
+import type { Conversation as RuntimeConversation } from '@/../product/sections/agent-runtime/types'
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
@@ -682,6 +683,42 @@ export function StudioShell({
     buildAgentPayload,
   ])
 
+  const handleSaveRuntimeConversation = useCallback((conversation: RuntimeConversation) => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const persistedId =
+      conversation.id === 'preview-conversation'
+        ? `conversation-${Date.now()}`
+        : conversation.id
+
+    const now = new Date().toISOString()
+    const persistedConversation = {
+      ...conversation,
+      id: persistedId,
+      agentId,
+      agentName: (existingAgent.frontmatter.name as string) || agentId,
+      updatedAt: now,
+    }
+
+    const currentConversations = existingAgent.conversations || []
+    const existingIndex = currentConversations.findIndex((item) => item.id === persistedId)
+
+    const nextConversations =
+      existingIndex >= 0
+        ? currentConversations.map((item, index) =>
+            index === existingIndex ? persistedConversation : item
+          )
+        : [...currentConversations, persistedConversation]
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: nextConversations,
+    })
+  }, [agentId, agentsMap, upsertAgent])
+
   const handleNewAgent = useCallback(() => {
     setSelectedDomainIds([])
     setFormValues({})
@@ -844,6 +881,7 @@ export function StudioShell({
     onDetachFlow: handleDetachFlow,
     onToggleSlashAction: handleToggleSlashAction,
     onEditSlashAction: handleEditSlashAction,
+    onSaveRuntimeConversation: handleSaveRuntimeConversation,
   }
 
   return (

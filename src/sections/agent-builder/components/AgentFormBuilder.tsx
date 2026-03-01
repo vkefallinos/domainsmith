@@ -169,6 +169,8 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     promptPreview,
     validationErrors = {},
     toolLibraryOpen = false,
+    loadedAgentId = null,
+    onSaveRuntimeConversation,
     onDomainsChange,
     onFieldValueChange,
     onEnableFieldForRuntime,
@@ -581,6 +583,8 @@ These instructions will appear at the top of your agent's system prompt.`}
           onClose={() => setRuntimePreviewOpen(false)}
           enabledFilePaths={enabledFilePaths}
           generatedPrompt={promptPreview?.generatedPrompt || ''}
+          onSaveConversation={onSaveRuntimeConversation}
+          canSaveConversation={Boolean(loadedAgentId && onSaveRuntimeConversation)}
           runtimeFields={runtimeFieldEntries.map(({ field, domainName }) => ({
             id: field.id,
             label: field.label,

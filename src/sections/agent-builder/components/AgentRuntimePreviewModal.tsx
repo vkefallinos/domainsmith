@@ -17,6 +17,8 @@ interface AgentRuntimePreviewModalProps {
   enabledFilePaths: string[]
   generatedPrompt: string
   runtimeFields: RuntimeFieldSummary[]
+  onSaveConversation?: (conversation: Conversation) => void
+  canSaveConversation?: boolean
 }
 
 export function AgentRuntimePreviewModal({
@@ -25,6 +27,8 @@ export function AgentRuntimePreviewModal({
   enabledFilePaths,
   generatedPrompt,
   runtimeFields,
+  onSaveConversation,
+  canSaveConversation = false,
 }: AgentRuntimePreviewModalProps) {
   const toRuntimeValue = useCallback((field: RuntimeFieldSummary): string | string[] | boolean => {
     switch (field.fieldType) {
@@ -132,6 +136,11 @@ export function AgentRuntimePreviewModal({
     }, 700)
   }, [runtimeFields])
 
+  const handleSaveConversation = useCallback(() => {
+    if (!onSaveConversation) return
+    onSaveConversation(conversation)
+  }, [onSaveConversation, conversation])
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -204,6 +213,8 @@ export function AgentRuntimePreviewModal({
             activeConversationId={conversation.id}
             isLoading={isLoading}
             onSendMessage={handleSendMessage}
+            onSaveConversation={handleSaveConversation}
+            canSaveConversation={canSaveConversation}
             hideTopNav={true}
             onBackToList={handleClose}
           />

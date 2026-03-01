@@ -26,6 +26,10 @@ export interface AgentRuntimeViewProps {
   onCreateConversation?: () => void
   /** Callback when deleting a conversation */
   onDeleteConversation?: (conversationId: string) => void
+  /** Callback when saving the current conversation */
+  onSaveConversation?: () => void
+  /** Whether saving conversation is allowed */
+  canSaveConversation?: boolean
   /** Whether to hide the top navigation bar */
   hideTopNav?: boolean
 }
@@ -42,6 +46,8 @@ export function AgentRuntimeView({
   onSelectConversation,
   onCreateConversation,
   onDeleteConversation,
+  onSaveConversation,
+  canSaveConversation = false,
   hideTopNav = false,
 }: AgentRuntimeViewProps) {
   const [runtimeFieldValues, setRuntimeFieldValues] = useState<Record<string, string | string[] | boolean>>({})
@@ -149,6 +155,8 @@ export function AgentRuntimeView({
           onSelectConversation={handleSelectConversation}
           onCreateConversation={handleCreateConversation}
           onDeleteConversation={handleDeleteConversation}
+          onSaveConversation={onSaveConversation}
+          canSaveConversation={canSaveConversation}
         />
       </div>
     </div>
