@@ -4,7 +4,7 @@ import { StudioSidebar } from './StudioSidebar'
 import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
-import { useAgents, useKnowledgeSections } from '@/lib/workspaceContext'
+import { useAgents, useKnowledgeSections, useFlows } from '@/lib/workspaceContext'
 import { useWorkspaceData } from '@/lib/workspaceDataContext'
 import type { KnowledgeNode } from '@/types/workspace-data'
 import type {
@@ -171,6 +171,7 @@ export function StudioShell({
   // Use the new state hooks
   const knowledgeSections = useKnowledgeSections()
   const { agents: agentsMap } = useAgents()
+  const { flows: flowsMap } = useFlows()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
 
@@ -263,7 +264,7 @@ export function StudioShell({
         flowId: sa.flowId,
         flowName: sa.name,
         flowDescription: sa.description,
-        taskCount: 0, // Would need to look up the flow to get task count
+        taskCount: flowsMap[sa.flowId]?.tasks?.length || 0,
         slashAction: {
           id: `sa_${sa.actionId}`,
           actionId: sa.actionId,
@@ -491,6 +492,7 @@ export function StudioShell({
       flowId,
       flowName: name,
       flowDescription: description,
+      taskCount: flowsMap[flowId]?.tasks?.length || 0,
       slashAction: {
         id: `sc_${Date.now()}`,
         actionId,
@@ -592,7 +594,10 @@ export function StudioShell({
     formValues,
     enabledTools: enabledTools.map(t => ({ ...t, source: 'manual' as const })),
     emptyFieldsForRuntime,
-    attachedFlows: attachedFlows.map(af => ({ ...af, taskCount: 0 })),
+    attachedFlows: attachedFlows.map(af => ({
+      ...af,
+      taskCount: af.taskCount || flowsMap[af.flowId]?.tasks?.length || 0
+    })),
     availableFlows,
     mainInstruction,
     promptPreview,

@@ -10,10 +10,11 @@ import {
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { useKnowledgeSections, useAgentList } from '@/lib/workspaceContext'
+import { useKnowledgeSections, useAgents } from '@/lib/workspaceContext'
 import logo from '@/assets/logo.png'
 import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
+import type { Agent } from '@/types/workspace-data'
 
 type Domain = {
   id: string
@@ -68,7 +69,7 @@ export function StudioSidebar({
 
   // Use the new state hooks
   const knowledgeSections = useKnowledgeSections()
-  const agentList = useAgentList()
+  const { agents: agentsMap } = useAgents()
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
@@ -90,16 +91,19 @@ export function StudioSidebar({
 
   // Map agent list to agent config format
   const agents = useMemo(() => {
-    return agentList.map(agent => ({
+    return Object.values(agentsMap).map((agent: Agent) => ({
       id: agent.id,
-      name: agent.name,
-      description: agent.description,
-      selectedDomains: [],
-      formValues: {},
+      name: agent.frontmatter.name || agent.id,
+      description: agent.frontmatter.description || '',
+      selectedDomains: agent.frontmatter.selectedDomains || [],
+      formValues: agent.formValues,
       enabledTools: [],
-      attachedFlows: [],
+      attachedFlows: (agent.slashActions || []).map(sa => ({
+        flowId: sa.flowId,
+        flowName: sa.name,
+      })),
     })) as AgentConfig[]
-  }, [agentList])
+  }, [agentsMap])
 
   const toggleDomains = () => {
     setDomainsExpanded((prev) => !prev)
