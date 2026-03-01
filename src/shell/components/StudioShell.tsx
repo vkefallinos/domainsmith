@@ -4,7 +4,8 @@ import { StudioSidebar } from './StudioSidebar'
 import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
-import { useAgents, useKnowledgeSections, useFlows } from '@/lib/workspaceContext'
+import { AgentRuntimeView } from '@/sections/agent-runtime/components'
+import { useAgents, useKnowledgeSections, useFlows, useRuntimeAgents } from '@/lib/workspaceContext'
 import { useWorkspaceData } from '@/lib/workspaceDataContext'
 import type { KnowledgeNode } from '@/types/workspace-data'
 import type {
@@ -21,7 +22,12 @@ import type {
   FormFieldValue,
   AttachedFlow,
 } from '@/../product/sections/agent-builder/types'
-import type { Conversation as RuntimeConversation } from '@/../product/sections/agent-runtime/types'
+import type {
+  Agent as RuntimeAgent,
+  Conversation as RuntimeConversation,
+  MessageRole,
+  RuntimeFieldType,
+} from '@/../product/sections/agent-runtime/types'
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
@@ -35,6 +41,33 @@ function toAgentId(name: string): string {
     .replace(/^-+|-+$/g, '')
 
   return base || `agent-${Date.now()}`
+}
+
+function toRuntimeDefaultValue(fieldType?: string): string | string[] | boolean {
+  switch (fieldType) {
+    case 'multiselect':
+      return []
+    case 'toggle':
+      return false
+    case 'select':
+    case 'textarea':
+    case 'text':
+    default:
+      return ''
+  }
+}
+
+function toRuntimeFieldType(fieldType?: string): RuntimeFieldType {
+  switch (fieldType) {
+    case 'text':
+    case 'textarea':
+    case 'select':
+    case 'multiselect':
+    case 'toggle':
+      return fieldType
+    default:
+      return 'text'
+  }
 }
 
 function areAgentDraftsEqual(a: WorkspaceAgent, b: WorkspaceAgent): boolean {
@@ -191,12 +224,13 @@ export function StudioShell({
   onDelete,
   onDuplicate,
 }: StudioShellProps) {
-  const { domainId, agentId, workspaceName } = useParams()
+  const { domainId, agentId, workspaceName, conversationId } = useParams()
   const navigate = useNavigate()
 
   // Use the new state hooks
   const knowledgeSections = useKnowledgeSections()
   const { agents: agentsMap } = useAgents()
+  const runtimeAgents = useRuntimeAgents()
   const { flows: flowsMap } = useFlows()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
@@ -222,12 +256,14 @@ export function StudioShell({
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
   const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>([])
+  const [runtimeChatLoading, setRuntimeChatLoading] = useState(false)
   const hydratedAgentIdRef = useRef<string | null>(null)
   const lastAutoSavedSnapshotRef = useRef<string>('')
   const contentEditDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const frontmatterEditDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingContentEditRef = useRef<{ path: string; content: string } | null>(null)
   const pendingFrontmatterEditRef = useRef<{ path: string; frontmatter: Record<string, unknown> } | null>(null)
+  const runtimeResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Extract domains from knowledge sections
   const domains = useMemo(() => {
@@ -332,6 +368,72 @@ export function StudioShell({
     [agentId, agents]
   )
 
+  const activeRuntimeAgent = useMemo<RuntimeAgent | null>(
+    () => (agentId ? runtimeAgents.find((a) => a.id === agentId) || null : null),
+    [agentId, runtimeAgents]
+  )
+
+  const selectedDomainsForRuntime = useMemo(
+    () => domains.filter((domain) => selectedDomainIds.includes(domain.id)),
+    [domains, selectedDomainIds]
+  )
+
+  const runtimeFieldsForConversation = useMemo(() => {
+    const runtimeFieldIds = new Set(emptyFieldsForRuntime)
+
+    const selectedFieldEntries = selectedDomainsForRuntime.flatMap((domain) =>
+      (domain.fields || []).map((field) => ({ field, domainName: domain.name }))
+    )
+
+    return selectedFieldEntries
+      .filter(({ field }) =>
+        runtimeFieldIds.has(field.id) || runtimeFieldIds.has(field.variableName)
+      )
+      .map(({ field, domainName }) => ({
+        id: field.id,
+        label: field.label,
+        type: toRuntimeFieldType(field.fieldType),
+        options: (field.options || []).map((option) => option.label),
+        value: toRuntimeDefaultValue(field.fieldType),
+        domain: domainName,
+      }))
+  }, [emptyFieldsForRuntime, selectedDomainsForRuntime])
+
+  const studioRuntimeAgent = useMemo<RuntimeAgent | null>(() => {
+    if (!activeRuntimeAgent) return null
+
+    return {
+      ...activeRuntimeAgent,
+      domains: selectedDomainsForRuntime.map((domain) => domain.name),
+      runtimeFields: runtimeFieldsForConversation,
+    }
+  }, [activeRuntimeAgent, selectedDomainsForRuntime, runtimeFieldsForConversation])
+
+  const runtimeConversations = useMemo<RuntimeConversation[]>(() => {
+    if (!agentId) return []
+
+    const source = agentsMap[agentId]?.conversations || []
+    return source
+      .map((conv) => ({
+        id: conv.id,
+        agentId: conv.agentId,
+        agentName: conv.agentName,
+        messages: (conv.messages || [])
+          .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+          .map((msg) => ({
+            id: msg.id,
+            role: msg.role as MessageRole,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            slashAction: msg.slashAction,
+            structuredOutput: msg.structuredOutput,
+          })),
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt,
+      }))
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  }, [agentId, agentsMap])
+
   // Load agent data only when the route agent changes
   useEffect(() => {
     if (!agentId) {
@@ -371,11 +473,13 @@ export function StudioShell({
   }, [agentId, agentsMap, agents])
 
   // Determine view mode from URL params
-  const viewMode: 'list' | 'domain-detail' | 'agent-detail' = agentId
-    ? 'agent-detail'
-    : domainId
-      ? 'domain-detail'
-      : 'list'
+  const viewMode: 'list' | 'domain-detail' | 'agent-detail' | 'agent-conversation' = conversationId
+    ? 'agent-conversation'
+    : agentId
+      ? 'agent-detail'
+      : domainId
+        ? 'domain-detail'
+        : 'list'
 
   // Get filtered file system for the selected domain
   // knowledgeNodeToFileSystem is a module-level pure function – no useCallback needed
@@ -518,6 +622,14 @@ export function StudioShell({
       flushPendingKnowledgeEdits()
     }
   }, [flushPendingKnowledgeEdits])
+
+  useEffect(() => {
+    return () => {
+      if (runtimeResponseTimeoutRef.current) {
+        clearTimeout(runtimeResponseTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleSave = useCallback(() => {
     flushPendingKnowledgeEdits()
@@ -718,6 +830,131 @@ export function StudioShell({
       conversations: nextConversations,
     })
   }, [agentId, agentsMap, upsertAgent])
+
+  const handleSelectRuntimeConversation = useCallback((targetConversationId: string) => {
+    if (!agentId) return
+    navigate(`${studioPath}/agent/${agentId}/conversation/${targetConversationId}`)
+  }, [agentId, navigate, studioPath])
+
+  const handleCreateRuntimeConversation = useCallback(() => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const now = new Date().toISOString()
+    const nextConversationId = `conversation-${Date.now()}`
+    const nextConversation = {
+      id: nextConversationId,
+      agentId,
+      agentName: (existingAgent.frontmatter.name as string) || agentId,
+      messages: [],
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: [...(existingAgent.conversations || []), nextConversation],
+    })
+
+    navigate(`${studioPath}/agent/${agentId}/conversation/${nextConversationId}`)
+  }, [agentId, agentsMap, navigate, studioPath, upsertAgent])
+
+  const handleDeleteRuntimeConversation = useCallback((targetConversationId: string) => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const remaining = (existingAgent.conversations || []).filter((c) => c.id !== targetConversationId)
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: remaining,
+    })
+
+    if (conversationId === targetConversationId) {
+      if (remaining.length > 0) {
+        navigate(`${studioPath}/agent/${agentId}/conversation/${remaining[0].id}`)
+      } else {
+        navigate(`${studioPath}/agent/${agentId}`)
+      }
+    }
+  }, [agentId, agentsMap, conversationId, navigate, studioPath, upsertAgent])
+
+  const handleSendRuntimeMessage = useCallback((content: string) => {
+    if (!agentId || !conversationId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const targetConversation = (existingAgent.conversations || []).find((c) => c.id === conversationId)
+    if (!targetConversation) return
+
+    const now = new Date().toISOString()
+    const userMessage = {
+      id: `msg-user-${Date.now()}`,
+      role: 'user' as const,
+      content,
+      timestamp: now,
+    }
+
+    const updatedConversation = {
+      ...targetConversation,
+      messages: [...(targetConversation.messages || []), userMessage],
+      updatedAt: now,
+    }
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: (existingAgent.conversations || []).map((c) =>
+        c.id === conversationId ? updatedConversation : c
+      ),
+    })
+
+    setRuntimeChatLoading(true)
+
+    if (runtimeResponseTimeoutRef.current) {
+      clearTimeout(runtimeResponseTimeoutRef.current)
+      runtimeResponseTimeoutRef.current = null
+    }
+
+    runtimeResponseTimeoutRef.current = setTimeout(() => {
+      const assistantNow = new Date().toISOString()
+      const assistantMessage = {
+        id: `msg-assistant-${Date.now()}`,
+        role: 'assistant' as const,
+        content: 'Preview response: I would use your assembled prompt and enabled files to answer this request.',
+        timestamp: assistantNow,
+      }
+
+      upsertAgent({
+        ...existingAgent,
+        conversations: (existingAgent.conversations || []).map((c) =>
+          c.id === conversationId
+            ? {
+                ...updatedConversation,
+                messages: [...(updatedConversation.messages || []), assistantMessage],
+                updatedAt: assistantNow,
+              }
+            : c
+        ),
+      })
+
+      setRuntimeChatLoading(false)
+      runtimeResponseTimeoutRef.current = null
+    }, 700)
+  }, [agentId, conversationId, agentsMap, upsertAgent])
+
+  const handleSaveActiveRuntimeConversation = useCallback(() => {
+    if (!conversationId) return
+
+    const targetConversation = runtimeConversations.find((conv) => conv.id === conversationId)
+    if (!targetConversation) return
+
+    handleSaveRuntimeConversation(targetConversation)
+  }, [conversationId, runtimeConversations, handleSaveRuntimeConversation])
 
   const handleNewAgent = useCallback(() => {
     setSelectedDomainIds([])
@@ -1092,6 +1329,24 @@ export function StudioShell({
             <div className="h-full flex flex-col">
               <AgentFormBuilder {...agentBuilderProps} />
             </div>
+          )}
+
+          {/* Agent Conversation View - Use AgentRuntimeView/ChatPanel implementation */}
+          {viewMode === 'agent-conversation' && (
+            <AgentRuntimeView
+              agent={studioRuntimeAgent}
+              conversations={runtimeConversations}
+              activeConversationId={conversationId || null}
+              isLoading={runtimeChatLoading}
+              onBackToList={handleBackToList}
+              onSendMessage={handleSendRuntimeMessage}
+              onSelectConversation={handleSelectRuntimeConversation}
+              onCreateConversation={handleCreateRuntimeConversation}
+              onDeleteConversation={handleDeleteRuntimeConversation}
+              onSaveConversation={handleSaveActiveRuntimeConversation}
+              canSaveConversation={Boolean(agentId && conversationId)}
+              hideTopNav
+            />
           )}
         </div>
       </div>

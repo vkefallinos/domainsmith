@@ -35,6 +35,8 @@ export const router = createBrowserRouter([
       { path: 'domain/:domainId' },
       // Agent detail view
       { path: 'agent/:agentId' },
+      // Agent conversation view in studio
+      { path: 'agent/:agentId/conversation/:conversationId' },
       // Agent flow editing view (shows modal)
       { path: 'agent/:agentId/actions/:actionId' },
     ],
