@@ -38,9 +38,9 @@ const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444',
 
 // Mock workspaces from extracted_data_structure.json
 const MOCK_WORKSPACES = [
-  { id: 'education', name: 'Education', slug: 'education', description: 'Learning and tutoring agents' },
-  { id: 'plants', name: 'Plants', slug: 'plants', description: 'Indoor plant care coaching' },
-  { id: 'web-development', name: 'Web Development', slug: 'web-development', description: 'React and web component building' },
+  { id: 'education', name: 'local/education', slug: 'education', description: 'Learning and tutoring agents' },
+  { id: 'plants', name: 'local/plants', slug: 'plants', description: 'Indoor plant care coaching' },
+  { id: 'web-development', name: 'local/web-development', slug: 'web-development', description: 'React and web component building' },
 ]
 
 export default function LandingLayout() {

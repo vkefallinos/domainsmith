@@ -2,7 +2,10 @@
 
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
 import { useGithub } from '@/lib/github/GithubContext'
-import { loadWorkspaceDataFromGithubRepo } from '@/lib/github/workspaceLoader'
+import {
+  loadWorkspaceDataFromGithubRepo,
+  type GithubWorkspaceLoadProgress,
+} from '@/lib/github/workspaceLoader'
 import { fromWorkspaceRouteParam, parseWorkspaceRepoRef } from '@/lib/workspaces'
 import type {
   ExtractedDataStructure,
@@ -29,6 +32,7 @@ interface WorkspaceDataContextValue {
   workspaceData: WorkspaceData | null
   isLoading: boolean
   error: string | null
+  githubLoadProgress: GithubWorkspaceLoadProgress | null
 
   // Direct data access
   agents: Record<string, Agent>
@@ -234,6 +238,7 @@ export function WorkspaceDataProvider({
   const [currentWorkspace, setCurrentWorkspace] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [githubLoadProgress, setGithubLoadProgress] = useState<GithubWorkspaceLoadProgress | null>(null)
 
   const setCurrentWorkspaceSafe = useCallback((workspaceId: string) => {
     setCurrentWorkspace(fromWorkspaceRouteParam(workspaceId))
@@ -274,16 +279,25 @@ export function WorkspaceDataProvider({
 
       const repoRef = parseWorkspaceRepoRef(currentWorkspace, user?.login)
       if (!repoRef) return
+      if (repoRef.owner === 'local') return
 
       try {
         setIsLoading(true)
         setError(null)
+        setGithubLoadProgress({
+          loadedFiles: 0,
+          totalFiles: 0,
+          currentPath: 'Initializing GitHub workspace load…',
+        })
 
         const workspace = await loadWorkspaceDataFromGithubRepo({
           octokit,
           owner: repoRef.owner,
           repo: repoRef.repo,
           workspaceId: currentWorkspace,
+          onProgress: (progress) => {
+            setGithubLoadProgress(progress)
+          },
         })
 
         setData((prev) => {
@@ -301,6 +315,7 @@ export function WorkspaceDataProvider({
         setError(message)
         console.error('Failed to load GitHub workspace data:', err)
       } finally {
+        setGithubLoadProgress(null)
         setIsLoading(false)
       }
     }
@@ -313,7 +328,10 @@ export function WorkspaceDataProvider({
       setData((prev) => {
         if (!prev || !currentWorkspace) return prev
 
-        const existingWorkspace = prev.workspaces[currentWorkspace]
+        const repoRef = parseWorkspaceRepoRef(currentWorkspace)
+        const workspaceKey = repoRef?.owner === 'local' ? repoRef.repo : currentWorkspace
+
+        const existingWorkspace = prev.workspaces[workspaceKey]
         if (!existingWorkspace) return prev
 
         const updatedWorkspace = updater(existingWorkspace)
@@ -322,7 +340,7 @@ export function WorkspaceDataProvider({
           ...prev,
           workspaces: {
             ...prev.workspaces,
-            [currentWorkspace]: updatedWorkspace,
+            [workspaceKey]: updatedWorkspace,
           },
         }
       })
@@ -422,7 +440,14 @@ export function WorkspaceDataProvider({
 
   // Computed values
   const workspaceData: WorkspaceData | null = useMemo(
-    () => (currentWorkspace && data ? data.workspaces[currentWorkspace] : null),
+    () => {
+      if (!currentWorkspace || !data) return null
+
+      const repoRef = parseWorkspaceRepoRef(currentWorkspace)
+      const workspaceKey = repoRef?.owner === 'local' ? repoRef.repo : currentWorkspace
+
+      return data.workspaces[workspaceKey] || null
+    },
     [currentWorkspace, data]
   )
 
@@ -440,6 +465,7 @@ export function WorkspaceDataProvider({
     workspaceData,
     isLoading,
     error,
+    githubLoadProgress,
     agents,
     flows,
     knowledge,

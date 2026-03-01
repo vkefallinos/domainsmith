@@ -97,7 +97,13 @@ function useWorkspace(workspaceName?: string): Workspace {
 
   return useMemo(() => {
     const displayWorkspaceName = workspaceName ? fromWorkspaceRouteParam(workspaceName) : 'Workspace'
-    const defaultWorkspace = { id: 'default', name: displayWorkspaceName, color: '#10b981' }
+    const defaultWorkspace = {
+      id: displayWorkspaceName.startsWith('local/')
+        ? `local-${displayWorkspaceName.replace('local/', '')}`
+        : 'default',
+      name: displayWorkspaceName,
+      color: '#10b981',
+    }
     if (!workspaces) return defaultWorkspace
 
     if (workspaceName) {
@@ -109,6 +115,10 @@ function useWorkspace(workspaceName?: string): Workspace {
       if (found) {
         return { id: found.id.toString(), name: found.name, color: '#10b981' }
       }
+
+      // Keep the URL-selected workspace visible (e.g. local/*),
+      // even if it is not part of GitHub workspace results.
+      return defaultWorkspace
     }
 
     const first = workspaces[0]
@@ -341,6 +351,8 @@ export function StudioShell({
   // Access raw knowledge nodes and in-memory mutators from workspace context
   const {
     workspaceData,
+    isLoading,
+    githubLoadProgress,
     knowledge: rawKnowledge,
     upsertAgent,
     deleteAgent,
@@ -1175,11 +1187,23 @@ export function StudioShell({
     }
   }, [workspaceData, octokit, githubUser])
 
-  // Show loading state while data loads (new hooks don't have loading, so we check if data exists)
-  if (knowledgeSections.length === 0 && Object.keys(agentsMap).length === 0) {
+  // Show loading state while workspace data loads
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-slate-500">Loading workspace data...</div>
+        <div className="text-center">
+          <div className="text-slate-500">Loading workspace data...</div>
+          {githubLoadProgress && (
+            <div className="mt-2 text-xs text-slate-400">
+              <div>
+                {githubLoadProgress.loadedFiles}/{githubLoadProgress.totalFiles} files
+              </div>
+              <div className="mt-1 max-w-[560px] truncate" title={githubLoadProgress.currentPath}>
+                {githubLoadProgress.currentPath}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     )
   }

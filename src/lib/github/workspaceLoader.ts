@@ -208,7 +208,18 @@ type RepoTextFile = {
   content: string
 }
 
-async function listRepoTextFiles(octokit: Octokit, owner: string, repo: string): Promise<RepoTextFile[]> {
+export interface GithubWorkspaceLoadProgress {
+  loadedFiles: number
+  totalFiles: number
+  currentPath: string
+}
+
+async function listRepoTextFiles(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  onProgress?: (progress: GithubWorkspaceLoadProgress) => void
+): Promise<RepoTextFile[]> {
   const { data: repoData } = await octokit.rest.repos.get({ owner, repo })
   const defaultBranch = repoData.default_branch || 'main'
 
@@ -234,16 +245,29 @@ async function listRepoTextFiles(octokit: Octokit, owner: string, repo: string):
       sha: entry.sha as string,
     }))
 
+  const relevantEntries = fileEntries.filter((entry) =>
+    entry.path === 'package.json' ||
+    entry.path.startsWith('agents/') ||
+    entry.path.startsWith('flows/') ||
+    entry.path.startsWith('knowledge/')
+  )
+
   const files: RepoTextFile[] = []
+  const totalFiles = relevantEntries.length
+  let loadedFiles = 0
 
-  for (const entry of fileEntries) {
-    const isRelevant =
-      entry.path === 'package.json' ||
-      entry.path.startsWith('agents/') ||
-      entry.path.startsWith('flows/') ||
-      entry.path.startsWith('knowledge/')
+  onProgress?.({
+    loadedFiles,
+    totalFiles,
+    currentPath: 'Reading repository tree…',
+  })
 
-    if (!isRelevant) continue
+  for (const entry of relevantEntries) {
+    onProgress?.({
+      loadedFiles,
+      totalFiles,
+      currentPath: entry.path,
+    })
 
     const { data: blob } = await octokit.rest.git.getBlob({
       owner,
@@ -253,6 +277,13 @@ async function listRepoTextFiles(octokit: Octokit, owner: string, repo: string):
 
     const content = decodeBase64Utf8(blob.content)
     files.push({ path: entry.path, content })
+
+    loadedFiles += 1
+    onProgress?.({
+      loadedFiles,
+      totalFiles,
+      currentPath: entry.path,
+    })
   }
 
   return files
@@ -263,9 +294,10 @@ export async function loadWorkspaceDataFromGithubRepo(params: {
   owner: string
   repo: string
   workspaceId: string
+  onProgress?: (progress: GithubWorkspaceLoadProgress) => void
 }): Promise<WorkspaceData> {
-  const { octokit, owner, repo, workspaceId } = params
-  const files = await listRepoTextFiles(octokit, owner, repo)
+  const { octokit, owner, repo, workspaceId, onProgress } = params
+  const files = await listRepoTextFiles(octokit, owner, repo, onProgress)
 
   const agents: Record<string, Agent> = {}
   const flows: Record<string, Flow> = {}

@@ -29,6 +29,10 @@ export function useWorkspaceMutation() {
                 throw new Error(`Invalid workspace name format: ${normalizedWorkspaceName}`)
             }
 
+            if (repoRef.owner === 'local') {
+                throw new Error('Local demo workspaces are not synced to GitHub.')
+            }
+
             const owner = repoRef.owner
             const repo = repoRef.repo
 

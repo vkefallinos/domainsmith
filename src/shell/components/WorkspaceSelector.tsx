@@ -27,6 +27,7 @@ export function workspaceToSlug(name: string): string {
 }
 
 const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444', '#84cc16']
+const LOCAL_WORKSPACE_REPOS = ['education', 'plants', 'web-development']
 
 const FALLBACK_WORKSPACE: Workspace = {
   id: 'workspace-default',
@@ -56,6 +57,14 @@ export function WorkspaceSelector({
 
   const { data: githubWorkspaces, isLoading } = useWorkspaces()
 
+  const localWorkspaces = useMemo<Workspace[]>(() => {
+    return LOCAL_WORKSPACE_REPOS.map((repo, idx) => ({
+      id: `local-${repo}`,
+      name: `local/${repo}`,
+      color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+    }))
+  }, [])
+
   const mappedWorkspaces = useMemo<Workspace[]>(() => {
     if (!githubWorkspaces) return []
     return githubWorkspaces.map((repo, idx) => ({
@@ -65,13 +74,27 @@ export function WorkspaceSelector({
     }))
   }, [githubWorkspaces])
 
-  const activeWorkspace = currentWorkspace || mappedWorkspaces[0] || FALLBACK_WORKSPACE
+  const allWorkspaces = useMemo(
+    () => [...localWorkspaces, ...mappedWorkspaces],
+    [localWorkspaces, mappedWorkspaces]
+  )
+
+  const activeWorkspace = currentWorkspace || allWorkspaces[0] || FALLBACK_WORKSPACE
 
   const filteredWorkspaces = useMemo(() => {
-    if (!searchQuery) return mappedWorkspaces.slice(0, 5)
+    if (!searchQuery) {
+      return {
+        local: localWorkspaces,
+        github: mappedWorkspaces.slice(0, 5),
+      }
+    }
+
     const query = searchQuery.toLowerCase()
-    return mappedWorkspaces.filter(w => w.name.toLowerCase().includes(query))
-  }, [mappedWorkspaces, searchQuery])
+    const local = localWorkspaces.filter((w) => w.name.toLowerCase().includes(query))
+    const github = mappedWorkspaces.filter((w) => w.name.toLowerCase().includes(query))
+
+    return { local, github }
+  }, [localWorkspaces, mappedWorkspaces, searchQuery])
 
   const derivedRepoName = useMemo(() => {
     const trimmed = searchQuery.trim()
@@ -154,7 +177,7 @@ export function WorkspaceSelector({
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <button
-          className="flex items-center gap-2 px-2 py-1.5 w-full rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+          className="flex min-w-0 items-center gap-2 px-2 py-1.5 w-full rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
           aria-label="Select workspace"
           disabled={isLoading}
         >
@@ -196,7 +219,10 @@ export function WorkspaceSelector({
         <DropdownMenuSeparator />
 
         <div className="overflow-y-auto flex-1 p-1">
-          {filteredWorkspaces.map((workspace) => (
+          <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Local
+          </div>
+          {filteredWorkspaces.local.map((workspace) => (
             <DropdownMenuItem
               key={workspace.id}
               onClick={() => handleSelect(workspace)}
@@ -217,15 +243,39 @@ export function WorkspaceSelector({
             </DropdownMenuItem>
           ))}
 
-          {filteredWorkspaces.length === 0 && !isLoading && !searchQuery && (
+          <div className="mt-2 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            GitHub Repositories
+          </div>
+          {filteredWorkspaces.github.map((workspace) => (
+            <DropdownMenuItem
+              key={workspace.id}
+              onClick={() => handleSelect(workspace)}
+              className="flex items-center gap-3 cursor-pointer"
+            >
+              <div
+                className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
+                style={{ backgroundColor: workspace.color + '20' }}
+              >
+                <Building2 className="w-3 h-3" style={{ color: workspace.color }} />
+              </div>
+
+              <span className="flex-1 truncate" title={workspace.name}>{workspace.name}</span>
+
+              {workspace.id === activeWorkspace.id && (
+                <Check className="w-4 h-4 text-slate-500 shrink-0" />
+              )}
+            </DropdownMenuItem>
+          ))}
+
+          {filteredWorkspaces.local.length + filteredWorkspaces.github.length === 0 && !isLoading && !searchQuery && (
             <div className="px-2 py-3 text-sm text-slate-500 text-center">
-              No repositories found
+              No workspaces found
             </div>
           )}
 
-          {filteredWorkspaces.length === 0 && searchQuery && (
+          {filteredWorkspaces.local.length + filteredWorkspaces.github.length === 0 && searchQuery && (
             <div className="px-2 py-3 text-sm text-slate-500 text-center">
-              No repositories match "{searchQuery}"
+              No workspaces match "{searchQuery}"
             </div>
           )}
         </div>
@@ -236,7 +286,7 @@ export function WorkspaceSelector({
           </p>
         )}
 
-        {searchQuery && !filteredWorkspaces.find(w => w.name.toLowerCase() === searchQuery.toLowerCase()) && (
+        {searchQuery && !filteredWorkspaces.github.find(w => w.name.toLowerCase() === searchQuery.toLowerCase()) && (
           <div className="p-2 border-t">
             <button
               onClick={handleCreateWorkspace}

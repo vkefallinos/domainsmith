@@ -181,16 +181,18 @@ export function StudioSidebar({
         >
           <Link
             to="/"
-            className="flex items-center gap-2"
+            className="flex h-8 w-8 shrink-0 items-center justify-center"
             title="lmthing"
           >
-            <img src={logo} alt="lmthing logo" className="w-8 h-8 rounded-md" />
+            <img src={logo} alt="lmthing logo" className="h-8 w-8 rounded-md object-contain" />
           </Link>
           {!isCollapsed && (
-            <WorkspaceSelector
-              currentWorkspace={workspace}
-              isCollapsed={false}
-            />
+            <div className="min-w-0 flex-1">
+              <WorkspaceSelector
+                currentWorkspace={workspace}
+                isCollapsed={false}
+              />
+            </div>
           )}
         </div>
         {isCollapsed && (

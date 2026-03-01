@@ -18,9 +18,11 @@ export function useWorkspaceData<T>(path: string) {
   const { octokit, isAuthenticated, user } = useGithub()
 
   const normalizedWorkspaceName = getNormalizedWorkspace(workspaceName)
+  const repoRef = parseWorkspaceRepoRef(normalizedWorkspaceName, user?.login)
+  const isLocalWorkspace = repoRef?.owner === 'local'
 
   return useQuery({
-    enabled: isAuthenticated && !!octokit && !!normalizedWorkspaceName,
+    enabled: isAuthenticated && !!octokit && !!normalizedWorkspaceName && !isLocalWorkspace,
     queryKey: ['workspace-data', normalizedWorkspaceName, path],
     queryFn: async (): Promise<T> => {
       if (!octokit) throw new Error('Octokit not initialized')
