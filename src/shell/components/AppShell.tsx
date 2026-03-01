@@ -3,15 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ChatSidebar } from './ChatSidebar'
 import { AgentsDashboard } from './AgentsDashboard'
 import { AgentRuntimeView } from '@/sections/agent-runtime/components'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
-import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
+import { useRuntimeAgents, useAgents } from '@/lib/workspaceContext'
+import type { Conversation, MessageRole } from '@/../product/sections/agent-runtime/types'
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
-
-type AgentRuntimeData = {
-  agents?: Agent[]
-  conversations?: Conversation[]
-}
 
 // Helper to get workspace from URL param
 function useWorkspace(workspaceName?: string): Workspace {
@@ -48,8 +43,6 @@ export interface AppShellProps {
 }
 
 export function AppShell({
-  user,
-  onLogout,
   onOpenSettings,
   defaultSidebarCollapsed = false,
   onSidebarCollapsedChange,
@@ -63,7 +56,9 @@ export function AppShell({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
   const [isLoading, setIsLoading] = useState(false)
 
-  const { data: agentRuntimeData } = useWorkspaceData<AgentRuntimeData>('agent-runtime')
+  // Use the new state hooks
+  const agents = useRuntimeAgents()
+  const { agents: agentsMap } = useAgents()
 
   // Workspace - derived directly from URL
   const currentWorkspace = useWorkspace(workspaceName)
@@ -71,15 +66,32 @@ export function AppShell({
   // Build workspace-aware path helper
   const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
-  // Load agents and conversations from runtime data
-  const agents = useMemo(
-    () => (agentRuntimeData?.agents || []) as Agent[],
-    [agentRuntimeData?.agents]
-  )
-  const allConversations = useMemo(
-    () => (agentRuntimeData?.conversations || []) as Conversation[],
-    [agentRuntimeData?.conversations]
-  )
+  // Collect all conversations from all agents
+  const allConversations = useMemo(() => {
+    const conversations: Conversation[] = []
+    for (const agent of Object.values(agentsMap)) {
+      if (agent.conversations) {
+        for (const conv of agent.conversations) {
+          conversations.push({
+            id: conv.id,
+            agentId: conv.agentId,
+            agentName: conv.agentName,
+            messages: conv.messages
+              .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+              .map(msg => ({
+                id: msg.id,
+                role: msg.role as MessageRole,
+                content: msg.content,
+                timestamp: msg.timestamp,
+              })),
+            createdAt: conv.createdAt,
+            updatedAt: conv.updatedAt,
+          })
+        }
+      }
+    }
+    return conversations
+  }, [agentsMap])
 
   // Get the active agent
   const activeAgent = agentId

@@ -29,15 +29,24 @@ import { workspaceToSlug, type Workspace } from './components/WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { GithubLoginButton } from '@/components/GithubLoginButton'
 import { useGithub } from '@/lib/github/GithubContext'
+import { useWorkspaceDataContext } from '@/lib/workspaceContext'
 import { useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
 import logo from '@/assets/logo.png'
 
 const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444', '#84cc16']
 
+// Mock workspaces from extracted_data_structure.json
+const MOCK_WORKSPACES = [
+  { id: 'education', name: 'Education', slug: 'education', description: 'Learning and tutoring agents' },
+  { id: 'plants', name: 'Plants', slug: 'plants', description: 'Indoor plant care coaching' },
+  { id: 'web-development', name: 'Web Development', slug: 'web-development', description: 'React and web component building' },
+]
+
 export default function LandingLayout() {
   const navigate = useNavigate()
   const { data: githubWorkspaces, isLoading } = useWorkspaces()
+  const { workspaces: jsonWorkspaces } = useWorkspaceDataContext()
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
   const [targetApp, setTargetApp] = useState<'studio' | 'chat'>('studio')
 
@@ -46,13 +55,35 @@ export default function LandingLayout() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
+  // Combine mock workspaces and GitHub workspaces
   const availableWorkspaces = useMemo(() => {
-    if (!githubWorkspaces) return []
-    return githubWorkspaces.map((repo, idx) => ({
-      id: repo.id.toString(),
-      name: repo.name,
-      color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
-    }))
+    const workspaces: Workspace[] = []
+
+    // Add mock workspaces first
+    MOCK_WORKSPACES.forEach((mock, idx) => {
+      workspaces.push({
+        id: mock.id,
+        name: mock.name,
+        color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+        description: mock.description,
+      })
+    })
+
+    // Add GitHub workspaces
+    if (githubWorkspaces) {
+      githubWorkspaces.forEach((repo) => {
+        // Avoid duplicates
+        if (!workspaces.find(w => w.name === repo.name)) {
+          workspaces.push({
+            id: repo.id.toString(),
+            name: repo.name,
+            color: WORKSPACE_COLORS[workspaces.length % WORKSPACE_COLORS.length],
+          })
+        }
+      })
+    }
+
+    return workspaces
   }, [githubWorkspaces])
 
   const filteredWorkspaces = useMemo(() => {
@@ -194,6 +225,79 @@ export default function LandingLayout() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Demo Workspaces Section */}
+        <div className="mt-16">
+          <h3 className="text-center text-2xl font-semibold">Demo Workspaces</h3>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">
+            Explore pre-configured workspaces to see how AI agents work
+          </p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-3">
+            {MOCK_WORKSPACES.map((workspace, idx) => (
+              <Card
+                key={workspace.id}
+                className="group cursor-pointer border-2 transition-all hover:border-primary/50 hover:shadow-lg"
+                onClick={() => handleWorkspaceSelect({
+                  id: workspace.id,
+                  name: workspace.name,
+                  color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+                } as Workspace)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div
+                      className="flex size-12 items-center justify-center rounded-xl text-white transition-colors"
+                      style={{ backgroundColor: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length] }}
+                    >
+                      <Building2 className="size-6" />
+                    </div>
+                    <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                  </div>
+                  <CardTitle className="mt-4 text-xl">{workspace.name}</CardTitle>
+                  <CardDescription>{workspace.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setTargetApp('studio')
+                        handleWorkspaceSelect({
+                          id: workspace.id,
+                          name: workspace.name,
+                          color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+                        } as Workspace)
+                      }}
+                    >
+                      <Settings className="mr-2 size-4" />
+                      Studio
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setTargetApp('chat')
+                        handleWorkspaceSelect({
+                          id: workspace.id,
+                          name: workspace.name,
+                          color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+                        } as Workspace)
+                      }}
+                    >
+                      <MessageSquare className="mr-2 size-4" />
+                      Chat
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
 

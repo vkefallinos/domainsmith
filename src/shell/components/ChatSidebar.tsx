@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useAgentList, useAgents } from '@/lib/workspaceContext'
 import logo from '@/assets/logo.png'
 import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
@@ -37,11 +37,6 @@ type Conversation = {
   updatedAt: string
 }
 
-type AgentRuntimeData = {
-  agents?: Agent[]
-  conversations?: Conversation[]
-}
-
 export interface ChatSidebarProps {
   isCollapsed?: boolean
   onToggleCollapse?: () => void
@@ -60,21 +55,32 @@ export function ChatSidebar({
   const location = useLocation()
   const { workspaceName } = useParams<{ workspaceName: string }>()
   const [conversationsExpanded, setConversationsExpanded] = useState(true)
-  const { data } = useWorkspaceData<AgentRuntimeData>('agent-runtime')
+
+  // Use the new state hooks
+  const agents = useAgentList()
+  const { agents: agentsMap } = useAgents()
 
   // Build workspace-aware path helper
   const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
 
-  // Load agents from runtime data (same source as AppShell)
-  const agents = useMemo(() => {
-    return (data?.agents || []) as Agent[]
-  }, [data?.agents])
-
-  // Load conversations from runtime data
+  // Load conversations from agents map
   const conversations = useMemo(() => {
-    return (data?.conversations || []) as Conversation[]
-  }, [data?.conversations])
+    const result: Conversation[] = []
+    for (const agent of Object.values(agentsMap)) {
+      for (const conv of agent.conversations || []) {
+        result.push({
+          id: conv.id,
+          agentId: conv.agentId,
+          agentName: conv.agentName,
+          messages: conv.messages,
+          createdAt: conv.createdAt,
+          updatedAt: conv.updatedAt,
+        })
+      }
+    }
+    return result
+  }, [agentsMap])
 
   // Group conversations by agent
   const conversationsByAgent = useMemo(() => {

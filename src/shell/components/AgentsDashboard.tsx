@@ -1,16 +1,6 @@
 import { Search, Plus, Bot } from 'lucide-react'
 import { useState, useMemo } from 'react'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
-
-type Agent = {
-  id: string
-  name: string
-  description: string
-}
-
-type AgentRuntimeData = {
-  agents?: Agent[]
-}
+import { useAgentList } from '@/lib/workspaceContext'
 
 export interface AgentsDashboardProps {
   onNewAgent?: () => void
@@ -26,12 +16,9 @@ export function AgentsDashboard({
   onDeleteAgent,
 }: AgentsDashboardProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const { data } = useWorkspaceData<AgentRuntimeData>('agent-runtime')
 
-  // Load agents from runtime data (same source as AppShell)
-  const agents: Agent[] = useMemo(() => {
-    return (data?.agents || []) as Agent[]
-  }, [data?.agents])
+  // Load agents from workspace state
+  const agents = useAgentList()
 
   const filteredAgents = useMemo(() => {
     return agents.filter(agent =>

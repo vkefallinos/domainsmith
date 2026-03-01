@@ -4,7 +4,7 @@ import { StudioSidebar } from './StudioSidebar'
 import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useAgents, useKnowledgeSections } from '@/lib/workspaceContext'
 import type {
   PromptLibraryProps,
   FileSystemNode,
@@ -128,10 +128,9 @@ export function StudioShell({
   const { domainId, agentId, workspaceName } = useParams()
   const navigate = useNavigate()
 
-  // Load workspace data dynamically
-  const { data: promptLibraryData, isLoading: loadingPromptLibrary } = useWorkspaceData<any>('prompt-library')
-  const { data: agentBuilderData, isLoading: loadingAgentBuilder } = useWorkspaceData<any>('agent-builder')
-
+  // Use the new state hooks
+  const knowledgeSections = useKnowledgeSections()
+  const { agents: agentsMap } = useAgents()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
 
@@ -157,29 +156,84 @@ export function StudioShell({
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
   const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>([])
 
-  // Extract domains from prompt library data
+  // Extract domains from knowledge sections
   const domains = useMemo(() => {
-    const fileSystem = promptLibraryData?.fileSystem as FileSystemNode
-    if (!fileSystem?.children) return []
+    return knowledgeSections.map(section => {
+      // Build field nodes from field-type children
+      const fieldNodes = (section.children || [])
+        .filter(c => c.type === 'field')
+        .map(field => ({
+          id: field.path,
+          type: 'field' as const,
+          label: field.label || field.path,
+          description: field.description || '',
+          variableName: field.variableName || field.path.split('/').pop() || field.path,
+          fieldType: field.fieldType || 'select',
+          required: field.required || false,
+          runtimeOptional: true,
+          options: (field.children || []).map(opt => ({
+            id: opt.path,
+            value: opt.path.split('/').pop() || opt.path,
+            label: opt.label || opt.path,
+            filePath: opt.path,
+          })),
+        }))
 
-    return fileSystem.children
-      .filter((child: any) => child.type === 'directory' && child.config?.renderAs === 'section')
-      .map((dir: any) => ({
-        id: dir.id,
-        name: dir.name,
-        label: dir.config?.label || dir.name,
-        description: dir.config?.description || '',
-        icon: dir.config?.icon || 'folder',
-        color: dir.config?.color || '#6366f1',
-        path: dir.path,
-      })) as Domain[]
-  }, [promptLibraryData])
+      return {
+        id: section.path,           // Use path directly (e.g. 'plant-profile')
+        name: section.label || section.path,
+        label: section.label || section.path,
+        description: section.description || '',
+        icon: section.icon || '📁',
+        color: section.color || '#6366f1',
+        path: section.path,
+        directoryPath: section.path,
+        category: 'Knowledge',
+        schema: {
+          root: {
+            id: section.path,
+            type: 'section' as const,
+            label: section.label || section.path,
+            description: section.description || '',
+            children: fieldNodes,
+          },
+        },
+        fields: fieldNodes,
+      }
+    })
+  }, [knowledgeSections])
 
-  // Extract agents from agent builder data
+  // Extract agents from agents map
   const agents = useMemo(() => {
-    const savedConfigs = agentBuilderData?.savedAgentConfigs as AgentConfig[]
-    return savedConfigs || []
-  }, [agentBuilderData])
+    return Object.values(agentsMap).map(agent => ({
+      id: agent.id,
+      name: agent.frontmatter.name || agent.id,
+      description: agent.frontmatter.description || '',
+      selectedDomains: (agent.frontmatter.selectedDomains || []).map(id =>
+        // Normalize: 'domain-plant-profile' → 'plant-profile' to match knowledge section paths
+        id.startsWith('domain-') ? id.slice('domain-'.length) : id
+      ),
+      formValues: agent.formValues,
+      enabledTools: [],
+      emptyFieldsForRuntime: agent.config.emptyFieldsForRuntime || [],
+      attachedFlows: (agent.slashActions || []).map(sa => ({
+        flowId: sa.flowId,
+        flowName: sa.name,
+        flowDescription: sa.description,
+        taskCount: 0, // Would need to look up the flow to get task count
+        slashAction: {
+          id: `sa_${sa.actionId}`,
+          actionId: sa.actionId,
+          name: sa.name,
+          description: sa.description,
+          enabled: true,
+        },
+      })),
+      mainInstruction: agent.mainInstruction,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })) as unknown as AgentConfig[]
+  }, [agentsMap])
 
   // Get the active domain
   const activeDomain = domainId
@@ -192,7 +246,7 @@ export function StudioShell({
     : null
 
   // Load agent data when agentId changes
-  useMemo(() => {
+  useEffect(() => {
     if (activeAgent) {
       setSelectedDomainIds(activeAgent.selectedDomains || [])
       setFormValues(activeAgent.formValues || {})
@@ -219,27 +273,24 @@ export function StudioShell({
       : 'list'
 
   // Get filtered file system for the selected domain
+  // Note: For now, this returns null as the detailed file structure isn't in extracted_data_structure.json
+  // This would need to be populated from the actual knowledge tree structure
   const domainFileSystem = useMemo(() => {
     if (!activeDomain) return null
 
-    const fileSystem = promptLibraryData?.fileSystem as Directory
-    if (!fileSystem?.children) return null
+    // Find the knowledge section matching this domain
+    const section = knowledgeSections.find(s => s.path === activeDomain.path)
+    if (!section) return null
 
-    const domainNode = fileSystem.children?.find(
-      (child: any) => child.id === activeDomain.id && child.type === 'directory'
-    ) as Directory | undefined
-
-    if (!domainNode) return null
-
+    // Build a Directory structure from the knowledge section
     return {
-      ...fileSystem,
       id: 'root',
       name: 'root',
       type: 'directory' as const,
       path: '/',
-      children: [domainNode],
+      children: [section as unknown as Directory],
     } as Directory
-  }, [activeDomain, promptLibraryData])
+  }, [activeDomain, knowledgeSections])
 
   // Available flows (empty for now, would come from flow builder data)
   const availableFlows: any[] = []
@@ -467,9 +518,10 @@ export function StudioShell({
   }, [onDeleteDomain])
   useEffect(() => {
     handleExpandAll()
-  }, [domainFileSystem])
-  // Show loading state while data loads
-  if (loadingPromptLibrary || loadingAgentBuilder) {
+  }, [domainFileSystem, handleExpandAll])
+
+  // Show loading state while data loads (new hooks don't have loading, so we check if data exists)
+  if (knowledgeSections.length === 0 && Object.keys(agentsMap).length === 0) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-slate-500">Loading workspace data...</div>
@@ -477,27 +529,25 @@ export function StudioShell({
     )
   }
 
-  if (!promptLibraryData || !agentBuilderData) {
-    return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        Failed to load workspace data
-      </div>
-    )
+  // Prompt preview - create a default one
+  const promptPreview = {
+    agentId: agentId || 'default',
+    domains: selectedDomainIds,
+    generatedPrompt: mainInstruction || '',
+    tokenCount: mainInstruction?.length || 0,
+    lastGenerated: new Date().toISOString(),
   }
 
-  // Prompt preview from data
-  const promptPreview = (agentBuilderData as any).promptPreview
-
-  // Build agent builder props
+  // Build agent builder props using new data structure
   const agentBuilderProps: AgentBuilderScreenProps = {
-    domains: (agentBuilderData as any).domains,
-    toolLibrary: (agentBuilderData as any).toolLibrary,
-    savedAgentConfigs: (agentBuilderData as any).savedAgentConfigs,
+    domains,
+    toolLibrary: [], // Empty for now - tool library not in extracted data
+    savedAgentConfigs: agents,
     selectedDomainIds,
     formValues,
-    enabledTools,
+    enabledTools: enabledTools.map(t => ({ ...t, source: 'manual' as const })),
     emptyFieldsForRuntime,
-    attachedFlows,
+    attachedFlows: attachedFlows.map(af => ({ ...af, taskCount: 0 })),
     availableFlows,
     mainInstruction,
     promptPreview,

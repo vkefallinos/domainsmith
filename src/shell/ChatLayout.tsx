@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from './components'
+import { useWorkspaceData } from '@/lib/workspaceDataContext'
 
 type ChatState = {
   sidebarCollapsed: boolean
@@ -36,6 +37,14 @@ export default function ChatLayout() {
   const navigate = useNavigate()
   const { workspaceName } = useParams<{ workspaceName: string }>()
   const [state, setState] = useState<ChatState>(loadState)
+  const { setCurrentWorkspace } = useWorkspaceData()
+
+  // Sync URL workspace param into the data context
+  useEffect(() => {
+    if (workspaceName) {
+      setCurrentWorkspace(workspaceName)
+    }
+  }, [workspaceName, setCurrentWorkspace])
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'

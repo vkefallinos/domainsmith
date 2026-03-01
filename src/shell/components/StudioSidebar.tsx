@@ -10,25 +10,10 @@ import {
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useKnowledgeSections, useAgentList } from '@/lib/workspaceContext'
 import logo from '@/assets/logo.png'
 import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
-
-type FileSystemNode = {
-  id: string
-  name: string
-  type: 'directory' | 'file'
-  path: string
-  config?: {
-    label?: string
-    description?: string
-    icon?: string
-    color?: string
-    renderAs?: 'section' | 'field'
-  }
-  children?: FileSystemNode[]
-}
 
 type Domain = {
   id: string
@@ -53,14 +38,6 @@ type AgentConfig = {
     flowName: string
     slashAction?: { name: string; actionId: string; enabled?: boolean }
   }>
-}
-
-type PromptLibraryData = {
-  fileSystem: FileSystemNode
-}
-
-type AgentBuilderData = {
-  savedAgentConfigs: AgentConfig[]
 }
 
 export interface StudioSidebarProps {
@@ -88,37 +65,41 @@ export function StudioSidebar({
   const { workspaceName } = useParams<{ workspaceName: string }>()
   const [domainsExpanded, setDomainsExpanded] = useState(true)
   const [agentsExpanded, setAgentsExpanded] = useState(true)
-  const { data: promptLibraryData } = useWorkspaceData<PromptLibraryData>('prompt-library')
-  const { data: agentBuilderData } = useWorkspaceData<AgentBuilderData>('agent-builder')
+
+  // Use the new state hooks
+  const knowledgeSections = useKnowledgeSections()
+  const agentList = useAgentList()
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
   const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
-  // Extract domains from prompt library data (top-level directories with renderAs='section')
+  // Map knowledge sections to domain format
   const domains = useMemo(() => {
-    const fileSystem = promptLibraryData?.fileSystem
-    if (!fileSystem?.children) return []
+    return knowledgeSections.map(section => ({
+      id: section.path.replace(/\//g, '-'),
+      name: section.path,
+      label: section.label || section.path,
+      description: section.description || '',
+      icon: section.icon || 'folder',
+      color: section.color || '#6366f1',
+      path: section.path,
+      childCount: section.children?.filter(c => c.type === 'field').length || 0,
+    })) as Domain[]
+  }, [knowledgeSections])
 
-    return fileSystem.children
-      .filter((child) => child.type === 'directory' && child.config?.renderAs === 'section')
-      .map((dir) => ({
-        id: dir.id,
-        name: dir.name,
-        label: dir.config?.label || dir.name,
-        description: dir.config?.description || '',
-        icon: dir.config?.icon || 'folder',
-        color: dir.config?.color || '#6366f1',
-        path: dir.path,
-        childCount: dir.children?.filter((c) => c.type === 'directory').length || 0,
-      })) as Domain[]
-  }, [promptLibraryData?.fileSystem])
-
-  // Extract agents from agent builder data
+  // Map agent list to agent config format
   const agents = useMemo(() => {
-    const savedConfigs = agentBuilderData?.savedAgentConfigs
-    return savedConfigs || []
-  }, [agentBuilderData?.savedAgentConfigs])
+    return agentList.map(agent => ({
+      id: agent.id,
+      name: agent.name,
+      description: agent.description,
+      selectedDomains: [],
+      formValues: {},
+      enabledTools: [],
+      attachedFlows: [],
+    })) as AgentConfig[]
+  }, [agentList])
 
   const toggleDomains = () => {
     setDomainsExpanded((prev) => !prev)

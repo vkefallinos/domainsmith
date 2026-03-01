@@ -1,26 +1,15 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { StudioShell } from './components'
+import { useWorkspaceData } from '@/lib/workspaceDataContext'
 import { FlowEditorModal } from '@/sections/agent-builder/components/FlowEditorModal'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useAgents, useFlows } from '@/lib/workspaceContext'
 import type {
   PromptFragment,
   NewFileForm,
 } from '@/../product/sections/prompt-library/types'
 import type { Flow, Task } from '@/../product/sections/flow-builder/types'
 import type { AttachedFlow } from '@/../product/sections/agent-builder/types'
-
-type AgentBuilderData = {
-  savedAgentConfigs: Array<{
-    id: string
-    attachedFlows?: AttachedFlow[]
-  }>
-}
-
-type FlowBuilderData = {
-  flows: Flow[]
-  tasks: Task[]
-}
 
 type StudioState = {
   sidebarCollapsed: boolean
@@ -53,29 +42,47 @@ function saveState(state: StudioState) {
 }
 
 export default function StudioLayout() {
-  const { agentId, actionId } = useParams()
+  const { agentId, actionId, workspaceName } = useParams()
   const [state, setState] = useState<StudioState>(loadState)
+  const { setCurrentWorkspace } = useWorkspaceData()
 
-  // Load workspace data dynamically
-  const { data: agentBuilderData } = useWorkspaceData<AgentBuilderData>('agent-builder')
-  const { data: flowBuilderData } = useWorkspaceData<FlowBuilderData>('flow-builder')
+  // Sync URL workspace param into the data context
+  useEffect(() => {
+    if (workspaceName) {
+      setCurrentWorkspace(workspaceName)
+    }
+  }, [workspaceName, setCurrentWorkspace])
+
+  // Use the new state hooks
+  const { agents: agentsMap } = useAgents()
+  const { flows: flowsMap } = useFlows()
 
   // Flow editor state
   const [currentEditingFlow, setCurrentEditingFlow] = useState<Flow | null>(null)
   const [currentEditingTasks, setCurrentEditingTasks] = useState<Task[]>([])
 
-  // Get attached flows from agent builder data (memoized to prevent infinite loop)
+  // Get attached flows from agent data (memoized to prevent infinite loop)
   const attachedFlows = useMemo(() => {
-    if (!agentBuilderData?.savedAgentConfigs) return []
-    const agentConfig = agentBuilderData.savedAgentConfigs?.find(
-      (config: { id: string }) => config.id === agentId
-    )
-    return (agentConfig?.attachedFlows || []) as AttachedFlow[]
-  }, [agentBuilderData, agentId])
+    const agent = agentsMap[agentId || '']
+    if (!agent?.slashActions) return []
+
+    return agent.slashActions.map(sa => ({
+      flowId: sa.flowId,
+      flowName: sa.name,
+      flowDescription: sa.description,
+      slashAction: {
+        id: `sa_${sa.actionId}`,
+        actionId: sa.actionId,
+        name: sa.name,
+        description: sa.description,
+        enabled: true,
+      },
+    })) as AttachedFlow[]
+  }, [agentsMap, agentId])
 
   // Handle URL parameter for flow editing
   useEffect(() => {
-    if (!flowBuilderData || !actionId) {
+    if (!actionId) {
       setCurrentEditingFlow(null)
       setCurrentEditingTasks([])
       return
@@ -89,21 +96,30 @@ export default function StudioLayout() {
       return
     }
 
-    // Get the full flow data from flow builder data
-    const fullFlow = flowBuilderData.flows?.find((f: Flow) => f.id === attachedFlow.flowId)
-    if (!fullFlow) {
-      setCurrentEditingFlow(null)
-      setCurrentEditingTasks([])
-      return
+    // Get the full flow data from the flows map
+    // For now, create a simplified flow object from the attached flow data
+    const fullFlow: Flow = {
+      id: attachedFlow.flowId,
+      name: attachedFlow.flowName,
+      description: attachedFlow.flowDescription,
+      agentId: agentId || '',
+      status: 'active',
+      tags: [],
+      taskCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
 
-    // Get the tasks for this flow
-    const flowTasks = flowBuilderData.tasks?.filter((t: Task) => t.flowId === attachedFlow.flowId) || []
+    // Get the tasks for this flow from the actual flow data in the agent
+    const agent = agentsMap[agentId || '']
+    const flowData = agent?.slashActions?.find(sa => sa.actionId === actionId)
+    // Tasks are nested in the flow data, for now use empty array
+    const flowTasks: Task[] = []
 
     setCurrentEditingFlow(fullFlow)
     setCurrentEditingTasks(flowTasks)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionId, attachedFlows, flowBuilderData])
+  }, [actionId, attachedFlows, agentsMap, agentId])
 
   const handleCloseFlowEditor = useCallback(() => {
     setCurrentEditingFlow(null)
