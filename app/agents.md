@@ -118,5 +118,5 @@ LMTHING is a no-code platform designed to help users build, configure, and deplo
 - Do not remove expected `frontmatter` keys used by lists and filters.
 
 ## Quick Validation
-- App runs with `npm run dev`.
-- Build check: `npm run build`.
+- App runs with `pnpm dev` (from repo root).
+- Build check: `pnpm build` (from repo root).

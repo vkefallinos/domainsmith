@@ -20,13 +20,13 @@ Now you have a clean local instance ready to use.
 ## Install Dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ## Start the Dev Server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
