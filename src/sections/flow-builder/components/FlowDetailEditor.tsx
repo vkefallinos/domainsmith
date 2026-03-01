@@ -92,7 +92,8 @@ export function FlowDetailEditor({
                 </label>
                 <input
                   type="text"
-                  defaultValue={flow.name}
+                  value={flow.name}
+                  onChange={(e) => onUpdateFlow?.({ name: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                 />
               </div>
@@ -101,7 +102,8 @@ export function FlowDetailEditor({
                   Status
                 </label>
                 <select
-                  defaultValue={flow.status}
+                  value={flow.status}
+                  onChange={(e) => onUpdateFlow?.({ status: e.target.value as Flow['status'] })}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
                   <option value="draft">Draft</option>
@@ -114,7 +116,8 @@ export function FlowDetailEditor({
                   Description
                 </label>
                 <textarea
-                  defaultValue={flow.description}
+                  value={flow.description}
+                  onChange={(e) => onUpdateFlow?.({ description: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
                 />
@@ -127,6 +130,12 @@ export function FlowDetailEditor({
                   {allTags.map((tag) => (
                     <button
                       key={tag}
+                      onClick={() => {
+                        const nextTags = flow.tags.includes(tag)
+                          ? flow.tags.filter((t) => t !== tag)
+                          : [...flow.tags, tag]
+                        onUpdateFlow?.({ tags: nextTags })
+                      }}
                       className={`
                         px-3 py-1 rounded-full text-sm font-medium transition-all
                         ${flow.tags.includes(tag)
@@ -292,7 +301,7 @@ export function FlowDetailEditor({
         }}
         onSave={({ name, description, type, config }) => {
           if (editingTaskId) {
-            onUpdateTask?.(editingTaskId, { name, description, config })
+            onUpdateTask?.(editingTaskId, { name, description, type, config })
           } else {
             onAddTask?.({
               flowId: flow.id,

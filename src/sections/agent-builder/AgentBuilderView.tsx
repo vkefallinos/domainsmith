@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useAgents, useFlows, useKnowledgeSections } from '@/lib/workspaceContext'
 import { AgentFormBuilder } from './components/AgentFormBuilder'
 import { SavedAgentsList } from './components/SavedAgentsList'
 import { ToolLibraryModal } from './components/ToolLibraryModal'
@@ -38,52 +38,158 @@ type AgentBuilderPreviewContentProps = {
 /**
  * Preview wrapper for Agent Builder view
  *
- * This is a DESIGN ONLY component for visualization in Design OS.
- * It imports sample data and feeds it to the props-based component.
- *
- * For production use, import AgentFormBuilder directly from components/
- * and pass your own data via props.
+ * Uses the new workspace state hooks (useAgents, useFlows, useKnowledgeSections)
+ * instead of GitHub API data loading.
  */
 export default function AgentBuilderPreview() {
-  // In the real Github structure, 'agents' is a directory. 
-  // We'll query it and handle the structure later; 
-  // for the preview let's adapt to what would be returned.
-  const { data: agentsData, isLoading: agentsLoading, error: agentsError } = useWorkspaceData<any[]>('agents')
+  const { agents: agentsMap, isLoading: agentsLoading, error: agentsError } = useAgents()
+  const { flowList, isLoading: flowsLoading } = useFlows()
+  const knowledgeSections = useKnowledgeSections()
 
-  const {
-    data: flowBuilderData,
-    isLoading: flowBuilderLoading,
-    error: flowBuilderError,
-  } = useWorkspaceData<FlowBuilderData>('flow-builder') // Can be scoped to flows/ later
+  // Map workspace agents to AgentConfig format
+  const savedAgentConfigs = useMemo(() => {
+    return Object.values(agentsMap).map(agent => ({
+      id: agent.id,
+      name: agent.frontmatter.name || agent.id,
+      description: agent.frontmatter.description || '',
+      selectedDomains: (agent.frontmatter.selectedDomains || []).map(id =>
+        // Normalize: 'domain-plant-profile' → 'plant-profile' to match knowledge section paths
+        id.startsWith('domain-') ? id.slice('domain-'.length) : id
+      ),
+      formValues: agent.formValues,
+      enabledTools: [],
+      emptyFieldsForRuntime: agent.config.emptyFieldsForRuntime || [],
+      mainInstruction: agent.mainInstruction,
+      attachedFlows: (agent.slashActions || []).map(sa => ({
+        flowId: sa.flowId,
+        flowName: sa.name,
+        flowDescription: sa.description,
+        slashAction: {
+          id: `sa_${sa.actionId}`,
+          actionId: sa.actionId,
+          name: sa.name,
+          description: sa.description,
+          enabled: true,
+        },
+      })),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })) as unknown as AgentConfig[]
+  }, [agentsMap])
 
-  // For the preview, we'll construct the expected AgentBuilderData shape 
-  // from whatever 'agents' folder returns, or fallback to empty.
-  const firstAgent = agentsData?.[0]?.config // Assuming data is mapped to have config
+  // Map flow list to Flow format
+  const flows = useMemo(() => {
+    return flowList.map(flow => ({
+      id: flow.id,
+      name: flow.name,
+      description: flow.description,
+      agentId: '', // Not in FlowListItem
+      status: flow.status,
+      tags: flow.tags,
+      taskCount: flow.taskCount,
+      createdAt: '',
+      updatedAt: '',
+    })) as Flow[]
+  }, [flowList])
 
-  if (agentsLoading || flowBuilderLoading) {
+  // Map knowledge sections to Domain format
+  const domains = useMemo(() => {
+    return knowledgeSections.map(section => {
+      // Build schema field nodes from each field-type child
+      const fieldNodes = (section.children || [])
+        .filter(c => c.type === 'field')
+        .map(field => ({
+          id: field.path,
+          type: 'field' as const,
+          label: field.label || field.path,
+          description: field.description || '',
+          variableName: field.variableName || field.path.split('/').pop() || field.path,
+          fieldType: field.fieldType || 'select',
+          required: field.required || false,
+          runtimeOptional: true,
+          options: (field.children || []).map(opt => ({
+            id: opt.path,
+            value: opt.path.split('/').pop() || opt.path,
+            label: opt.label || opt.path,
+            filePath: opt.path,
+          })),
+        }))
+
+      return {
+        id: section.path,
+        name: section.label || section.path,
+        label: section.label || section.path,
+        description: section.description || '',
+        icon: section.icon || '📁',
+        color: section.color || '#6366f1',
+        path: section.path,
+        directoryPath: section.path,
+        category: 'Knowledge',
+        schema: {
+          root: {
+            id: section.path,
+            type: 'section' as const,
+            label: section.label || section.path,
+            description: section.description || '',
+            children: fieldNodes,
+          },
+        },
+        fields: fieldNodes,
+      }
+    }) as unknown as Domain[]
+  }, [knowledgeSections])
+
+  // Get first agent for initial state
+  const firstAgent = savedAgentConfigs[0] || ({
+    id: 'default',
+    name: 'Default Agent',
+    description: '',
+    selectedDomains: [],
+    formValues: {},
+    enabledTools: [],
+    emptyFieldsForRuntime: [],
+    mainInstruction: '',
+    attachedFlows: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  } as unknown) as AgentConfig
+
+  if (agentsLoading || flowsLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
-  if (agentsError || flowBuilderError || !flowBuilderData) {
+  if (agentsError) {
     return <div className="flex items-center justify-center flex-col h-screen text-red-500">
-      <p>Error loading data from GitHub</p>
-      <p className="text-sm mt-2">Ensure the repository has an <code className="bg-red-100 px-1">agents/</code> folder.</p>
+      <p>Error loading data</p>
+      <p className="text-sm mt-2">{agentsError}</p>
     </div>
   }
 
-  // Construct a fallback data object since we aren't loading the full mock bundle anymore
-  const fallbackData: AgentBuilderData = {
-    domains: [],
-    toolLibrary: [],
-    savedAgentConfigs: agentsData ? agentsData.map(a => a.config).filter(Boolean) : [],
-    promptPreview: { agentId: 'preview-agent', domains: [], generatedPrompt: '', tokenCount: 0, lastGenerated: new Date().toISOString() }
+  // Construct data object
+  const data: AgentBuilderData = {
+    domains,
+    toolLibrary: [], // Tool library not in extracted data
+    savedAgentConfigs,
+    promptPreview: {
+      agentId: 'preview-agent',
+      domains: [],
+      generatedPrompt: '',
+      tokenCount: 0,
+      lastGenerated: new Date().toISOString()
+    }
+  }
+
+  // Construct flow builder data
+  const flowBuilderData: FlowBuilderData = {
+    flows,
+    tasks: [], // Tasks are nested within flows in the new structure
   }
 
   return (
     <AgentBuilderPreviewContent
-      data={fallbackData}
+      data={data}
       flowBuilderData={flowBuilderData}
-      firstAgent={firstAgent || { selectedDomains: [], formValues: {}, enabledTools: [], emptyFieldsForRuntime: [] } as unknown as AgentConfig}
+      firstAgent={firstAgent}
     />
   )
 }
@@ -124,7 +230,30 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
 
   // Field handlers
   const handleFieldValueChange = useCallback((fieldId: string, value: FormFieldValue) => {
-    setFormValues(prev => ({ ...prev, [fieldId]: value }))
+    setFormValues(prev => {
+      // If fieldId contains '/', handle nested update
+      if (fieldId.includes('/')) {
+        const parts = fieldId.split('/')
+        const newFormValues = { ...prev }
+        let current: any = newFormValues
+
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i]
+          if (!current[part] || typeof current[part] !== 'object') {
+            current[part] = {}
+          } else {
+            current[part] = { ...current[part] }
+          }
+          current = current[part]
+        }
+
+        current[parts[parts.length - 1]] = value
+        return newFormValues
+      }
+
+      // Otherwise fallback to flat update
+      return { ...prev, [fieldId]: value }
+    })
   }, [])
 
   const handleEnableFieldForRuntime = useCallback((fieldId: string) => {

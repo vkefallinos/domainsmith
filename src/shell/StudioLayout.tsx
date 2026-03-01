@@ -1,26 +1,21 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { StudioShell } from './components'
+import { useWorkspaceData } from '@/lib/workspaceDataContext'
 import { FlowEditorModal } from '@/sections/agent-builder/components/FlowEditorModal'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useAgents, useFlows } from '@/lib/workspaceContext'
 import type {
   PromptFragment,
   NewFileForm,
 } from '@/../product/sections/prompt-library/types'
 import type { Flow, Task } from '@/../product/sections/flow-builder/types'
 import type { AttachedFlow } from '@/../product/sections/agent-builder/types'
-
-type AgentBuilderData = {
-  savedAgentConfigs: Array<{
-    id: string
-    attachedFlows?: AttachedFlow[]
-  }>
-}
-
-type FlowBuilderData = {
-  flows: Flow[]
-  tasks: Task[]
-}
+import type {
+  Flow as WorkspaceFlow,
+  Agent as WorkspaceAgent,
+  TaskFrontmatter,
+  TaskOutputSchema,
+} from '@/types/workspace-data'
 
 type StudioState = {
   sidebarCollapsed: boolean
@@ -53,29 +48,109 @@ function saveState(state: StudioState) {
 }
 
 export default function StudioLayout() {
-  const { agentId, actionId } = useParams()
+  const { agentId, actionId, workspaceName } = useParams()
   const [state, setState] = useState<StudioState>(loadState)
+  const { setCurrentWorkspace, upsertFlow, upsertAgent } = useWorkspaceData()
 
-  // Load workspace data dynamically
-  const { data: agentBuilderData } = useWorkspaceData<AgentBuilderData>('agent-builder')
-  const { data: flowBuilderData } = useWorkspaceData<FlowBuilderData>('flow-builder')
+  // Sync URL workspace param into the data context
+  useEffect(() => {
+    if (workspaceName) {
+      setCurrentWorkspace(workspaceName)
+    }
+  }, [workspaceName, setCurrentWorkspace])
+
+  // Use the new state hooks
+  const { agents: agentsMap } = useAgents()
+  const { flows: flowsMap } = useFlows()
 
   // Flow editor state
   const [currentEditingFlow, setCurrentEditingFlow] = useState<Flow | null>(null)
   const [currentEditingTasks, setCurrentEditingTasks] = useState<Task[]>([])
+  const currentEditingFlowRef = useRef<Flow | null>(null)
+  const currentEditingTasksRef = useRef<Task[]>([])
 
-  // Get attached flows from agent builder data (memoized to prevent infinite loop)
+  useEffect(() => {
+    currentEditingFlowRef.current = currentEditingFlow
+  }, [currentEditingFlow])
+
+  useEffect(() => {
+    currentEditingTasksRef.current = currentEditingTasks
+  }, [currentEditingTasks])
+
+  const persistFlowToWorkspace = useCallback((flowDraft: Flow, tasksDraft: Task[]) => {
+    const existingFlow = flowsMap[flowDraft.id]
+
+    const normalizedTasks = [...tasksDraft]
+      .sort((a, b) => a.order - b.order)
+      .map((task, index) => {
+        const existingTaskByOrder = existingFlow?.tasks?.find((t) => t.order === index + 1)
+
+        return {
+          order: index + 1,
+          name: task.name,
+          frontmatter: {
+            ...(existingTaskByOrder?.frontmatter || {}),
+            description: task.description,
+            type: task.type,
+            ...(task.config?.model ? { model: task.config.model } : {}),
+            ...(task.config?.temperature !== undefined
+              ? { temperature: task.config.temperature }
+              : {}),
+            ...(task.config?.isPushable !== undefined
+              ? { isPushable: String(task.config.isPushable) }
+              : {}),
+            ...(task.config?.enabledTools ? { enabledTools: task.config.enabledTools } : {}),
+          } as TaskFrontmatter,
+          instructions: task.config?.taskInstructions || '',
+          outputSchema: task.config?.outputSchema as TaskOutputSchema | undefined,
+          targetFieldName: task.config?.targetFieldName,
+        }
+      })
+
+    const workspaceFlow: WorkspaceFlow = {
+      id: flowDraft.id,
+      frontmatter: {
+        ...(existingFlow?.frontmatter || {}),
+        id: flowDraft.id,
+        name: flowDraft.name,
+        status: flowDraft.status,
+        scope: flowDraft.scope,
+        agentId: flowDraft.agentId || '',
+        tags: flowDraft.tags,
+        taskCount: String(normalizedTasks.length),
+        createdAt: existingFlow?.frontmatter.createdAt || flowDraft.createdAt,
+        updatedAt: new Date().toISOString(),
+        lastRunAt: flowDraft.lastRunAt || undefined,
+      },
+      description: flowDraft.description,
+      tasks: normalizedTasks,
+    }
+
+    upsertFlow(workspaceFlow)
+  }, [flowsMap, upsertFlow])
+
+  // Get attached flows from agent data (memoized to prevent infinite loop)
   const attachedFlows = useMemo(() => {
-    if (!agentBuilderData?.savedAgentConfigs) return []
-    const agentConfig = agentBuilderData.savedAgentConfigs?.find(
-      (config: { id: string }) => config.id === agentId
-    )
-    return (agentConfig?.attachedFlows || []) as AttachedFlow[]
-  }, [agentBuilderData, agentId])
+    const agent = agentsMap[agentId || '']
+    if (!agent?.slashActions) return []
+
+    return agent.slashActions.map(sa => ({
+      flowId: sa.flowId,
+      flowName: sa.name,
+      flowDescription: sa.description,
+      slashAction: {
+        id: `sa_${sa.actionId}`,
+        actionId: sa.actionId,
+        name: sa.name,
+        description: sa.description,
+        enabled: true,
+      },
+    })) as AttachedFlow[]
+  }, [agentsMap, agentId])
 
   // Handle URL parameter for flow editing
   useEffect(() => {
-    if (!flowBuilderData || !actionId) {
+    if (!actionId) {
       setCurrentEditingFlow(null)
       setCurrentEditingTasks([])
       return
@@ -89,21 +164,44 @@ export default function StudioLayout() {
       return
     }
 
-    // Get the full flow data from flow builder data
-    const fullFlow = flowBuilderData.flows?.find((f: Flow) => f.id === attachedFlow.flowId)
-    if (!fullFlow) {
-      setCurrentEditingFlow(null)
-      setCurrentEditingTasks([])
-      return
-    }
+    // Get the flow ID and source flow data first (needed for fullFlow construction)
+    const flowId = attachedFlow.flowId
+    const sourceFlow = flowId ? flowsMap[flowId] : null
 
-    // Get the tasks for this flow
-    const flowTasks = flowBuilderData.tasks?.filter((t: Task) => t.flowId === attachedFlow.flowId) || []
+    // Build the Flow object for the UI editor
+    const fullFlow: Flow = {
+      id: attachedFlow.flowId,
+      name: attachedFlow.flowName,
+      description: attachedFlow.flowDescription ?? '',
+      agentId: agentId || '',
+      status: 'active',
+      scope: (sourceFlow?.frontmatter?.scope as Flow['scope']) ?? 'agent-specific',
+      tags: [],
+      taskCount: 0,
+      lastRunAt: (sourceFlow?.frontmatter?.lastRunAt as string) ?? null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    const flowTasks: Task[] = (sourceFlow?.tasks ?? []).map(ft => ({
+      id: `task_${ft.order}_${flowId}`,
+      flowId: flowId,
+      type: (ft.frontmatter?.type as Task['type']) ?? 'updateFlowOutput',
+      order: ft.order,
+      name: ft.name,
+      description: ft.frontmatter?.description ?? '',
+      config: {
+        taskInstructions: ft.instructions,
+        outputSchema: ft.outputSchema as import('@/../product/sections/flow-builder/types').JSONSchema | undefined,
+        targetFieldName: ft.targetFieldName,
+        model: ft.frontmatter?.model as string | undefined,
+        temperature: ft.frontmatter?.temperature as number | undefined,
+      },
+      status: 'valid' as const,
+    }))
 
     setCurrentEditingFlow(fullFlow)
     setCurrentEditingTasks(flowTasks)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionId, attachedFlows, flowBuilderData])
+  }, [actionId, attachedFlows, flowsMap, agentId])
 
   const handleCloseFlowEditor = useCallback(() => {
     setCurrentEditingFlow(null)
@@ -113,58 +211,116 @@ export default function StudioLayout() {
   }, [])
 
   const handleUpdateFlow = useCallback((updates: Partial<Flow>) => {
-    if (!currentEditingFlow) return
-    setCurrentEditingFlow(prev => prev ? { ...prev, ...updates } : null)
-    console.log('Update flow:', currentEditingFlow.id, updates)
-  }, [currentEditingFlow])
+    const activeFlow = currentEditingFlowRef.current
+    if (!activeFlow) return
+
+    const nextFlow = {
+      ...activeFlow,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    }
+
+    setCurrentEditingFlow(nextFlow)
+    persistFlowToWorkspace(nextFlow, currentEditingTasksRef.current)
+
+    if (agentId && actionId && (updates.name !== undefined || updates.description !== undefined)) {
+      const existingAgent = agentsMap[agentId]
+      if (existingAgent) {
+        const updatedAgent: WorkspaceAgent = {
+          ...existingAgent,
+          slashActions: (existingAgent.slashActions || []).map((sa) =>
+            sa.actionId === actionId
+              ? {
+                  ...sa,
+                  name: updates.name ?? sa.name,
+                  description: updates.description ?? sa.description,
+                }
+              : sa
+          ),
+        }
+        upsertAgent(updatedAgent)
+      }
+    }
+  }, [
+    persistFlowToWorkspace,
+    agentId,
+    actionId,
+    agentsMap,
+    upsertAgent,
+  ])
 
   const handleAddTask = useCallback((task: Omit<Task, 'id'>) => {
-    const newTask: Task = {
-      ...task,
-      id: `task_${Date.now()}`,
+    const activeFlow = currentEditingFlowRef.current
+    const next = [
+      ...currentEditingTasksRef.current,
+      {
+        ...task,
+        id: `task_${Date.now()}`,
+      },
+    ]
+
+    setCurrentEditingTasks(next)
+    if (activeFlow) {
+      persistFlowToWorkspace(activeFlow, next)
     }
-    setCurrentEditingTasks(prev => [...prev, newTask])
-    console.log('Add task to flow:', currentEditingFlow?.id)
-  }, [currentEditingFlow])
+  }, [persistFlowToWorkspace])
 
   const handleUpdateTask = useCallback((taskId: string, updates: Partial<Task>) => {
-    setCurrentEditingTasks(prev =>
-      prev.map(t => (t.id === taskId ? { ...t, ...updates } : t))
-    )
-    console.log('Update task:', taskId)
-  }, [])
+    const activeFlow = currentEditingFlowRef.current
+    const next = currentEditingTasksRef.current.map(t => (t.id === taskId ? { ...t, ...updates } : t))
+
+    setCurrentEditingTasks(next)
+    if (activeFlow) {
+      persistFlowToWorkspace(activeFlow, next)
+    }
+  }, [persistFlowToWorkspace])
 
   const handleDeleteTask = useCallback((taskId: string) => {
-    setCurrentEditingTasks(prev => prev.filter(t => t.id !== taskId))
-    console.log('Delete task:', taskId)
-  }, [])
+    const activeFlow = currentEditingFlowRef.current
+    const next = currentEditingTasksRef.current.filter(t => t.id !== taskId)
+
+    setCurrentEditingTasks(next)
+    if (activeFlow) {
+      persistFlowToWorkspace(activeFlow, next)
+    }
+  }, [persistFlowToWorkspace])
 
   const handleDuplicateTask = useCallback((taskId: string) => {
-    setCurrentEditingTasks(prev => {
-      const task = prev.find(t => t.id === taskId)
-      if (!task) return prev
-      const newTask: Task = {
+    const activeFlow = currentEditingFlowRef.current
+    const existingTasks = currentEditingTasksRef.current
+    const task = existingTasks.find(t => t.id === taskId)
+    if (!task) return
+
+    const next = [
+      ...existingTasks,
+      {
         ...task,
         id: `task_${Date.now()}`,
         name: `${task.name} (copy)`,
-        order: prev.length + 1,
-      }
-      return [...prev, newTask]
-    })
-    console.log('Duplicate task:', taskId)
-  }, [])
+        order: existingTasks.length + 1,
+      },
+    ]
+
+    setCurrentEditingTasks(next)
+    if (activeFlow) {
+      persistFlowToWorkspace(activeFlow, next)
+    }
+  }, [persistFlowToWorkspace])
 
   const handleReorderTasks = useCallback((taskIds: string[]) => {
-    setCurrentEditingTasks(prev => {
-      const taskMap = new Map(prev.map(t => [t.id, t]))
-      return taskIds.map((id, index) => {
-        const task = taskMap.get(id)
-        return task ? { ...task, order: index + 1 } : prev[index]
-      })
+    const activeFlow = currentEditingFlowRef.current
+    const existingTasks = currentEditingTasksRef.current
+    const taskMap = new Map(existingTasks.map(t => [t.id, t]))
+    const next = taskIds.map((id, index) => {
+      const task = taskMap.get(id)
+      return task ? { ...task, order: index + 1 } : existingTasks[index]
     })
-    console.log('Reorder tasks:', taskIds)
-  }, [])
 
+    setCurrentEditingTasks(next)
+    if (activeFlow) {
+      persistFlowToWorkspace(activeFlow, next)
+    }
+  }, [persistFlowToWorkspace])
   // Persist state changes
   useEffect(() => {
     saveState(state)
@@ -187,8 +343,8 @@ export default function StudioLayout() {
     console.log('Collapse all folders')
   }, [])
 
-  const handleEditContent = useCallback((content: string) => {
-    console.log('Edit content, length:', content.length)
+  const handleEditContent = useCallback(() => {
+    // console.log('Edit content, length:', content.length)
   }, [])
 
   const handleSave = useCallback(() => {
@@ -224,7 +380,11 @@ export default function StudioLayout() {
       <StudioShell
         defaultSidebarCollapsed={state.sidebarCollapsed}
         onSidebarCollapsedChange={(collapsed) =>
-          setState((prev) => ({ ...prev, sidebarCollapsed: collapsed }))
+          setState((prev) =>
+            prev.sidebarCollapsed === collapsed
+              ? prev
+              : { ...prev, sidebarCollapsed: collapsed }
+          )
         }
         onOpenSettings={() => console.log('Open settings')}
         onCreateDomain={() => console.log('Create domain')}

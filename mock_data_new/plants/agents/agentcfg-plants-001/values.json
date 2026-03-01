@@ -1,10 +1,10 @@
 {
-  "field-plant-type": "Houseplant",
-  "field-growth-stage": "Vegetative",
-  "field-light-exposure": "Bright Indirect",
-  "field-watering-frequency": "Weekly",
-  "field-constraints": [
-    "Pet-safe only",
-    "Low maintenance"
-  ]
+  "plant-profile": {
+    "plant-type": "houseplant",
+    "growth-stage": "vegetative"
+  },
+  "care-routine": {
+    "light-exposure": "bright indirect",
+    "watering-frequency": "weekly"
+  }
 }

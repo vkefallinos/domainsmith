@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Bot,
   Settings,
-  MessageSquare,
   FileText,
   Workflow,
   Play,
@@ -29,30 +28,60 @@ import { workspaceToSlug, type Workspace } from './components/WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { GithubLoginButton } from '@/components/GithubLoginButton'
 import { useGithub } from '@/lib/github/GithubContext'
+import { useWorkspaceDataContext } from '@/lib/workspaceContext'
 import { useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
 import logo from '@/assets/logo.png'
 
 const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444', '#84cc16']
 
+// Mock workspaces from extracted_data_structure.json
+const MOCK_WORKSPACES = [
+  { id: 'education', name: 'Education', slug: 'education', description: 'Learning and tutoring agents' },
+  { id: 'plants', name: 'Plants', slug: 'plants', description: 'Indoor plant care coaching' },
+  { id: 'web-development', name: 'Web Development', slug: 'web-development', description: 'React and web component building' },
+]
+
 export default function LandingLayout() {
   const navigate = useNavigate()
   const { data: githubWorkspaces, isLoading } = useWorkspaces()
+  const { workspaces: jsonWorkspaces } = useWorkspaceDataContext()
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
-  const [targetApp, setTargetApp] = useState<'studio' | 'chat'>('studio')
 
   const { octokit } = useGithub()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
+  // Combine mock workspaces and GitHub workspaces
   const availableWorkspaces = useMemo(() => {
-    if (!githubWorkspaces) return []
-    return githubWorkspaces.map((repo, idx) => ({
-      id: repo.id.toString(),
-      name: repo.name,
-      color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
-    }))
+    const workspaces: Workspace[] = []
+
+    // Add mock workspaces first
+    MOCK_WORKSPACES.forEach((mock, idx) => {
+      workspaces.push({
+        id: mock.id,
+        name: mock.name,
+        color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+        description: mock.description,
+      })
+    })
+
+    // Add GitHub workspaces
+    if (githubWorkspaces) {
+      githubWorkspaces.forEach((repo) => {
+        // Avoid duplicates
+        if (!workspaces.find(w => w.name === repo.name)) {
+          workspaces.push({
+            id: repo.id.toString(),
+            name: repo.name,
+            color: WORKSPACE_COLORS[workspaces.length % WORKSPACE_COLORS.length],
+          })
+        }
+      })
+    }
+
+    return workspaces
   }, [githubWorkspaces])
 
   const filteredWorkspaces = useMemo(() => {
@@ -80,14 +109,13 @@ export default function LandingLayout() {
     }
   }
 
-  const openWorkspaceModal = (app: 'studio' | 'chat') => {
-    setTargetApp(app)
+  const openWorkspaceModal = () => {
     setIsWorkspaceModalOpen(true)
   }
 
   const handleWorkspaceSelect = (workspace: Workspace) => {
     setIsWorkspaceModalOpen(false)
-    navigate(`/workspace/${workspaceToSlug(workspace.name)}/${targetApp}`)
+    navigate(`/workspace/${workspaceToSlug(workspace.name)}/studio`)
   }
 
   return (
@@ -119,81 +147,97 @@ export default function LandingLayout() {
           </p>
         </div>
 
-        {/* Main Navigation Cards */}
-        <div className="mt-16 grid gap-6 sm:grid-cols-2">
-          {/* Studio Card */}
-          <Card className="group cursor-pointer border-2 transition-all hover:border-primary/50 hover:shadow-lg">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <Settings className="size-6" />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={() => openWorkspaceModal('studio')}
-                >
-                  <ArrowRight className="size-5" />
-                </Button>
+        {/* Studio Launch Panel */}
+        <div className="mx-auto mt-14 max-w-4xl rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 sm:p-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <Settings className="size-3.5" />
+                Studio
               </div>
-              <CardTitle className="mt-4 text-2xl">Studio</CardTitle>
-              <CardDescription className="text-base">
-                Where your knowledge becomes AI agents
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Build agents that embody your expertise. Configure behaviors through
-                intuitive forms, organize into knowledge, and visually design workflows —
-                all without code.
+              <h3 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                Build, test, and run everything in one place
+              </h3>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+                Studio is now your full workflow: shape knowledge, configure agents, design flows,
+                and validate runtime behavior without leaving the workspace.
               </p>
-              <Button
-                className="mt-4 w-full sm:w-auto"
-                onClick={() => openWorkspaceModal('studio')}
-              >
-                Open Studio
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+            <Button size="lg" className="sm:self-start" onClick={openWorkspaceModal}>
+              Open Studio
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </div>
 
-          {/* Chat Card */}
-          <Card className="group cursor-pointer border-2 transition-all hover:border-primary/50 hover:shadow-lg">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <MessageSquare className="size-6" />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={() => openWorkspaceModal('chat')}
-                >
-                  <ArrowRight className="size-5" />
-                </Button>
-              </div>
-              <CardTitle className="mt-4 text-2xl">Chat</CardTitle>
-              <CardDescription className="text-base">
-                Put your agents to the test
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Interact with your AI agents naturally. Validate their responses,
-                refine their behavior through conversation, and build confidence
-                in your LLM engineering skills.
-              </p>
-              <Button
-                className="mt-4 w-full sm:w-auto"
-                onClick={() => openWorkspaceModal('chat')}
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+              <span className="font-medium">Knowledge</span>
+              <span className="text-slate-500 dark:text-slate-400"> → markdown-driven context</span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+              <span className="font-medium">Agents</span>
+              <span className="text-slate-500 dark:text-slate-400"> → forms, prompts, and tools</span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+              <span className="font-medium">Runtime</span>
+              <span className="text-slate-500 dark:text-slate-400"> → in-studio conversations</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Demo Workspaces Section */}
+        <div id="demo-workspaces" className="mt-16">
+          <h3 className="text-center text-2xl font-semibold">Demo Workspaces</h3>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">
+            Explore pre-configured workspaces to see how AI agents work
+          </p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-3">
+            {MOCK_WORKSPACES.map((workspace, idx) => (
+              <Card
+                key={workspace.id}
+                className="group cursor-pointer border-2 transition-all hover:border-primary/50 hover:shadow-lg"
+                onClick={() => handleWorkspaceSelect({
+                  id: workspace.id,
+                  name: workspace.name,
+                  color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+                } as Workspace)}
               >
-                Open Chat
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
-            </CardContent>
-          </Card>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div
+                      className="flex size-12 items-center justify-center rounded-xl text-white transition-colors"
+                      style={{ backgroundColor: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length] }}
+                    >
+                      <Building2 className="size-6" />
+                    </div>
+                    <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                  </div>
+                  <CardTitle className="mt-4 text-xl">{workspace.name}</CardTitle>
+                  <CardDescription>{workspace.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleWorkspaceSelect({
+                          id: workspace.id,
+                          name: workspace.name,
+                          color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
+                        } as Workspace)
+                      }}
+                    >
+                      <Settings className="mr-2 size-4" />
+                      Open
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
 
@@ -273,9 +317,9 @@ export default function LandingLayout() {
                 <div className="mt-4 flex items-center gap-2">
                   <span className="text-sm font-semibold text-primary-foreground">Step 4</span>
                 </div>
-                <h4 className="mt-2 text-lg font-semibold">Chat & Execute</h4>
+                <h4 className="mt-2 text-lg font-semibold">Run & Execute in Studio</h4>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Interact with your agent through natural conversation. Watch it run actions,
+                  Test your agent directly inside Studio conversations. Watch it run actions,
                   perform tasks, and leverage your knowledge in real-time.
                 </p>
               </div>
@@ -297,13 +341,9 @@ export default function LandingLayout() {
             Your knowledge is all you need — no coding required
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
-            <Button size="lg" onClick={() => openWorkspaceModal('studio')}>
+            <Button size="lg" onClick={openWorkspaceModal}>
               <Settings className="mr-2 size-5" />
               Build in Studio
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => openWorkspaceModal('chat')}>
-              <MessageSquare className="mr-2 size-5" />
-              Try Chat First
             </Button>
           </div>
         </div>
@@ -314,7 +354,7 @@ export default function LandingLayout() {
           <DialogHeader>
             <DialogTitle>Select Demo Workspace</DialogTitle>
             <DialogDescription>
-              Choose a workspace to open {targetApp === 'studio' ? 'Studio' : 'Chat'}.
+              Choose a workspace to open Studio.
             </DialogDescription>
           </DialogHeader>
 

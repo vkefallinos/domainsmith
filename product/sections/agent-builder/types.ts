@@ -13,6 +13,8 @@
  * - Files within directories = selectable options
  */
 
+import type { Conversation as RuntimeConversation } from '../agent-runtime/types';
+
 /**
  * A form field type within a domain's schema
  */
@@ -324,6 +326,8 @@ export interface AgentBuilderProps {
   toolLibraryOpen?: boolean;
   /** Whether flow builder/selector modal is open */
   flowBuilderOpen?: boolean;
+  /** Called when saving runtime preview conversation to workspace */
+  onSaveRuntimeConversation?: (conversation: RuntimeConversation) => void;
 }
 
 /**

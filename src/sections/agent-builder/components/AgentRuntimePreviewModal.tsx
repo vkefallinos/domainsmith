@@ -6,6 +6,9 @@ interface RuntimeFieldSummary {
   id: string
   label: string
   domain: string
+  fieldType?: 'text' | 'textarea' | 'select' | 'multiselect' | 'toggle'
+  placeholder?: string
+  options?: string[]
 }
 
 interface AgentRuntimePreviewModalProps {
@@ -14,6 +17,8 @@ interface AgentRuntimePreviewModalProps {
   enabledFilePaths: string[]
   generatedPrompt: string
   runtimeFields: RuntimeFieldSummary[]
+  onSaveConversation?: (conversation: Conversation) => void
+  canSaveConversation?: boolean
 }
 
 export function AgentRuntimePreviewModal({
@@ -22,7 +27,23 @@ export function AgentRuntimePreviewModal({
   enabledFilePaths,
   generatedPrompt,
   runtimeFields,
+  onSaveConversation,
+  canSaveConversation = false,
 }: AgentRuntimePreviewModalProps) {
+  const toRuntimeValue = useCallback((field: RuntimeFieldSummary): string | string[] | boolean => {
+    switch (field.fieldType) {
+      case 'multiselect':
+        return []
+      case 'toggle':
+        return false
+      case 'select':
+      case 'textarea':
+      case 'text':
+      default:
+        return ''
+    }
+  }, [])
+
   const timeoutRef = useRef<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [conversation, setConversation] = useState<Conversation>({
@@ -51,8 +72,10 @@ export function AgentRuntimePreviewModal({
       runtimeFields: runtimeFields.map((field) => ({
         id: field.id,
         label: field.label,
-        type: 'text',
-        value: '',
+        type: field.fieldType || 'text',
+        placeholder: field.placeholder,
+        options: field.options,
+        value: toRuntimeValue(field),
         domain: field.domain,
       })),
       enabledTools: [],
@@ -62,7 +85,7 @@ export function AgentRuntimePreviewModal({
       lastUsedAt: null,
       status: 'ready',
     }),
-    [runtimeFields, generatedPrompt]
+    [runtimeFields, generatedPrompt, toRuntimeValue]
   )
 
   const handleClose = useCallback(() => {
@@ -113,6 +136,11 @@ export function AgentRuntimePreviewModal({
     }, 700)
   }, [runtimeFields])
 
+  const handleSaveConversation = useCallback(() => {
+    if (!onSaveConversation) return
+    onSaveConversation(conversation)
+  }, [onSaveConversation, conversation])
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -162,8 +190,7 @@ export function AgentRuntimePreviewModal({
         onClick={handleClose}
       />
       <div
-        className="relative flex flex-col w-full max-w-5xl min-w-[340px] max-h-[80vh] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
-        style={{ height: 'auto' }}
+        className="relative flex h-[80vh] max-h-[80vh] w-full max-w-5xl min-w-[340px] flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div>
@@ -186,6 +213,8 @@ export function AgentRuntimePreviewModal({
             activeConversationId={conversation.id}
             isLoading={isLoading}
             onSendMessage={handleSendMessage}
+            onSaveConversation={handleSaveConversation}
+            canSaveConversation={canSaveConversation}
             hideTopNav={true}
             onBackToList={handleClose}
           />

@@ -5,30 +5,17 @@ import {
   ChevronRight,
   Folder,
   Bot,
+  MessageSquare,
   ChevronDown,
   ChevronRight as ChevronRightSmall,
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useKnowledgeSections, useAgents } from '@/lib/workspaceContext'
 import logo from '@/assets/logo.png'
 import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
-
-type FileSystemNode = {
-  id: string
-  name: string
-  type: 'directory' | 'file'
-  path: string
-  config?: {
-    label?: string
-    description?: string
-    icon?: string
-    color?: string
-    renderAs?: 'section' | 'field'
-  }
-  children?: FileSystemNode[]
-}
+import type { Agent } from '@/types/workspace-data'
 
 type Domain = {
   id: string
@@ -55,12 +42,20 @@ type AgentConfig = {
   }>
 }
 
-type PromptLibraryData = {
-  fileSystem: FileSystemNode
+type Message = {
+  id: string
+  role: string
+  content: string
+  timestamp: string
 }
 
-type AgentBuilderData = {
-  savedAgentConfigs: AgentConfig[]
+type Conversation = {
+  id: string
+  agentId: string
+  agentName: string
+  messages?: Message[]
+  createdAt: string
+  updatedAt: string
 }
 
 export interface StudioSidebarProps {
@@ -88,37 +83,70 @@ export function StudioSidebar({
   const { workspaceName } = useParams<{ workspaceName: string }>()
   const [domainsExpanded, setDomainsExpanded] = useState(true)
   const [agentsExpanded, setAgentsExpanded] = useState(true)
-  const { data: promptLibraryData } = useWorkspaceData<PromptLibraryData>('prompt-library')
-  const { data: agentBuilderData } = useWorkspaceData<AgentBuilderData>('agent-builder')
+  const [conversationsExpanded, setConversationsExpanded] = useState(true)
+
+  // Use the new state hooks
+  const knowledgeSections = useKnowledgeSections()
+  const { agents: agentsMap } = useAgents()
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
-  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
-  // Extract domains from prompt library data (top-level directories with renderAs='section')
+  // Map knowledge sections to domain format
   const domains = useMemo(() => {
-    const fileSystem = promptLibraryData?.fileSystem
-    if (!fileSystem?.children) return []
+    return knowledgeSections.map(section => ({
+      id: section.path.replace(/\//g, '-'),
+      name: section.path,
+      label: section.label || section.path,
+      description: section.description || '',
+      icon: section.icon || 'folder',
+      color: section.color || '#6366f1',
+      path: section.path,
+      childCount: section.children?.filter(c => c.type === 'field').length || 0,
+    })) as Domain[]
+  }, [knowledgeSections])
 
-    return fileSystem.children
-      .filter((child) => child.type === 'directory' && child.config?.renderAs === 'section')
-      .map((dir) => ({
-        id: dir.id,
-        name: dir.name,
-        label: dir.config?.label || dir.name,
-        description: dir.config?.description || '',
-        icon: dir.config?.icon || 'folder',
-        color: dir.config?.color || '#6366f1',
-        path: dir.path,
-        childCount: dir.children?.filter((c) => c.type === 'directory').length || 0,
-      })) as Domain[]
-  }, [promptLibraryData?.fileSystem])
-
-  // Extract agents from agent builder data
+  // Map agent list to agent config format
   const agents = useMemo(() => {
-    const savedConfigs = agentBuilderData?.savedAgentConfigs
-    return savedConfigs || []
-  }, [agentBuilderData?.savedAgentConfigs])
+    return Object.values(agentsMap).map((agent: Agent) => ({
+      id: agent.id,
+      name: agent.frontmatter.name || agent.id,
+      description: agent.frontmatter.description || '',
+      selectedDomains: agent.frontmatter.selectedDomains || [],
+      formValues: agent.formValues,
+      enabledTools: [],
+      attachedFlows: (agent.slashActions || []).map(sa => ({
+        flowId: sa.flowId,
+        flowName: sa.name,
+      })),
+    })) as AgentConfig[]
+  }, [agentsMap])
+
+  // Load conversations from agents map
+  const conversations = useMemo(() => {
+    const result: Conversation[] = []
+    for (const agent of Object.values(agentsMap)) {
+      for (const conv of agent.conversations || []) {
+        result.push({
+          id: conv.id,
+          agentId: conv.agentId,
+          agentName: conv.agentName,
+          messages: conv.messages,
+          createdAt: conv.createdAt,
+          updatedAt: conv.updatedAt,
+        })
+      }
+    }
+
+    return result.sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )
+  }, [agentsMap])
+
+  const activeAgentConversations = useMemo(() => {
+    if (!activeAgentId) return []
+    return conversations.filter((conv) => conv.agentId === activeAgentId)
+  }, [activeAgentId, conversations])
 
   const toggleDomains = () => {
     setDomainsExpanded((prev) => !prev)
@@ -126,6 +154,10 @@ export function StudioSidebar({
 
   const toggleAgents = () => {
     setAgentsExpanded((prev) => !prev)
+  }
+
+  const toggleConversations = () => {
+    setConversationsExpanded((prev) => !prev)
   }
 
   return (
@@ -300,6 +332,68 @@ export function StudioSidebar({
                 </div>
               )}
             </section>
+
+            {/* Conversations Section (agent-scoped, like runtime preview) */}
+            {(activeAgentId || conversations.length > 0) && (
+              <section>
+                <button
+                  onClick={toggleConversations}
+                  className="flex items-center gap-1 px-3 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                >
+                  {conversationsExpanded ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronRightSmall className="w-3 h-3" />
+                  )}
+                  Conversations
+                  <span className="ml-1 text-slate-400 dark:text-slate-500">
+                    ({activeAgentId ? activeAgentConversations.length : conversations.length})
+                  </span>
+                </button>
+
+                {conversationsExpanded && (
+                  <div className="space-y-1">
+                    {!activeAgentId && (
+                      <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-500">
+                        Select an agent to view its conversations.
+                      </div>
+                    )}
+
+                    {activeAgentId && activeAgentConversations.length === 0 && (
+                      <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-500">
+                        No conversations yet for this agent.
+                      </div>
+                    )}
+
+                    {activeAgentConversations.map((conv) => {
+                      const href = `${studioPath}/agent/${activeAgentId}/conversation/${conv.id}`
+                      const isActive = location.pathname === href
+                      const lastMessage = conv.messages?.[conv.messages.length - 1]
+
+                      return (
+                        <Link
+                          key={conv.id}
+                          to={href}
+                          className={`
+                            flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg transition-colors text-left
+                            ${isActive
+                              ? 'bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                            }
+                          `}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-60" />
+                          <span className="truncate flex-1">
+                            {(lastMessage?.content || 'New chat').slice(0, 36)}
+                            {(lastMessage?.content || 'New chat').length > 36 ? '…' : ''}
+                          </span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         ) : (
           /* Collapsed state - show quick icons */
@@ -316,33 +410,21 @@ export function StudioSidebar({
             >
               <Bot className="w-5 h-5" />
             </div>
+            {(activeAgentId ? activeAgentConversations.length : conversations.length) > 0 && (
+              <div
+                className="flex items-center justify-center px-2 py-2 rounded-lg text-slate-500 dark:text-slate-400"
+                title={`${activeAgentId ? activeAgentConversations.length : conversations.length} conversations`}
+              >
+                <MessageSquare className="w-5 h-5" />
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Bottom Section: Chat, Settings & Collapse */}
+      {/* Bottom Section: Settings & Collapse */}
       <div className="p-3 border-t border-slate-200 dark:border-slate-800">
         <div className="flex flex-col gap-1">
-          {/* Chat */}
-          <Link
-            to={chatPath}
-            className={`
-              flex items-center gap-3
-              text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300
-              hover:bg-violet-50 dark:hover:bg-violet-950/30
-              rounded-lg transition-colors
-              ${isCollapsed ? 'justify-center px-2 py-2' : 'px-3 py-2'}
-            `}
-            title={isCollapsed ? 'Go to Chat' : ''}
-          >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m0 0l3-3 3m-3 3V9" />
-            </svg>
-            {!isCollapsed && (
-              <span className="text-sm font-medium">Chat</span>
-            )}
-          </Link>
-
           {/* Settings */}
           <button
             onClick={onOpenSettings}

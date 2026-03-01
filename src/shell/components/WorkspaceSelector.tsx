@@ -108,8 +108,8 @@ export function WorkspaceSelector({
       pathParts[workspaceIdx + 1] = workspace.name // The mapping uses repo.name directly
       navigate(pathParts.join('/'))
     } else {
-      // If we're not in a workspace route, navigate to the default chat view
-      navigate(`/workspace/${workspace.name}/chat`)
+      // If we're not in a workspace route, navigate to the default studio view
+      navigate(`/workspace/${workspace.name}/studio`)
     }
   }, [navigate, location.pathname, onWorkspaceChange])
 

@@ -1,10 +1,13 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { StudioSidebar } from './StudioSidebar'
 import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { AgentRuntimeView } from '@/sections/agent-runtime/components'
+import { useAgents, useKnowledgeSections, useFlows, useRuntimeAgents } from '@/lib/workspaceContext'
+import { useWorkspaceData } from '@/lib/workspaceDataContext'
+import type { KnowledgeNode } from '@/types/workspace-data'
 import type {
   PromptLibraryProps,
   FileSystemNode,
@@ -12,14 +15,71 @@ import type {
   Directory,
   NewFileForm,
   NewFolderForm,
+  PromptFrontmatter,
 } from '@/../product/sections/prompt-library/types'
 import type {
   AgentBuilderScreenProps,
   FormFieldValue,
   AttachedFlow,
 } from '@/../product/sections/agent-builder/types'
+import type {
+  Agent as RuntimeAgent,
+  Conversation as RuntimeConversation,
+  MessageRole,
+  RuntimeFieldType,
+} from '@/../product/sections/agent-runtime/types'
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
+import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
+import type { Agent as WorkspaceAgent } from '@/types/workspace-data'
+
+function toAgentId(name: string): string {
+  const base = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return base || `agent-${Date.now()}`
+}
+
+function toRuntimeDefaultValue(fieldType?: string): string | string[] | boolean {
+  switch (fieldType) {
+    case 'multiselect':
+      return []
+    case 'toggle':
+      return false
+    case 'select':
+    case 'textarea':
+    case 'text':
+    default:
+      return ''
+  }
+}
+
+function toRuntimeFieldType(fieldType?: string): RuntimeFieldType {
+  switch (fieldType) {
+    case 'text':
+    case 'textarea':
+    case 'select':
+    case 'multiselect':
+    case 'toggle':
+      return fieldType
+    default:
+      return 'text'
+  }
+}
+
+function areAgentDraftsEqual(a: WorkspaceAgent, b: WorkspaceAgent): boolean {
+  return (
+    a.id === b.id &&
+    JSON.stringify(a.frontmatter) === JSON.stringify(b.frontmatter) &&
+    a.mainInstruction === b.mainInstruction &&
+    JSON.stringify(a.slashActions) === JSON.stringify(b.slashActions) &&
+    JSON.stringify(a.config) === JSON.stringify(b.config) &&
+    JSON.stringify(a.formValues) === JSON.stringify(b.formValues)
+  )
+}
 
 // Helper to get workspace from URL param
 function useWorkspace(workspaceName?: string): Workspace {
@@ -86,6 +146,45 @@ type Domain = {
   path: string
 }
 
+/**
+ * Recursively convert a raw KnowledgeNode (from workspace JSON) into the
+ * Directory | PromptFragment shape required by PromptLibrary.
+ * File nodes carry markdown `content`; directory nodes carry nested children.
+ */
+function knowledgeNodeToFileSystem(node: KnowledgeNode): Directory | PromptFragment {
+  if (node.type === 'file') {
+    const fileName = node.path.split('/').pop() || node.path
+    const rawFrontmatter = (node.frontmatter || {}) as Record<string, unknown>
+    return {
+      id: node.path,
+      name: fileName,
+      type: 'file',
+      path: node.path,
+      content: node.content || '',
+      frontmatter: {
+        ...rawFrontmatter,
+        title: rawFrontmatter.title as string | undefined,
+        description: rawFrontmatter.description as string | undefined,
+        order:
+          rawFrontmatter.order !== undefined
+            ? Number(rawFrontmatter.order)
+            : undefined,
+      },
+    } as PromptFragment
+  }
+
+  // Directory node
+  const dirName = node.path.split('/').pop() || node.path
+  return {
+    id: node.path,
+    name: node.config?.label || dirName,
+    type: 'directory',
+    path: node.path,
+    config: node.config,
+    children: (node.children || []).map(knowledgeNodeToFileSystem),
+  } as Directory
+}
+
 type AgentConfig = {
   id: string
   name: string
@@ -125,13 +224,14 @@ export function StudioShell({
   onDelete,
   onDuplicate,
 }: StudioShellProps) {
-  const { domainId, agentId, workspaceName } = useParams()
+  const { domainId, agentId, workspaceName, conversationId } = useParams()
   const navigate = useNavigate()
 
-  // Load workspace data dynamically
-  const { data: promptLibraryData, isLoading: loadingPromptLibrary } = useWorkspaceData<any>('prompt-library')
-  const { data: agentBuilderData, isLoading: loadingAgentBuilder } = useWorkspaceData<any>('agent-builder')
-
+  // Use the new state hooks
+  const knowledgeSections = useKnowledgeSections()
+  const { agents: agentsMap } = useAgents()
+  const runtimeAgents = useRuntimeAgents()
+  const { flows: flowsMap } = useFlows()
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed)
 
@@ -140,7 +240,6 @@ export function StudioShell({
 
   // Build workspace-aware path helper
   const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
-  const chatPath = workspaceName ? `/workspace/${workspaceName}/chat` : '/chat'
 
   // Prompt Library state
   const [selectedFile, setSelectedFile] = useState<PromptFragment | null>(null)
@@ -156,51 +255,190 @@ export function StudioShell({
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
   const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>([])
+  const [runtimeChatLoading, setRuntimeChatLoading] = useState(false)
+  const hydratedAgentIdRef = useRef<string | null>(null)
+  const lastAutoSavedSnapshotRef = useRef<string>('')
+  const contentEditDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const frontmatterEditDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingContentEditRef = useRef<{ path: string; content: string } | null>(null)
+  const pendingFrontmatterEditRef = useRef<{ path: string; frontmatter: Record<string, unknown> } | null>(null)
+  const runtimeResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Extract domains from prompt library data
+  // Extract domains from knowledge sections
   const domains = useMemo(() => {
-    const fileSystem = promptLibraryData?.fileSystem as FileSystemNode
-    if (!fileSystem?.children) return []
+    return knowledgeSections.map(section => {
+      // Build field nodes from field-type children
+      const fieldNodes = (section.children || [])
+        .filter(c => c.type === 'field')
+        .map(field => ({
+          id: field.path,
+          type: 'field' as const,
+          label: field.label || field.path,
+          description: field.description || '',
+          variableName: field.variableName || field.path.split('/').pop() || field.path,
+          fieldType: field.fieldType || 'select',
+          required: field.required || false,
+          runtimeOptional: true,
+          options: (field.children || []).map(opt => {
+            const stem = opt.path.split('/').pop()?.replace(/\.md$/, '') ?? opt.path
+            return {
+              id: opt.path,
+              value: stem,
+              label: opt.label || stem,
+              filePath: opt.path,
+            }
+          }),
+        }))
 
-    return fileSystem.children
-      .filter((child: any) => child.type === 'directory' && child.config?.renderAs === 'section')
-      .map((dir: any) => ({
-        id: dir.id,
-        name: dir.name,
-        label: dir.config?.label || dir.name,
-        description: dir.config?.description || '',
-        icon: dir.config?.icon || 'folder',
-        color: dir.config?.color || '#6366f1',
-        path: dir.path,
-      })) as Domain[]
-  }, [promptLibraryData])
+      return {
+        id: section.path,           // Use path directly (e.g. 'plant-profile')
+        name: section.label || section.path,
+        label: section.label || section.path,
+        description: section.description || '',
+        icon: section.icon || '📁',
+        color: section.color || '#6366f1',
+        path: section.path,
+        directoryPath: section.path,
+        category: 'Knowledge',
+        schema: {
+          root: {
+            id: section.path,
+            type: 'section' as const,
+            label: section.label || section.path,
+            description: section.description || '',
+            children: fieldNodes,
+          },
+        },
+        fields: fieldNodes,
+      }
+    })
+  }, [knowledgeSections])
 
-  // Extract agents from agent builder data
+  // Access raw knowledge nodes and in-memory mutators from workspace context
+  const {
+    knowledge: rawKnowledge,
+    upsertAgent,
+    deleteAgent,
+    updateKnowledgeFileContent,
+    updateKnowledgeFileFrontmatter,
+  } = useWorkspaceData()
+
+  // Extract agents from agents map
   const agents = useMemo(() => {
-    const savedConfigs = agentBuilderData?.savedAgentConfigs as AgentConfig[]
-    return savedConfigs || []
-  }, [agentBuilderData])
+    return Object.values(agentsMap).map(agent => ({
+      id: agent.id,
+      name: agent.frontmatter.name || agent.id,
+      description: agent.frontmatter.description || '',
+      selectedDomains: (agent.frontmatter.selectedDomains || []).map(id =>
+        // Normalize: 'domain-plant-profile' → 'plant-profile' to match knowledge section paths
+        id.startsWith('domain-') ? id.slice('domain-'.length) : id
+      ),
+      formValues: agent.formValues,
+      enabledTools: [],
+      emptyFieldsForRuntime: flattenEmptyFieldsForRuntime(agent.config.emptyFieldsForRuntime),
+      attachedFlows: (agent.slashActions || []).map(sa => ({
+        flowId: sa.flowId,
+        flowName: sa.name,
+        flowDescription: sa.description,
+        taskCount: flowsMap[sa.flowId]?.tasks?.length || 0,
+        slashAction: {
+          id: `sa_${sa.actionId}`,
+          actionId: sa.actionId,
+          name: sa.name,
+          description: sa.description,
+          enabled: true,
+        },
+      })),
+      mainInstruction: agent.mainInstruction,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })) as unknown as AgentConfig[]
+  }, [agentsMap, flowsMap])
 
   // Get the active domain
-  const activeDomain = domainId
-    ? domains.find((d) => d.id === domainId) || null
-    : null
+  const activeDomain = useMemo(
+    () => (domainId ? domains.find((d) => d.id === domainId) || null : null),
+    [domainId, domains]
+  )
 
   // Get the active agent
-  const activeAgent = agentId
-    ? agents.find((a) => a.id === agentId) || null
-    : null
+  const activeAgent = useMemo(
+    () => (agentId ? agents.find((a) => a.id === agentId) || null : null),
+    [agentId, agents]
+  )
 
-  // Load agent data when agentId changes
-  useMemo(() => {
-    if (activeAgent) {
-      setSelectedDomainIds(activeAgent.selectedDomains || [])
-      setFormValues(activeAgent.formValues || {})
-      setMainInstruction(activeAgent.mainInstruction || '')
-      setEnabledTools(activeAgent.enabledTools || [])
-      setEmptyFieldsForRuntime(activeAgent.emptyFieldsForRuntime || [])
-      setAttachedFlows(activeAgent.attachedFlows || [])
-    } else {
+  const activeRuntimeAgent = useMemo<RuntimeAgent | null>(
+    () => (agentId ? runtimeAgents.find((a) => a.id === agentId) || null : null),
+    [agentId, runtimeAgents]
+  )
+
+  const selectedDomainsForRuntime = useMemo(
+    () => domains.filter((domain) => selectedDomainIds.includes(domain.id)),
+    [domains, selectedDomainIds]
+  )
+
+  const runtimeFieldsForConversation = useMemo(() => {
+    const runtimeFieldIds = new Set(emptyFieldsForRuntime)
+
+    const selectedFieldEntries = selectedDomainsForRuntime.flatMap((domain) =>
+      (domain.fields || []).map((field) => ({ field, domainName: domain.name }))
+    )
+
+    return selectedFieldEntries
+      .filter(({ field }) =>
+        runtimeFieldIds.has(field.id) || runtimeFieldIds.has(field.variableName)
+      )
+      .map(({ field, domainName }) => ({
+        id: field.id,
+        label: field.label,
+        type: toRuntimeFieldType(field.fieldType),
+        options: (field.options || []).map((option) => option.label),
+        value: toRuntimeDefaultValue(field.fieldType),
+        domain: domainName,
+      }))
+  }, [emptyFieldsForRuntime, selectedDomainsForRuntime])
+
+  const studioRuntimeAgent = useMemo<RuntimeAgent | null>(() => {
+    if (!activeRuntimeAgent) return null
+
+    return {
+      ...activeRuntimeAgent,
+      domains: selectedDomainsForRuntime.map((domain) => domain.name),
+      runtimeFields: runtimeFieldsForConversation,
+    }
+  }, [activeRuntimeAgent, selectedDomainsForRuntime, runtimeFieldsForConversation])
+
+  const runtimeConversations = useMemo<RuntimeConversation[]>(() => {
+    if (!agentId) return []
+
+    const source = agentsMap[agentId]?.conversations || []
+    return source
+      .map((conv) => ({
+        id: conv.id,
+        agentId: conv.agentId,
+        agentName: conv.agentName,
+        messages: (conv.messages || [])
+          .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+          .map((msg) => ({
+            id: msg.id,
+            role: msg.role as MessageRole,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            slashAction: msg.slashAction,
+            structuredOutput: msg.structuredOutput,
+          })),
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt,
+      }))
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  }, [agentId, agentsMap])
+
+  // Load agent data only when the route agent changes
+  useEffect(() => {
+    if (!agentId) {
+      hydratedAgentIdRef.current = null
+      lastAutoSavedSnapshotRef.current = ''
+
       // Reset state when no agent selected
       setSelectedDomainIds([])
       setFormValues({})
@@ -208,38 +446,60 @@ export function StudioShell({
       setEnabledTools([])
       setEmptyFieldsForRuntime([])
       setAttachedFlows([])
+      return
     }
-  }, [activeAgent])
+
+    if (hydratedAgentIdRef.current === agentId) {
+      return
+    }
+
+    const sourceAgent = agentsMap[agentId]
+    if (!sourceAgent) {
+      return
+    }
+
+    const mappedAgent = agents.find((a) => a.id === agentId) || null
+
+    setSelectedDomainIds(mappedAgent?.selectedDomains || [])
+    setFormValues((sourceAgent.formValues || {}) as Record<string, FormFieldValue>)
+    setMainInstruction(sourceAgent.mainInstruction || '')
+    setEnabledTools([])
+    setEmptyFieldsForRuntime(flattenEmptyFieldsForRuntime(sourceAgent.config?.emptyFieldsForRuntime))
+    setAttachedFlows(mappedAgent?.attachedFlows || [])
+
+    hydratedAgentIdRef.current = agentId
+    lastAutoSavedSnapshotRef.current = JSON.stringify(sourceAgent)
+  }, [agentId, agentsMap, agents])
 
   // Determine view mode from URL params
-  const viewMode: 'list' | 'domain-detail' | 'agent-detail' = agentId
-    ? 'agent-detail'
-    : domainId
-      ? 'domain-detail'
-      : 'list'
+  const viewMode: 'list' | 'domain-detail' | 'agent-detail' | 'agent-conversation' = conversationId
+    ? 'agent-conversation'
+    : agentId
+      ? 'agent-detail'
+      : domainId
+        ? 'domain-detail'
+        : 'list'
 
   // Get filtered file system for the selected domain
+  // knowledgeNodeToFileSystem is a module-level pure function – no useCallback needed
   const domainFileSystem = useMemo(() => {
     if (!activeDomain) return null
 
-    const fileSystem = promptLibraryData?.fileSystem as Directory
-    if (!fileSystem?.children) return null
+    // Find the raw knowledge section (contains content on file nodes)
+    const section = rawKnowledge.find(s => s.path === activeDomain.path)
+    if (!section) return null
 
-    const domainNode = fileSystem.children?.find(
-      (child: any) => child.id === activeDomain.id && child.type === 'directory'
-    ) as Directory | undefined
-
-    if (!domainNode) return null
-
+    // Build a root Directory using section children directly.
+    // This avoids showing the selected domain as an extra top-level folder
+    // inside PromptLibrary.
     return {
-      ...fileSystem,
       id: 'root',
       name: 'root',
       type: 'directory' as const,
       path: '/',
-      children: [domainNode],
+      children: (section.children || []).map(knowledgeNodeToFileSystem),
     } as Directory
-  }, [activeDomain, promptLibraryData])
+  }, [activeDomain, rawKnowledge])
 
   // Available flows (empty for now, would come from flow builder data)
   const availableFlows: any[] = []
@@ -281,14 +541,100 @@ export function StudioShell({
   }, [onCollapseAll])
 
   const handleEditContent = useCallback((content: string) => {
-    setUnsavedChanges(true)
+    if (selectedFile?.path) {
+      pendingContentEditRef.current = { path: selectedFile.path, content }
+
+      if (contentEditDebounceRef.current) {
+        clearTimeout(contentEditDebounceRef.current)
+      }
+
+      contentEditDebounceRef.current = setTimeout(() => {
+        if (pendingContentEditRef.current) {
+          updateKnowledgeFileContent(
+            pendingContentEditRef.current.path,
+            pendingContentEditRef.current.content
+          )
+          pendingContentEditRef.current = null
+        }
+      }, 200)
+
+      setSelectedFile((prev) => (prev ? { ...prev, content } : prev))
+    }
+    setUnsavedChanges(false)
     onEditContent?.(content)
-  }, [onEditContent])
+  }, [onEditContent, selectedFile, updateKnowledgeFileContent])
+
+  const handleEditFrontmatter = useCallback((frontmatter: PromptFrontmatter) => {
+    if (selectedFile?.path) {
+      pendingFrontmatterEditRef.current = {
+        path: selectedFile.path,
+        frontmatter: frontmatter as Record<string, unknown>,
+      }
+
+      if (frontmatterEditDebounceRef.current) {
+        clearTimeout(frontmatterEditDebounceRef.current)
+      }
+
+      frontmatterEditDebounceRef.current = setTimeout(() => {
+        if (pendingFrontmatterEditRef.current) {
+          updateKnowledgeFileFrontmatter(
+            pendingFrontmatterEditRef.current.path,
+            pendingFrontmatterEditRef.current.frontmatter
+          )
+          pendingFrontmatterEditRef.current = null
+        }
+      }, 200)
+
+      setSelectedFile((prev) => (prev ? { ...prev, frontmatter } : prev))
+    }
+  }, [selectedFile, updateKnowledgeFileFrontmatter])
+
+  const flushPendingKnowledgeEdits = useCallback(() => {
+    if (contentEditDebounceRef.current) {
+      clearTimeout(contentEditDebounceRef.current)
+      contentEditDebounceRef.current = null
+    }
+    if (frontmatterEditDebounceRef.current) {
+      clearTimeout(frontmatterEditDebounceRef.current)
+      frontmatterEditDebounceRef.current = null
+    }
+
+    if (pendingContentEditRef.current) {
+      updateKnowledgeFileContent(
+        pendingContentEditRef.current.path,
+        pendingContentEditRef.current.content
+      )
+      pendingContentEditRef.current = null
+    }
+
+    if (pendingFrontmatterEditRef.current) {
+      updateKnowledgeFileFrontmatter(
+        pendingFrontmatterEditRef.current.path,
+        pendingFrontmatterEditRef.current.frontmatter
+      )
+      pendingFrontmatterEditRef.current = null
+    }
+  }, [updateKnowledgeFileContent, updateKnowledgeFileFrontmatter])
+
+  useEffect(() => {
+    return () => {
+      flushPendingKnowledgeEdits()
+    }
+  }, [flushPendingKnowledgeEdits])
+
+  useEffect(() => {
+    return () => {
+      if (runtimeResponseTimeoutRef.current) {
+        clearTimeout(runtimeResponseTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleSave = useCallback(() => {
+    flushPendingKnowledgeEdits()
     setUnsavedChanges(false)
     onSave?.()
-  }, [onSave])
+  }, [flushPendingKnowledgeEdits, onSave])
 
   const handleCreateFile = useCallback((form: NewFileForm) => {
     onCreateFile?.(form)
@@ -363,9 +709,251 @@ export function StudioShell({
     console.log('Generate preview')
   }, [])
 
+  const buildAgentPayload = useCallback(
+    (targetAgentId: string, name: string, description: string): WorkspaceAgent => {
+      const existingAgent = agentsMap[targetAgentId]
+      const slashActions = attachedFlows
+        .filter((af) => Boolean(af.slashAction?.actionId))
+        .map((af) => ({
+          name: af.slashAction?.name || af.flowName,
+          description: af.slashAction?.description || af.flowDescription || '',
+          flowId: af.flowId,
+          actionId: af.slashAction?.actionId || '',
+        }))
+
+      return {
+        id: targetAgentId,
+        frontmatter: {
+          ...(existingAgent?.frontmatter || {}),
+          name,
+          description,
+          selectedDomains: selectedDomainIds,
+          tools: enabledTools.map((tool) => tool.toolId),
+        },
+        mainInstruction,
+        slashActions,
+        config: {
+          ...(existingAgent?.config || {}),
+          emptyFieldsForRuntime,
+        },
+        formValues,
+        conversations: existingAgent?.conversations || [],
+      }
+    },
+    [agentsMap, attachedFlows, selectedDomainIds, enabledTools, mainInstruction, emptyFieldsForRuntime, formValues]
+  )
+
+  // Auto-save draft in memory for existing agents whenever form state changes
+  useEffect(() => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const draft = buildAgentPayload(
+      agentId,
+      (existingAgent.frontmatter.name as string) || agentId,
+      (existingAgent.frontmatter.description as string) || ''
+    )
+
+    const nextSnapshot = JSON.stringify(draft)
+    if (lastAutoSavedSnapshotRef.current === nextSnapshot) return
+
+    if (areAgentDraftsEqual(existingAgent, draft)) {
+      lastAutoSavedSnapshotRef.current = nextSnapshot
+      return
+    }
+
+    lastAutoSavedSnapshotRef.current = nextSnapshot
+    upsertAgent(draft)
+  }, [
+    agentId,
+    agentsMap,
+    selectedDomainIds,
+    formValues,
+    mainInstruction,
+    enabledTools,
+    emptyFieldsForRuntime,
+    attachedFlows,
+    buildAgentPayload,
+    upsertAgent,
+  ])
+
   const handleSaveAgent = useCallback((name: string, description: string) => {
-    console.log('Save agent:', name, description)
-  }, [])
+    const nextAgentId = agentId || toAgentId(name)
+    upsertAgent(buildAgentPayload(nextAgentId, name, description))
+
+    if (!agentId) {
+      navigate(`${studioPath}/agent/${nextAgentId}`, { replace: true })
+    }
+  }, [
+    agentId,
+    navigate,
+    studioPath,
+    upsertAgent,
+    buildAgentPayload,
+  ])
+
+  const handleSaveRuntimeConversation = useCallback((conversation: RuntimeConversation) => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const persistedId =
+      conversation.id === 'preview-conversation'
+        ? `conversation-${Date.now()}`
+        : conversation.id
+
+    const now = new Date().toISOString()
+    const persistedConversation = {
+      ...conversation,
+      id: persistedId,
+      agentId,
+      agentName: (existingAgent.frontmatter.name as string) || agentId,
+      updatedAt: now,
+    }
+
+    const currentConversations = existingAgent.conversations || []
+    const existingIndex = currentConversations.findIndex((item) => item.id === persistedId)
+
+    const nextConversations =
+      existingIndex >= 0
+        ? currentConversations.map((item, index) =>
+            index === existingIndex ? persistedConversation : item
+          )
+        : [...currentConversations, persistedConversation]
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: nextConversations,
+    })
+  }, [agentId, agentsMap, upsertAgent])
+
+  const handleSelectRuntimeConversation = useCallback((targetConversationId: string) => {
+    if (!agentId) return
+    navigate(`${studioPath}/agent/${agentId}/conversation/${targetConversationId}`)
+  }, [agentId, navigate, studioPath])
+
+  const handleCreateRuntimeConversation = useCallback(() => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const now = new Date().toISOString()
+    const nextConversationId = `conversation-${Date.now()}`
+    const nextConversation = {
+      id: nextConversationId,
+      agentId,
+      agentName: (existingAgent.frontmatter.name as string) || agentId,
+      messages: [],
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: [...(existingAgent.conversations || []), nextConversation],
+    })
+
+    navigate(`${studioPath}/agent/${agentId}/conversation/${nextConversationId}`)
+  }, [agentId, agentsMap, navigate, studioPath, upsertAgent])
+
+  const handleDeleteRuntimeConversation = useCallback((targetConversationId: string) => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const remaining = (existingAgent.conversations || []).filter((c) => c.id !== targetConversationId)
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: remaining,
+    })
+
+    if (conversationId === targetConversationId) {
+      if (remaining.length > 0) {
+        navigate(`${studioPath}/agent/${agentId}/conversation/${remaining[0].id}`)
+      } else {
+        navigate(`${studioPath}/agent/${agentId}`)
+      }
+    }
+  }, [agentId, agentsMap, conversationId, navigate, studioPath, upsertAgent])
+
+  const handleSendRuntimeMessage = useCallback((content: string) => {
+    if (!agentId || !conversationId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const targetConversation = (existingAgent.conversations || []).find((c) => c.id === conversationId)
+    if (!targetConversation) return
+
+    const now = new Date().toISOString()
+    const userMessage = {
+      id: `msg-user-${Date.now()}`,
+      role: 'user' as const,
+      content,
+      timestamp: now,
+    }
+
+    const updatedConversation = {
+      ...targetConversation,
+      messages: [...(targetConversation.messages || []), userMessage],
+      updatedAt: now,
+    }
+
+    upsertAgent({
+      ...existingAgent,
+      conversations: (existingAgent.conversations || []).map((c) =>
+        c.id === conversationId ? updatedConversation : c
+      ),
+    })
+
+    setRuntimeChatLoading(true)
+
+    if (runtimeResponseTimeoutRef.current) {
+      clearTimeout(runtimeResponseTimeoutRef.current)
+      runtimeResponseTimeoutRef.current = null
+    }
+
+    runtimeResponseTimeoutRef.current = setTimeout(() => {
+      const assistantNow = new Date().toISOString()
+      const assistantMessage = {
+        id: `msg-assistant-${Date.now()}`,
+        role: 'assistant' as const,
+        content: 'Preview response: I would use your assembled prompt and enabled files to answer this request.',
+        timestamp: assistantNow,
+      }
+
+      upsertAgent({
+        ...existingAgent,
+        conversations: (existingAgent.conversations || []).map((c) =>
+          c.id === conversationId
+            ? {
+                ...updatedConversation,
+                messages: [...(updatedConversation.messages || []), assistantMessage],
+                updatedAt: assistantNow,
+              }
+            : c
+        ),
+      })
+
+      setRuntimeChatLoading(false)
+      runtimeResponseTimeoutRef.current = null
+    }, 700)
+  }, [agentId, conversationId, agentsMap, upsertAgent])
+
+  const handleSaveActiveRuntimeConversation = useCallback(() => {
+    if (!conversationId) return
+
+    const targetConversation = runtimeConversations.find((conv) => conv.id === conversationId)
+    if (!targetConversation) return
+
+    handleSaveRuntimeConversation(targetConversation)
+  }, [conversationId, runtimeConversations, handleSaveRuntimeConversation])
 
   const handleNewAgent = useCallback(() => {
     setSelectedDomainIds([])
@@ -395,6 +983,7 @@ export function StudioShell({
       flowId,
       flowName: name,
       flowDescription: description,
+      taskCount: flowsMap[flowId]?.tasks?.length || 0,
       slashAction: {
         id: `sc_${Date.now()}`,
         actionId,
@@ -454,9 +1043,14 @@ export function StudioShell({
     onEditAgent?.(agentId)
   }, [onEditAgent])
 
-  const handleDeleteAgentClick = useCallback((agentId: string) => {
-    onDeleteAgent?.(agentId)
-  }, [onDeleteAgent])
+  const handleDeleteAgentClick = useCallback((targetAgentId: string) => {
+    deleteAgent(targetAgentId)
+    onDeleteAgent?.(targetAgentId)
+
+    if (agentId === targetAgentId) {
+      navigate(studioPath)
+    }
+  }, [agentId, deleteAgent, navigate, onDeleteAgent, studioPath])
 
   const handleEditDomainClick = useCallback((domainId: string) => {
     onEditDomain?.(domainId)
@@ -465,11 +1059,9 @@ export function StudioShell({
   const handleDeleteDomainClick = useCallback((domainId: string) => {
     onDeleteDomain?.(domainId)
   }, [onDeleteDomain])
-  useEffect(() => {
-    handleExpandAll()
-  }, [domainFileSystem])
-  // Show loading state while data loads
-  if (loadingPromptLibrary || loadingAgentBuilder) {
+
+  // Show loading state while data loads (new hooks don't have loading, so we check if data exists)
+  if (knowledgeSections.length === 0 && Object.keys(agentsMap).length === 0) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-slate-500">Loading workspace data...</div>
@@ -477,27 +1069,28 @@ export function StudioShell({
     )
   }
 
-  if (!promptLibraryData || !agentBuilderData) {
-    return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        Failed to load workspace data
-      </div>
-    )
+  // Prompt preview - create a default one
+  const promptPreview = {
+    agentId: agentId || 'default',
+    domains: selectedDomainIds,
+    generatedPrompt: mainInstruction || '',
+    tokenCount: mainInstruction?.length || 0,
+    lastGenerated: new Date().toISOString(),
   }
 
-  // Prompt preview from data
-  const promptPreview = (agentBuilderData as any).promptPreview
-
-  // Build agent builder props
+  // Build agent builder props using new data structure
   const agentBuilderProps: AgentBuilderScreenProps = {
-    domains: (agentBuilderData as any).domains,
-    toolLibrary: (agentBuilderData as any).toolLibrary,
-    savedAgentConfigs: (agentBuilderData as any).savedAgentConfigs,
+    domains,
+    toolLibrary: [], // Empty for now - tool library not in extracted data
+    savedAgentConfigs: agents,
     selectedDomainIds,
     formValues,
-    enabledTools,
+    enabledTools: enabledTools.map(t => ({ ...t, source: 'manual' as const })),
     emptyFieldsForRuntime,
-    attachedFlows,
+    attachedFlows: attachedFlows.map(af => ({
+      ...af,
+      taskCount: af.taskCount || flowsMap[af.flowId]?.tasks?.length || 0
+    })),
     availableFlows,
     mainInstruction,
     promptPreview,
@@ -524,6 +1117,7 @@ export function StudioShell({
     onDetachFlow: handleDetachFlow,
     onToggleSlashAction: handleToggleSlashAction,
     onEditSlashAction: handleEditSlashAction,
+    onSaveRuntimeConversation: handleSaveRuntimeConversation,
   }
 
   return (
@@ -568,18 +1162,7 @@ export function StudioShell({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to={chatPath}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors text-violet-700 dark:text-violet-300"
-              title="Go to Chat"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m0 0l3-3 3m-3 3V9" />
-              </svg>
-              <span className="text-sm font-medium">Go to Chat</span>
-            </Link>
-          </div>
+          <div className="flex items-center gap-2" />
         </header>
 
         {/* Content Area */}
@@ -718,6 +1301,7 @@ export function StudioShell({
               onExpandAll={handleExpandAll}
               onCollapseAll={handleCollapseAll}
               onEditContent={handleEditContent}
+              onEditFrontmatter={handleEditFrontmatter}
               onSave={handleSave}
               onCreateFile={handleCreateFile}
               onCreateFolder={handleCreateFolder}
@@ -733,6 +1317,24 @@ export function StudioShell({
             <div className="h-full flex flex-col">
               <AgentFormBuilder {...agentBuilderProps} />
             </div>
+          )}
+
+          {/* Agent Conversation View - Use AgentRuntimeView/ChatPanel implementation */}
+          {viewMode === 'agent-conversation' && (
+            <AgentRuntimeView
+              agent={studioRuntimeAgent}
+              conversations={runtimeConversations}
+              activeConversationId={conversationId || null}
+              isLoading={runtimeChatLoading}
+              onBackToList={handleBackToList}
+              onSendMessage={handleSendRuntimeMessage}
+              onSelectConversation={handleSelectRuntimeConversation}
+              onCreateConversation={handleCreateRuntimeConversation}
+              onDeleteConversation={handleDeleteRuntimeConversation}
+              onSaveConversation={handleSaveActiveRuntimeConversation}
+              canSaveConversation={Boolean(agentId && conversationId)}
+              hideTopNav
+            />
           )}
         </div>
       </div>

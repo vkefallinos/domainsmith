@@ -278,6 +278,10 @@ export interface ChatPanelProps {
   onCreateConversation?: () => void;
   /** Called when deleting a conversation */
   onDeleteConversation?: (conversationId: string) => void;
+  /** Called to save/persist the active conversation */
+  onSaveConversation?: () => void;
+  /** Whether saving the current conversation is allowed */
+  canSaveConversation?: boolean;
   /** Called when clearing the conversation */
   onClearConversation?: () => void;
 }

@@ -120,7 +120,7 @@ export function FormField({
       )}
 
       {/* Helper text for multi-select */}
-      {field.type === 'multiselect' && Array.isArray(value) && value.length > 0 && (
+      {field.fieldType === 'multiselect' && Array.isArray(value) && value.length > 0 && (
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
           {value.length} option{value.length > 1 ? 's' : ''} selected
         </p>
@@ -171,7 +171,7 @@ function renderFieldInput(
           >
             <option value="">Select...</option>
             {field.options?.map(opt => (
-              <option key={opt.id} value={opt.id}>
+              <option key={opt.id} value={opt.value}>
                 {opt.label}
               </option>
             ))}
@@ -192,7 +192,8 @@ function renderFieldInput(
           {selectedValues.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {selectedValues.map(val => {
-                const opt = field.options?.find(o => o.id === val)
+                // Look up by opt.value first (new format), fall back to opt.id (legacy)
+                const opt = field.options?.find(o => o.value === val || o.id === val)
                 const label = opt?.label || val
                 return (
                   <span
@@ -228,8 +229,8 @@ function renderFieldInput(
               className={`${inputClass} appearance-none pr-10`}
             >
               <option value="">Add option...</option>
-              {field.options?.filter(opt => !selectedValues.includes(opt.id)).map(opt => (
-                <option key={opt.id} value={opt.id}>
+              {field.options?.filter(opt => !selectedValues.includes(opt.value)).map(opt => (
+                <option key={opt.id} value={opt.value}>
                   {opt.label}
                 </option>
               ))}

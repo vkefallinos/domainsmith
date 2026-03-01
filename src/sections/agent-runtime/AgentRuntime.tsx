@@ -1,33 +1,44 @@
-import { useState, useCallback, useMemo } from 'react'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
-import type { Agent, Conversation } from '@/../product/sections/agent-runtime/types'
+import { useState, useCallback } from 'react'
+import { useRuntimeAgents, useAgents } from '@/lib/workspaceContext'
+import type { Conversation } from '@/../product/sections/agent-runtime/types'
 import { AgentList } from './components/AgentList'
 import { AgentRuntimeView } from './components/AgentRuntimeView'
 
-type AgentRuntimeData = {
-  agents: Agent[]
-  conversations: Conversation[]
-}
-
 export default function AgentRuntimePreview() {
-  const { data, loading, error } = useWorkspaceData<AgentRuntimeData>('agent-runtime')
+  // Use runtime-mapped agents (full shape with enabledTools, runtimeFields, etc.)
+  const agents = useRuntimeAgents()
+  const { agents: agentsMap, isLoading, error } = useAgents()
+
   const [view, setView] = useState<'list' | 'runtime'>('list')
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-  const [runtimeFieldValues, setRuntimeFieldValues] = useState<Record<string, string | string[] | boolean>>({})
-  const [isLoading, setIsLoading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
-
-  const agents = useMemo(() => (data?.agents as Agent[]) || [], [data])
 
   // Handle agent selection
   const handleSelectAgent = useCallback((agentId: string) => {
     setSelectedAgentId(agentId)
 
-    // Load conversations for this agent
-    const agentConversations = (data?.conversations as unknown as Conversation[])?.filter(
-      (c) => c.agentId === agentId
-    ) || []
+    // Load conversations for this agent from the agents map
+    const agent = agentsMap[agentId]
+    const agentConversations: Conversation[] = (agent?.conversations || [])
+      .map(conv => ({
+        id: conv.id,
+        agentId: conv.agentId,
+        agentName: conv.agentName,
+        messages: conv.messages
+          .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+          .map(msg => ({
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+            timestamp: msg.timestamp,
+            slashAction: (msg as any).slashAction,
+            structuredOutput: (msg as any).structuredOutput,
+          })),
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt,
+      }))
     setConversations(agentConversations)
 
     // Set active conversation to the most recently updated one
@@ -41,7 +52,7 @@ export default function AgentRuntimePreview() {
     }
 
     setView('runtime')
-  }, [data])
+  }, [agentsMap])
 
   // Handle back to list
   const handleBackToList = useCallback(() => {
@@ -52,17 +63,16 @@ export default function AgentRuntimePreview() {
 
   // Handle runtime field change
   const handleRuntimeFieldChange = useCallback((fieldId: string, value: string | string[] | boolean) => {
-    setRuntimeFieldValues((prev) => ({ ...prev, [fieldId]: value }))
     console.log('Field changed:', fieldId, value)
   }, [])
 
   // Handle send message
   const handleSendMessage = useCallback((content: string) => {
-    setIsLoading(true)
+    setIsSending(true)
     console.log('Send message:', content)
     // Simulate response
     setTimeout(() => {
-      setIsLoading(false)
+      setIsSending(false)
     }, 1000)
   }, [])
 
@@ -95,8 +105,8 @@ export default function AgentRuntimePreview() {
 
   // Handle delete conversation
   const handleDeleteConversation = useCallback((conversationId: string) => {
-    setConversations((prev) => {
-      const filtered = prev.filter((c) => c.id !== conversationId)
+    setConversations((prev: Conversation[]) => {
+      const filtered = prev.filter((c: Conversation) => c.id !== conversationId)
       // If we deleted the active conversation, switch to another one or null
       if (activeConversationId === conversationId) {
         if (filtered.length > 0) {
@@ -110,11 +120,11 @@ export default function AgentRuntimePreview() {
     console.log('Delete conversation:', conversationId)
   }, [activeConversationId])
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
-  if (error || !data) {
-    return <div className="flex items-center justify-center h-screen text-red-500">Error loading data</div>
+  if (error) {
+    return <div className="flex items-center justify-center h-screen text-red-500">Error loading data: {error}</div>
   }
 
   // Show list view or runtime view
@@ -135,7 +145,7 @@ export default function AgentRuntimePreview() {
       agent={agents.find((a) => a.id === selectedAgentId) || null}
       conversations={conversations}
       activeConversationId={activeConversationId}
-      isLoading={isLoading}
+      isLoading={isSending}
       onBackToList={handleBackToList}
       onRuntimeFieldChange={handleRuntimeFieldChange}
       onSendMessage={handleSendMessage}

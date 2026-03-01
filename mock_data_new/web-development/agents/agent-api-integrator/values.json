@@ -1,23 +1,27 @@
 {
-  "projectType": "opt-spa",
-  "frontendFramework": "opt-react",
-  "cssFramework": "opt-tailwind",
-  "stateManagement": "opt-zustand",
-  "buildTool": "opt-vite",
-  "testingFramework": [
-    "vitest",
-    "msw"
-  ],
-  "experienceLevel": "opt-intermediate",
-  "specialization": [
-    "opt-fullstack"
-  ],
-  "codingStyle": [
-    "opt-typescript",
-    "opt-functional"
-  ],
-  "architecturePattern": "opt-component-based",
-  "designPatterns": [
-    "opt-observer"
-  ]
+  "project": {
+    "project-type": "spa",
+    "frontend-framework": "react",
+    "css-framework": "tailwind",
+    "state-management": "zustand",
+    "testing-framework": [
+      "vitest",
+      "msw"
+    ]
+  },
+  "developer": {
+    "experience-level": "intermediate",
+    "specialization": [
+      "fullstack"
+    ],
+    "coding-style": [
+      "typescript",
+      "functional"
+    ]
+  },
+  "architecture": {
+    "design-patterns": [
+      "observer"
+    ]
+  }
 }

@@ -1,19 +1,6 @@
 {
-  "emptyFieldsForRuntime": [
-    {
-      "id": "field-unit-focus",
-      "label": "Current Unit or Topic Focus",
-      "domain": "/curriculum/unit-focus"
-    },
-    {
-      "id": "field-topics",
-      "label": "Topics to Cover",
-      "domain": "/subjects/topics"
-    },
-    {
-      "id": "field-essential-questions",
-      "label": "Essential Questions to Address",
-      "domain": "/subjects/essential-questions"
-    }
-  ]
+  "emptyFieldsForRuntime": {
+    "curriculum": ["unit-focus"],
+    "subjects": ["topics"]
+  }
 }

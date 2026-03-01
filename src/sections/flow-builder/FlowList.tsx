@@ -1,13 +1,10 @@
 import { useCallback } from 'react'
-import { useWorkspaceData } from '@/hooks/useWorkspaceData'
+import { useFlowList } from '@/lib/workspaceContext'
 import { FlowList } from './components'
 
-type FlowListData = {
-  flows: unknown[]
-}
-
 export default function FlowListPreview() {
-  const { data, loading, error } = useWorkspaceData<FlowListData>('flow-builder')
+  const flows = useFlowList()
+  const { isLoading, error } = useFlowList()
 
   const handleSelectFlow = useCallback((flowId: string) => {
     console.log('Select flow:', flowId)
@@ -25,16 +22,16 @@ export default function FlowListPreview() {
     console.log('Filter by tag:', tag)
   }, [])
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
-  if (error || !data) {
+  if (error) {
     return <div className="flex items-center justify-center h-screen text-red-500">Error loading data</div>
   }
 
   return (
     <FlowList
-      flows={data.flows}
+      flows={flows}
       selectedFlowId={null}
       onSelectFlow={handleSelectFlow}
       onCreateFlow={handleCreateFlow}

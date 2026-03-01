@@ -9,7 +9,6 @@ import {
   FolderOpen,
   Plus,
   MoreVertical,
-  Save,
   X,
   FileText,
   Check,
@@ -1000,6 +999,7 @@ export function PromptLibrary({
   onExpandAll,
   onCollapseAll,
   onEditContent,
+  onEditFrontmatter,
   onSave,
   onUnsavedChangesAction,
   onCreateFile,
@@ -1024,7 +1024,6 @@ export function PromptLibrary({
   const [editorContent, setEditorContent] = useState(selectedFile?.content || '')
   const [searchQuery, setSearchQuery] = useState('')
   const [newFileParentPath, setNewFileParentPath] = useState('/')
-  const [localUnsavedFiles, setLocalUnsavedFiles] = useState<Set<string>>(new Set())
   const [showMetadata, setShowMetadata] = useState(false)
   const [localFrontmatter, setLocalFrontmatter] = useState<PromptFrontmatter | undefined>(selectedFile?.frontmatter)
 
@@ -1036,7 +1035,7 @@ export function PromptLibrary({
 
   // Track unsaved files
   const isFileUnsaved = (fileId: string) => {
-    return localUnsavedFiles.has(fileId) || (selectedFile?.id === fileId && unsavedChanges)
+    return selectedFile?.id === fileId && unsavedChanges
   }
 
   // Update editor content when selection changes
@@ -1079,24 +1078,12 @@ export function PromptLibrary({
   const handleEditContent = useCallback((content: string) => {
     setEditorContent(content)
 
-    // Track unsaved changes locally
-    if (selectedFile && content !== selectedFile.content) {
-      setLocalUnsavedFiles(prev => new Set(prev).add(selectedFile.id))
-    }
-
     onEditContent(content)
-  }, [selectedFile, onEditContent])
+  }, [onEditContent])
 
   const handleSave = useCallback(() => {
     onSave()
-    if (selectedFile) {
-      setLocalUnsavedFiles(prev => {
-        const next = new Set(prev)
-        next.delete(selectedFile.id)
-        return next
-      })
-    }
-  }, [onSave, selectedFile])
+  }, [onSave])
 
   const handleContextMenu = useCallback((node: FileSystemNode, position: { x: number; y: number }) => {
     setContextMenu({ node, position })
@@ -1154,9 +1141,8 @@ export function PromptLibrary({
 
   const handleFrontmatterChange = useCallback((frontmatter: PromptFrontmatter) => {
     setLocalFrontmatter(frontmatter)
-    // Trigger save to persist metadata changes
-    // In real implementation, this would update the frontmatter in the file
-  }, [])
+    onEditFrontmatter?.(frontmatter)
+  }, [onEditFrontmatter])
 
   // Update frontmatter when selection changes
   useEffect(() => {
@@ -1207,7 +1193,16 @@ export function PromptLibrary({
       if (node.type === 'file') return 1
       return 1 + (node.children?.reduce((sum, child) => sum + count(child), 0) || 0)
     }
-    return (fileSystem.children?.reduce((sum, child) => sum + count(child), 0) || 0) - 1
+
+    const total = fileSystem.children?.reduce((sum, child) => sum + count(child), 0) || 0
+
+    // If there is a single top-level directory wrapper, exclude it from the count.
+    const hasSingleWrapperDirectory =
+      fileSystem.path === '/' &&
+      (fileSystem.children?.length || 0) === 1 &&
+      fileSystem.children?.[0]?.type === 'directory'
+
+    return hasSingleWrapperDirectory ? total - 1 : total
   }, [fileSystem])
 
   return (
@@ -1381,25 +1376,11 @@ export function PromptLibrary({
               </button>
             )}
 
-            {selectedFile && (
-              <button
-                onClick={handleSave}
-                disabled={!unsavedChanges || isLoading}
-                className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
-                  ${unsavedChanges
-                    ? 'bg-violet-500 text-white hover:bg-violet-600 shadow-sm hover:shadow-md shadow-violet-500/25'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                  }
-                `}
-              >
-                {isLoading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Save className="w-3.5 h-3.5" />
-                )}
-                Save
-              </button>
+            {selectedFile && isLoading && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Saving...
+              </div>
             )}
           </div>
         </div>

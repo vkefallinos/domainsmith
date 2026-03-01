@@ -1,5 +1,5 @@
 {
-  "emptyFieldsForRuntime": [
-    "field-feature-description"
-  ]
+  "emptyFieldsForRuntime": {
+    "feature": ["feature-description"]
+  }
 }

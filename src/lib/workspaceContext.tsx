@@ -7,6 +7,45 @@ import {
   getNormalizedWorkspace,
 } from '@/lib/workspaces'
 
+// Re-export the new data provider and hooks
+export {
+  WorkspaceDataProvider as WorkspaceDataProvider,
+  useWorkspaceData as useWorkspaceDataContext,
+} from '@/lib/workspaceDataContext'
+
+// Re-export convenience hooks
+export {
+  useAgents,
+  useAgent,
+  useAgentWithConversations,
+  useAgentList,
+  useRuntimeAgents,
+  useRuntimeAgent,
+} from '@/hooks/useAgents'
+
+export {
+  useFlows,
+  useFlow,
+  useFlowList,
+  useAgentFlows,
+} from '@/hooks/useFlows'
+
+export {
+  useKnowledge,
+  useKnowledgeSection,
+  useKnowledgeFlatList,
+  useKnowledgeFields,
+  useKnowledgeSections,
+} from '@/hooks/useKnowledge'
+
+export {
+  usePackageJson,
+} from '@/hooks/usePackageJson'
+
+// ============================================================================
+// LEGACY: Old glob-based data loading (deprecated - kept for backward compat)
+// ============================================================================
+
 type JsonModule<T = unknown> = { default: T }
 
 const workspaceDataModules = import.meta.glob('/mock_data/workspaces/*/sections/*/data.json')
@@ -16,7 +55,9 @@ function getWorkspaceDataModulePath(workspaceName: string, sectionPath: string) 
   return `/mock_data/workspaces/${normalizedWorkspace}/sections/${sectionPath}/data.json`
 }
 
-// Dynamic data loader for workspace-specific mock data
+/**
+ * @deprecated Use useWorkspaceDataContext or specific hooks (useAgents, useFlows, etc.) instead
+ */
 export async function loadWorkspaceData<T>(
   workspaceName: string,
   sectionPath: string
@@ -32,7 +73,9 @@ export async function loadWorkspaceData<T>(
   return module.default
 }
 
-// Synchronous import helper (for initial loads)
+/**
+ * @deprecated Use useWorkspaceDataContext or specific hooks instead
+ */
 export function importWorkspaceData(sectionPath: string, workspaceName: string = DEFAULT_WORKSPACE_SLUG) {
   const modulePath = getWorkspaceDataModulePath(workspaceName, sectionPath)
   const loader = workspaceDataModules[modulePath]
@@ -43,6 +86,10 @@ export function importWorkspaceData(sectionPath: string, workspaceName: string =
 
   return loader()
 }
+
+// ============================================================================
+// Workspace URL Context (for workspace routing)
+// ============================================================================
 
 interface WorkspaceContextValue {
   workspaceName: string
@@ -55,6 +102,12 @@ interface WorkspaceProviderProps {
   children: ReactNode
 }
 
+/**
+ * Legacy WorkspaceProvider - handles workspace URL routing
+ * For data access, use WorkspaceDataProvider (new) or useWorkspaceDataContext
+ *
+ * @deprecated Use WorkspaceDataProvider for data access. Keep for URL routing only.
+ */
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const { workspaceName = DEFAULT_WORKSPACE_SLUG } = useParams<{ workspaceName?: string }>()
   const normalizedWorkspace = getNormalizedWorkspace(workspaceName)
@@ -66,6 +119,10 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   )
 }
 
+/**
+ * Get workspace URL params
+ * For data access, use useWorkspaceDataContext or specific hooks (useAgents, etc.)
+ */
 export function useWorkspace() {
   const context = useContext(WorkspaceContext)
   const { workspaceName = DEFAULT_WORKSPACE_SLUG } = useParams<{ workspaceName?: string }>()

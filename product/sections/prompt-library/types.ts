@@ -269,6 +269,8 @@ export interface PromptLibraryProps {
   onCollapseAll: () => void;
   /** Callback when file content is edited */
   onEditContent: (content: string) => void;
+  /** Callback when file frontmatter metadata is edited */
+  onEditFrontmatter?: (frontmatter: PromptFrontmatter) => void;
   /** Callback when changes are saved */
   onSave: () => void;
   /** Callback when unsaved changes dialog action is chosen */
