@@ -6,6 +6,9 @@ interface RuntimeFieldSummary {
   id: string
   label: string
   domain: string
+  fieldType?: 'text' | 'textarea' | 'select' | 'multiselect' | 'toggle'
+  placeholder?: string
+  options?: string[]
 }
 
 interface AgentRuntimePreviewModalProps {
@@ -23,6 +26,20 @@ export function AgentRuntimePreviewModal({
   generatedPrompt,
   runtimeFields,
 }: AgentRuntimePreviewModalProps) {
+  const toRuntimeValue = useCallback((field: RuntimeFieldSummary): string | string[] | boolean => {
+    switch (field.fieldType) {
+      case 'multiselect':
+        return []
+      case 'toggle':
+        return false
+      case 'select':
+      case 'textarea':
+      case 'text':
+      default:
+        return ''
+    }
+  }, [])
+
   const timeoutRef = useRef<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [conversation, setConversation] = useState<Conversation>({
@@ -51,8 +68,10 @@ export function AgentRuntimePreviewModal({
       runtimeFields: runtimeFields.map((field) => ({
         id: field.id,
         label: field.label,
-        type: 'text',
-        value: '',
+        type: field.fieldType || 'text',
+        placeholder: field.placeholder,
+        options: field.options,
+        value: toRuntimeValue(field),
         domain: field.domain,
       })),
       enabledTools: [],
@@ -62,7 +81,7 @@ export function AgentRuntimePreviewModal({
       lastUsedAt: null,
       status: 'ready',
     }),
-    [runtimeFields, generatedPrompt]
+    [runtimeFields, generatedPrompt, toRuntimeValue]
   )
 
   const handleClose = useCallback(() => {

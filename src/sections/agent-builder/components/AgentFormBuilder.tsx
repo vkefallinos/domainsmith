@@ -582,9 +582,12 @@ These instructions will appear at the top of your agent's system prompt.`}
           enabledFilePaths={enabledFilePaths}
           generatedPrompt={promptPreview?.generatedPrompt || ''}
           runtimeFields={runtimeFieldEntries.map(({ field, domainName }) => ({
-            id: field.variableName,
+            id: field.id,
             label: field.label,
             domain: domainName,
+            fieldType: field.fieldType,
+            placeholder: field.placeholder,
+            options: field.options?.map((option) => option.label),
           }))}
         />
       </div>
