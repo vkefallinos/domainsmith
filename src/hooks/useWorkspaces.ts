@@ -3,7 +3,9 @@ import { useGithub } from '@/lib/github/GithubContext'
 
 export interface GithubWorkspace {
     id: number
-    name: string // maps to workspaceName slug
+    name: string // workspace name in format owner/repo
+    ownerLogin: string
+    repoName: string
     fullName: string
     description: string | null
     ownerAvatarUrl: string
@@ -28,7 +30,9 @@ export function useWorkspaces() {
 
             return response.data.map(repo => ({
                 id: repo.id,
-                name: repo.name, // We use the repo name as the workspace slug
+                name: `${repo.owner.login}/${repo.name}`,
+                ownerLogin: repo.owner.login,
+                repoName: repo.name,
                 fullName: repo.full_name,
                 description: repo.description,
                 ownerAvatarUrl: repo.owner.avatar_url,

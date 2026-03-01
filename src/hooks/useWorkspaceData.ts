@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useGithub } from '@/lib/github/GithubContext'
-import { DEFAULT_WORKSPACE_SLUG, getNormalizedWorkspace } from '@/lib/workspaces'
+import {
+  DEFAULT_WORKSPACE_SLUG,
+  getNormalizedWorkspace,
+  parseWorkspaceRepoRef,
+} from '@/lib/workspaces'
 
 /**
  * Hook to dynamically load workspace-specific data from GitHub.
@@ -11,7 +15,7 @@ import { DEFAULT_WORKSPACE_SLUG, getNormalizedWorkspace } from '@/lib/workspaces
  */
 export function useWorkspaceData<T>(path: string) {
   const { workspaceName = DEFAULT_WORKSPACE_SLUG } = useParams<{ workspaceName?: string }>()
-  const { octokit, isAuthenticated } = useGithub()
+  const { octokit, isAuthenticated, user } = useGithub()
 
   const normalizedWorkspaceName = getNormalizedWorkspace(workspaceName)
 
@@ -22,13 +26,13 @@ export function useWorkspaceData<T>(path: string) {
       if (!octokit) throw new Error('Octokit not initialized')
 
       try {
-        // Fetch the user to get their login (owner of the repo)
-        // In a real app involving organizations, the owner might need to be resolved differently
-        const { data: user } = await octokit.rest.users.getAuthenticated()
+        const repoRef = parseWorkspaceRepoRef(normalizedWorkspaceName, user?.login)
+        if (!repoRef) {
+          throw new Error(`Invalid workspace name format: ${normalizedWorkspaceName}`)
+        }
 
-        // Let's assume the repo is owned by the authenticated user for now
-        const owner = user.login
-        const repo = normalizedWorkspaceName
+        const owner = repoRef.owner
+        const repo = repoRef.repo
 
         const response = await octokit.rest.repos.getContent({
           owner,

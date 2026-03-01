@@ -12,6 +12,7 @@ import {
 import { useState, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useKnowledgeSections, useAgents } from '@/lib/workspaceContext'
+import { toWorkspaceRouteParam } from '@/lib/workspaces'
 import logo from '@/assets/logo.png'
 import { WorkspaceSelector } from './WorkspaceSelector'
 import type { Workspace } from './WorkspaceSelector'
@@ -90,7 +91,9 @@ export function StudioSidebar({
   const { agents: agentsMap } = useAgents()
 
   // Build workspace-aware path helper
-  const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
+  const studioPath = workspaceName
+    ? `/workspace/${toWorkspaceRouteParam(workspaceName)}/studio`
+    : '/studio'
 
   // Map knowledge sections to domain format
   const domains = useMemo(() => {

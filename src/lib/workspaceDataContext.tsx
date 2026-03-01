@@ -1,6 +1,9 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
+import { useGithub } from '@/lib/github/GithubContext'
+import { loadWorkspaceDataFromGithubRepo } from '@/lib/github/workspaceLoader'
+import { fromWorkspaceRouteParam, parseWorkspaceRepoRef } from '@/lib/workspaces'
 import type {
   ExtractedDataStructure,
   WorkspaceData,
@@ -225,11 +228,16 @@ function persistWorkspaceData(data: ExtractedDataStructure) {
 export function WorkspaceDataProvider({
   children,
 }: WorkspaceDataProviderProps) {
+  const { octokit, isAuthenticated, user } = useGithub()
   const [data, setData] = useState<ExtractedDataStructure | null>(null)
   // Start with null — layouts will call setCurrentWorkspace once they know the workspace from the URL
   const [currentWorkspace, setCurrentWorkspace] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const setCurrentWorkspaceSafe = useCallback((workspaceId: string) => {
+    setCurrentWorkspace(fromWorkspaceRouteParam(workspaceId))
+  }, [])
 
   // Load data from JSON file
   const loadData = async () => {
@@ -259,6 +267,46 @@ export function WorkspaceDataProvider({
     if (!data) return
     persistWorkspaceData(data)
   }, [data])
+
+  useEffect(() => {
+    const loadGithubWorkspace = async () => {
+      if (!currentWorkspace || !octokit || !isAuthenticated) return
+
+      const repoRef = parseWorkspaceRepoRef(currentWorkspace, user?.login)
+      if (!repoRef) return
+
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        const workspace = await loadWorkspaceDataFromGithubRepo({
+          octokit,
+          owner: repoRef.owner,
+          repo: repoRef.repo,
+          workspaceId: currentWorkspace,
+        })
+
+        setData((prev) => {
+          const base: ExtractedDataStructure = prev || { workspaces: {} }
+          return {
+            ...base,
+            workspaces: {
+              ...base.workspaces,
+              [currentWorkspace]: workspace,
+            },
+          }
+        })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        setError(message)
+        console.error('Failed to load GitHub workspace data:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void loadGithubWorkspace()
+  }, [currentWorkspace, octokit, isAuthenticated, user?.login])
 
   const updateCurrentWorkspace = useCallback(
     (updater: (workspace: WorkspaceData) => WorkspaceData) => {
@@ -399,7 +447,7 @@ export function WorkspaceDataProvider({
     agentList,
     flowList,
     knowledgeTree,
-    setCurrentWorkspace,
+    setCurrentWorkspace: setCurrentWorkspaceSafe,
     upsertAgent,
     deleteAgent,
     upsertFlow,

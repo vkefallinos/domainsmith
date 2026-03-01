@@ -35,6 +35,7 @@ import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
 import { downloadWorkspaceZip, exportWorkspaceToNewGithubRepo } from '@/lib/workspaceExport'
 import type { Agent as WorkspaceAgent } from '@/types/workspace-data'
+import { fromWorkspaceRouteParam, toWorkspaceRouteParam } from '@/lib/workspaces'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,11 +96,16 @@ function useWorkspace(workspaceName?: string): Workspace {
   const { data: workspaces } = useWorkspaces()
 
   return useMemo(() => {
-    const defaultWorkspace = { id: 'default', name: workspaceName || 'Workspace', color: '#10b981' }
+    const displayWorkspaceName = workspaceName ? fromWorkspaceRouteParam(workspaceName) : 'Workspace'
+    const defaultWorkspace = { id: 'default', name: displayWorkspaceName, color: '#10b981' }
     if (!workspaces) return defaultWorkspace
 
     if (workspaceName) {
-      const found = workspaces.find(w => workspaceToSlug(w.name) === workspaceName)
+      const decodedWorkspaceName = fromWorkspaceRouteParam(workspaceName)
+
+      const found = workspaces.find(
+        w => workspaceToSlug(w.name) === workspaceName || w.name === decodedWorkspaceName
+      )
       if (found) {
         return { id: found.id.toString(), name: found.name, color: '#10b981' }
       }
@@ -250,7 +256,7 @@ export function StudioShell({
   const currentWorkspace = useWorkspace(workspaceName)
 
   // Build workspace-aware path helper
-  const studioPath = workspaceName ? `/workspace/${workspaceName}/studio` : '/studio'
+  const studioPath = workspaceName ? `/workspace/${toWorkspaceRouteParam(workspaceName)}/studio` : '/studio'
 
   // Prompt Library state
   const [selectedFile, setSelectedFile] = useState<PromptFragment | null>(null)

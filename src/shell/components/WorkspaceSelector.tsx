@@ -13,6 +13,7 @@ import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { Input } from '@/components/ui/input'
 import { useGithub } from '@/lib/github/GithubContext'
 import { useQueryClient } from '@tanstack/react-query'
+import { toWorkspaceName, toWorkspaceRouteParam } from '@/lib/workspaces'
 
 export type Workspace = {
   id: string
@@ -20,9 +21,9 @@ export type Workspace = {
   color: string
 }
 
-// Helper to convert workspace name to URL-friendly slug
+// Helper to convert workspace name to route-safe value
 export function workspaceToSlug(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, '-').replace(/^-+|-+$/g, '')
+  return toWorkspaceRouteParam(name)
 }
 
 const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444', '#84cc16']
@@ -48,7 +49,7 @@ export function WorkspaceSelector({
   const navigate = useNavigate()
   const location = useLocation()
 
-  const { octokit } = useGithub()
+  const { octokit, user } = useGithub()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -59,7 +60,7 @@ export function WorkspaceSelector({
     if (!githubWorkspaces) return []
     return githubWorkspaces.map((repo, idx) => ({
       id: repo.id.toString(),
-      name: repo.name, // The slug
+      name: repo.name,
       color: WORKSPACE_COLORS[idx % WORKSPACE_COLORS.length],
     }))
   }, [githubWorkspaces])
@@ -72,17 +73,36 @@ export function WorkspaceSelector({
     return mappedWorkspaces.filter(w => w.name.toLowerCase().includes(query))
   }, [mappedWorkspaces, searchQuery])
 
+  const derivedRepoName = useMemo(() => {
+    const trimmed = searchQuery.trim()
+    if (!trimmed) return ''
+
+    if (trimmed.includes('%')) {
+      const parts = trimmed.split('%')
+      return parts.slice(1).join('%').trim()
+    }
+
+    if (trimmed.includes('/')) {
+      const parts = trimmed.split('/')
+      return parts.slice(1).join('/').trim()
+    }
+
+    return trimmed
+  }, [searchQuery])
+
   const handleCreateWorkspace = async () => {
-    if (!octokit || !searchQuery) return
+    if (!octokit || !user || !derivedRepoName) return
     setIsCreating(true)
     try {
-      await octokit.rest.repos.createForAuthenticatedUser({
-        name: searchQuery,
+      const { data } = await octokit.rest.repos.createForAuthenticatedUser({
+        name: derivedRepoName,
         private: true,
         auto_init: true
       })
+
+      const workspaceName = toWorkspaceName(data.owner.login, data.name)
       await queryClient.invalidateQueries({ queryKey: ['github-workspaces'] })
-      handleSelect({ id: 'new', name: searchQuery, color: WORKSPACE_COLORS[0] })
+      handleSelect({ id: data.id.toString(), name: workspaceName, color: WORKSPACE_COLORS[0] })
     } catch (e) {
       console.error(e)
       alert("Failed to create repository. It might already exist or you don't have permissions.")
@@ -105,11 +125,11 @@ export function WorkspaceSelector({
 
     if (workspaceIdx !== -1 && pathParts.length > workspaceIdx + 1) {
       // Replace the workspace slug in the current path
-      pathParts[workspaceIdx + 1] = workspace.name // The mapping uses repo.name directly
+      pathParts[workspaceIdx + 1] = workspaceToSlug(workspace.name)
       navigate(pathParts.join('/'))
     } else {
       // If we're not in a workspace route, navigate to the default studio view
-      navigate(`/workspace/${workspace.name}/studio`)
+      navigate(`/workspace/${workspaceToSlug(workspace.name)}/studio`)
     }
   }, [navigate, location.pathname, onWorkspaceChange])
 
@@ -220,10 +240,10 @@ export function WorkspaceSelector({
           <div className="p-2 border-t">
             <button
               onClick={handleCreateWorkspace}
-              disabled={isCreating}
+              disabled={isCreating || !derivedRepoName}
               className="w-full px-2 py-1.5 text-sm bg-primary text-primary-foreground rounded-md disabled:bg-primary/50"
             >
-              {isCreating ? 'Creating...' : `Create "${searchQuery}"`}
+              {isCreating ? 'Creating...' : `Create "${derivedRepoName}"`}
             </button>
           </div>
         )}

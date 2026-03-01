@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useGithub } from '@/lib/github/GithubContext'
-import { DEFAULT_WORKSPACE_SLUG, getNormalizedWorkspace } from '@/lib/workspaces'
+import {
+    DEFAULT_WORKSPACE_SLUG,
+    getNormalizedWorkspace,
+    parseWorkspaceRepoRef,
+} from '@/lib/workspaces'
 
 interface SaveFileArgs {
     path: string
@@ -20,8 +24,13 @@ export function useWorkspaceMutation() {
         mutationFn: async ({ path, content, message }: SaveFileArgs) => {
             if (!isAuthenticated || !octokit || !user) throw new Error('Not authenticated')
 
-            const owner = user.login
-            const repo = normalizedWorkspaceName
+            const repoRef = parseWorkspaceRepoRef(normalizedWorkspaceName, user.login)
+            if (!repoRef) {
+                throw new Error(`Invalid workspace name format: ${normalizedWorkspaceName}`)
+            }
+
+            const owner = repoRef.owner
+            const repo = repoRef.repo
 
             // Prepare content for GitHub API (must be base64 encoded)
             let stringContent = ''

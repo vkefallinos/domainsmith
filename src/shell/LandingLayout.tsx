@@ -31,6 +31,7 @@ import { useGithub } from '@/lib/github/GithubContext'
 import { useWorkspaceDataContext } from '@/lib/workspaceContext'
 import { useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
+import { toWorkspaceName } from '@/lib/workspaces'
 import logo from '@/assets/logo.png'
 
 const WORKSPACE_COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444', '#84cc16']
@@ -48,7 +49,7 @@ export default function LandingLayout() {
   const { workspaces: jsonWorkspaces } = useWorkspaceDataContext()
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
 
-  const { octokit } = useGithub()
+  const { octokit, user } = useGithub()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -90,17 +91,38 @@ export default function LandingLayout() {
     return availableWorkspaces.filter(w => w.name.toLowerCase().includes(query))
   }, [availableWorkspaces, searchQuery])
 
+  const derivedRepoName = useMemo(() => {
+    const trimmed = searchQuery.trim()
+    if (!trimmed) return ''
+
+    if (trimmed.includes('%')) {
+      const parts = trimmed.split('%')
+      return parts.slice(1).join('%').trim()
+    }
+
+    if (trimmed.includes('/')) {
+      const parts = trimmed.split('/')
+      return parts.slice(1).join('/').trim()
+    }
+
+    return trimmed
+  }, [searchQuery])
+
   const handleCreateWorkspace = async () => {
-    if (!octokit || !searchQuery) return
+    if (!octokit || !user || !derivedRepoName) return
     setIsCreating(true)
     try {
-      await octokit.rest.repos.createForAuthenticatedUser({
-        name: searchQuery,
+      const { data } = await octokit.rest.repos.createForAuthenticatedUser({
+        name: derivedRepoName,
         private: true,
         auto_init: true
       })
       await queryClient.invalidateQueries({ queryKey: ['github-workspaces'] })
-      handleWorkspaceSelect({ id: 'new', name: searchQuery, color: WORKSPACE_COLORS[0] })
+      handleWorkspaceSelect({
+        id: data.id.toString(),
+        name: toWorkspaceName(data.owner.login, data.name),
+        color: WORKSPACE_COLORS[0],
+      })
     } catch (e) {
       console.error(e)
       alert("Failed to create repository. It might already exist or you don't have permissions.")
@@ -384,7 +406,7 @@ export default function LandingLayout() {
                     </div>
                     <div>
                       <p className="font-medium truncate max-w-[180px]">{workspace.name}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">/{workspaceToSlug(workspace.name)}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">/{workspace.name}</p>
                     </div>
                   </div>
                   <ArrowRight className="size-4 text-muted-foreground shrink-0" />
@@ -408,9 +430,9 @@ export default function LandingLayout() {
               <Button
                 onClick={handleCreateWorkspace}
                 className="w-full mt-2"
-                disabled={isCreating}
+                disabled={isCreating || !derivedRepoName}
               >
-                {isCreating ? 'Creating...' : `Create "${searchQuery}"`}
+                {isCreating ? 'Creating...' : `Create "${derivedRepoName}"`}
               </Button>
             )}
 
