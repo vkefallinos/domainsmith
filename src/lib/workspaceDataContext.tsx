@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
 import type {
   ExtractedDataStructure,
   WorkspaceData,
@@ -40,6 +40,8 @@ interface WorkspaceDataContextValue {
 
   // Actions
   setCurrentWorkspace: (workspaceId: string) => void
+  upsertAgent: (agent: Agent) => void
+  deleteAgent: (agentId: string) => void
   reload: () => Promise<void>
 }
 
@@ -139,19 +141,69 @@ export function WorkspaceDataProvider({
     loadData()
   }, [])
 
+  const updateCurrentWorkspace = useCallback(
+    (updater: (workspace: WorkspaceData) => WorkspaceData) => {
+      setData((prev) => {
+        if (!prev || !currentWorkspace) return prev
+
+        const existingWorkspace = prev.workspaces[currentWorkspace]
+        if (!existingWorkspace) return prev
+
+        const updatedWorkspace = updater(existingWorkspace)
+
+        return {
+          ...prev,
+          workspaces: {
+            ...prev.workspaces,
+            [currentWorkspace]: updatedWorkspace,
+          },
+        }
+      })
+    },
+    [currentWorkspace]
+  )
+
+  const upsertAgent = useCallback(
+    (agent: Agent) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        agents: {
+          ...workspace.agents,
+          [agent.id]: agent,
+        },
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
+  const deleteAgent = useCallback(
+    (agentId: string) => {
+      updateCurrentWorkspace((workspace) => {
+        const remainingAgents = { ...workspace.agents }
+        delete remainingAgents[agentId]
+        return {
+          ...workspace,
+          agents: remainingAgents,
+        }
+      })
+    },
+    [updateCurrentWorkspace]
+  )
+
   // Computed values
-  const workspaceData: WorkspaceData | null = currentWorkspace && data
-    ? data.workspaces[currentWorkspace]
-    : null
+  const workspaceData: WorkspaceData | null = useMemo(
+    () => (currentWorkspace && data ? data.workspaces[currentWorkspace] : null),
+    [currentWorkspace, data]
+  )
 
-  const agents: Record<string, Agent> = workspaceData?.agents || {}
-  const flows: Record<string, Flow> = workspaceData?.flows || {}
-  const knowledge: KnowledgeNode[] = workspaceData?.knowledge || []
-  const packageJson: PackageJson | null = workspaceData?.packageJson || null
+  const agents = useMemo<Record<string, Agent>>(() => workspaceData?.agents || {}, [workspaceData])
+  const flows = useMemo<Record<string, Flow>>(() => workspaceData?.flows || {}, [workspaceData])
+  const knowledge = useMemo<KnowledgeNode[]>(() => workspaceData?.knowledge || [], [workspaceData])
+  const packageJson = useMemo<PackageJson | null>(() => workspaceData?.packageJson || null, [workspaceData])
 
-  const agentList: AgentListItem[] = Object.values(agents).map(toAgentListItem)
-  const flowList: FlowListItem[] = Object.values(flows).map(toFlowListItem)
-  const knowledgeTree: KnowledgeItem[] = knowledge.map(toKnowledgeItem)
+  const agentList = useMemo<AgentListItem[]>(() => Object.values(agents).map(toAgentListItem), [agents])
+  const flowList = useMemo<FlowListItem[]>(() => Object.values(flows).map(toFlowListItem), [flows])
+  const knowledgeTree = useMemo<KnowledgeItem[]>(() => knowledge.map(toKnowledgeItem), [knowledge])
 
   const value: WorkspaceDataContextValue = {
     currentWorkspace,
@@ -166,6 +218,8 @@ export function WorkspaceDataProvider({
     flowList,
     knowledgeTree,
     setCurrentWorkspace,
+    upsertAgent,
+    deleteAgent,
     reload: loadData,
   }
 

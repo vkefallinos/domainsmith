@@ -254,7 +254,11 @@ export default function StudioLayout() {
       <StudioShell
         defaultSidebarCollapsed={state.sidebarCollapsed}
         onSidebarCollapsedChange={(collapsed) =>
-          setState((prev) => ({ ...prev, sidebarCollapsed: collapsed }))
+          setState((prev) =>
+            prev.sidebarCollapsed === collapsed
+              ? prev
+              : { ...prev, sidebarCollapsed: collapsed }
+          )
         }
         onOpenSettings={() => console.log('Open settings')}
         onCreateDomain={() => console.log('Create domain')}

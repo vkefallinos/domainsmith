@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { StudioSidebar } from './StudioSidebar'
 import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
@@ -23,6 +23,28 @@ import type {
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
+import type { Agent as WorkspaceAgent } from '@/types/workspace-data'
+
+function toAgentId(name: string): string {
+  const base = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return base || `agent-${Date.now()}`
+}
+
+function areAgentDraftsEqual(a: WorkspaceAgent, b: WorkspaceAgent): boolean {
+  return (
+    a.id === b.id &&
+    JSON.stringify(a.frontmatter) === JSON.stringify(b.frontmatter) &&
+    a.mainInstruction === b.mainInstruction &&
+    JSON.stringify(a.slashActions) === JSON.stringify(b.slashActions) &&
+    JSON.stringify(a.config) === JSON.stringify(b.config) &&
+    JSON.stringify(a.formValues) === JSON.stringify(b.formValues)
+  )
+}
 
 // Helper to get workspace from URL param
 function useWorkspace(workspaceName?: string): Workspace {
@@ -197,6 +219,8 @@ export function StudioShell({
   const [toolLibraryOpen, setToolLibraryOpen] = useState(false)
   const [flowBuilderOpen, setFlowBuilderOpen] = useState(false)
   const [attachedFlows, setAttachedFlows] = useState<AttachedFlow[]>([])
+  const hydratedAgentIdRef = useRef<string | null>(null)
+  const lastAutoSavedSnapshotRef = useRef<string>('')
 
   // Extract domains from knowledge sections
   const domains = useMemo(() => {
@@ -248,6 +272,9 @@ export function StudioShell({
     })
   }, [knowledgeSections])
 
+  // Access raw knowledge nodes and in-memory mutators from workspace context
+  const { knowledge: rawKnowledge, upsertAgent, deleteAgent } = useWorkspaceData()
+
   // Extract agents from agents map
   const agents = useMemo(() => {
     return Object.values(agentsMap).map(agent => ({
@@ -278,28 +305,26 @@ export function StudioShell({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })) as unknown as AgentConfig[]
-  }, [agentsMap])
+  }, [agentsMap, flowsMap])
 
   // Get the active domain
-  const activeDomain = domainId
-    ? domains.find((d) => d.id === domainId) || null
-    : null
+  const activeDomain = useMemo(
+    () => (domainId ? domains.find((d) => d.id === domainId) || null : null),
+    [domainId, domains]
+  )
 
   // Get the active agent
-  const activeAgent = agentId
-    ? agents.find((a) => a.id === agentId) || null
-    : null
+  const activeAgent = useMemo(
+    () => (agentId ? agents.find((a) => a.id === agentId) || null : null),
+    [agentId, agents]
+  )
 
-  // Load agent data when agentId changes
+  // Load agent data only when the route agent changes
   useEffect(() => {
-    if (activeAgent) {
-      setSelectedDomainIds(activeAgent.selectedDomains || [])
-      setFormValues(activeAgent.formValues || {})
-      setMainInstruction(activeAgent.mainInstruction || '')
-      setEnabledTools(activeAgent.enabledTools || [])
-      setEmptyFieldsForRuntime(activeAgent.emptyFieldsForRuntime || [])
-      setAttachedFlows(activeAgent.attachedFlows || [])
-    } else {
+    if (!agentId) {
+      hydratedAgentIdRef.current = null
+      lastAutoSavedSnapshotRef.current = ''
+
       // Reset state when no agent selected
       setSelectedDomainIds([])
       setFormValues({})
@@ -307,8 +332,30 @@ export function StudioShell({
       setEnabledTools([])
       setEmptyFieldsForRuntime([])
       setAttachedFlows([])
+      return
     }
-  }, [activeAgent])
+
+    if (hydratedAgentIdRef.current === agentId) {
+      return
+    }
+
+    const sourceAgent = agentsMap[agentId]
+    if (!sourceAgent) {
+      return
+    }
+
+    const mappedAgent = agents.find((a) => a.id === agentId) || null
+
+    setSelectedDomainIds(mappedAgent?.selectedDomains || [])
+    setFormValues((sourceAgent.formValues || {}) as Record<string, FormFieldValue>)
+    setMainInstruction(sourceAgent.mainInstruction || '')
+    setEnabledTools([])
+    setEmptyFieldsForRuntime(flattenEmptyFieldsForRuntime(sourceAgent.config?.emptyFieldsForRuntime))
+    setAttachedFlows(mappedAgent?.attachedFlows || [])
+
+    hydratedAgentIdRef.current = agentId
+    lastAutoSavedSnapshotRef.current = JSON.stringify(sourceAgent)
+  }, [agentId, agentsMap, agents])
 
   // Determine view mode from URL params
   const viewMode: 'list' | 'domain-detail' | 'agent-detail' = agentId
@@ -316,9 +363,6 @@ export function StudioShell({
     : domainId
       ? 'domain-detail'
       : 'list'
-
-  // Access raw knowledge nodes (which include markdown content on file nodes)
-  const { knowledge: rawKnowledge } = useWorkspaceData()
 
   // Get filtered file system for the selected domain
   // knowledgeNodeToFileSystem is a module-level pure function – no useCallback needed
@@ -461,9 +505,90 @@ export function StudioShell({
     console.log('Generate preview')
   }, [])
 
+  const buildAgentPayload = useCallback(
+    (targetAgentId: string, name: string, description: string): WorkspaceAgent => {
+      const existingAgent = agentsMap[targetAgentId]
+      const slashActions = attachedFlows
+        .filter((af) => Boolean(af.slashAction?.actionId))
+        .map((af) => ({
+          name: af.slashAction?.name || af.flowName,
+          description: af.slashAction?.description || af.flowDescription || '',
+          flowId: af.flowId,
+          actionId: af.slashAction?.actionId || '',
+        }))
+
+      return {
+        id: targetAgentId,
+        frontmatter: {
+          ...(existingAgent?.frontmatter || {}),
+          name,
+          description,
+          selectedDomains: selectedDomainIds,
+          tools: enabledTools.map((tool) => tool.toolId),
+        },
+        mainInstruction,
+        slashActions,
+        config: {
+          ...(existingAgent?.config || {}),
+          emptyFieldsForRuntime,
+        },
+        formValues,
+        conversations: existingAgent?.conversations || [],
+      }
+    },
+    [agentsMap, attachedFlows, selectedDomainIds, enabledTools, mainInstruction, emptyFieldsForRuntime, formValues]
+  )
+
+  // Auto-save draft in memory for existing agents whenever form state changes
+  useEffect(() => {
+    if (!agentId) return
+
+    const existingAgent = agentsMap[agentId]
+    if (!existingAgent) return
+
+    const draft = buildAgentPayload(
+      agentId,
+      (existingAgent.frontmatter.name as string) || agentId,
+      (existingAgent.frontmatter.description as string) || ''
+    )
+
+    const nextSnapshot = JSON.stringify(draft)
+    if (lastAutoSavedSnapshotRef.current === nextSnapshot) return
+
+    if (areAgentDraftsEqual(existingAgent, draft)) {
+      lastAutoSavedSnapshotRef.current = nextSnapshot
+      return
+    }
+
+    lastAutoSavedSnapshotRef.current = nextSnapshot
+    upsertAgent(draft)
+  }, [
+    agentId,
+    agentsMap,
+    selectedDomainIds,
+    formValues,
+    mainInstruction,
+    enabledTools,
+    emptyFieldsForRuntime,
+    attachedFlows,
+    buildAgentPayload,
+    upsertAgent,
+  ])
+
   const handleSaveAgent = useCallback((name: string, description: string) => {
-    console.log('Save agent:', name, description)
-  }, [])
+    const nextAgentId = agentId || toAgentId(name)
+    upsertAgent(buildAgentPayload(nextAgentId, name, description))
+
+    if (!agentId) {
+      navigate(`${studioPath}/agent/${nextAgentId}`, { replace: true })
+    }
+  }, [
+    agentId,
+    navigate,
+    studioPath,
+    upsertAgent,
+    buildAgentPayload,
+  ])
 
   const handleNewAgent = useCallback(() => {
     setSelectedDomainIds([])
@@ -553,9 +678,14 @@ export function StudioShell({
     onEditAgent?.(agentId)
   }, [onEditAgent])
 
-  const handleDeleteAgentClick = useCallback((agentId: string) => {
-    onDeleteAgent?.(agentId)
-  }, [onDeleteAgent])
+  const handleDeleteAgentClick = useCallback((targetAgentId: string) => {
+    deleteAgent(targetAgentId)
+    onDeleteAgent?.(targetAgentId)
+
+    if (agentId === targetAgentId) {
+      navigate(studioPath)
+    }
+  }, [agentId, deleteAgent, navigate, onDeleteAgent, studioPath])
 
   const handleEditDomainClick = useCallback((domainId: string) => {
     onEditDomain?.(domainId)

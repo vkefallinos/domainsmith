@@ -172,7 +172,6 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
     onConfigureTool,
     onGeneratePreview,
     onSaveAgent,
-    onNewAgent,
     onOpenFlowBuilder,
     onAttachFlow,
     onDetachFlow,
@@ -348,40 +347,6 @@ export function AgentFormBuilder(props: AgentBuilderScreenProps) {
         {/* Center Panel - Agent Builder */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-6 py-8">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-                    Configure Agent
-                  </h1>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {hasSelection
-                      ? `Building with ${selectedDomains.length} knowledge`
-                      : 'Select knowledge areas to begin building your agent'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={onNewAgent}
-                    className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
-                  >
-                    New Agent
-                  </button>
-                  <button
-                    onClick={() => setSaveModalOpen(true)}
-                    disabled={!hasSelection}
-                    className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:dark:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white rounded-lg transition-all shadow-lg shadow-violet-200/50 dark:shadow-violet-900/20 disabled:shadow-none flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    Save Agent
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* Main Instruction Section */}
             <div className="mb-8">
               <label className="block mb-3">
