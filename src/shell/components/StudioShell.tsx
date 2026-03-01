@@ -211,12 +211,15 @@ export function StudioShell({
           fieldType: field.fieldType || 'select',
           required: field.required || false,
           runtimeOptional: true,
-          options: (field.children || []).map(opt => ({
-            id: opt.path,
-            value: opt.path.split('/').pop() || opt.path,
-            label: opt.label || opt.path,
-            filePath: opt.path,
-          })),
+          options: (field.children || []).map(opt => {
+            const stem = opt.path.split('/').pop()?.replace(/\.md$/, '') ?? opt.path
+            return {
+              id: opt.path,
+              value: stem,
+              label: opt.label || stem,
+              filePath: opt.path,
+            }
+          }),
         }))
 
       return {

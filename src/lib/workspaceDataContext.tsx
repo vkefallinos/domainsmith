@@ -78,11 +78,17 @@ function toFlowListItem(flow: Flow): FlowListItem {
  * Convert internal KnowledgeNode to KnowledgeItem
  */
 function toKnowledgeItem(node: KnowledgeNode): KnowledgeItem {
+  // For file nodes, the human-readable label lives in frontmatter.title (not config.label)
+  // Fall back to stripping the .md extension from the filename
+  const filenameStem = node.path.split('/').pop()?.replace(/\.md$/, '') ?? node.path
+
   const item: KnowledgeItem = {
     path: node.path,
     type: node.config?.renderAs === 'field' ? 'field' :
       node.config?.renderAs === 'section' ? 'section' : 'file',
-    label: node.config?.label,
+    label: node.config?.label
+      ?? (node.frontmatter?.title as string | undefined)
+      ?? (node.type === 'file' ? filenameStem : undefined),
     description: node.config?.description,
     icon: node.config?.icon,
     color: node.config?.color,
