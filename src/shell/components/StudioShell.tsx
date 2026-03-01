@@ -14,6 +14,7 @@ import type {
   Directory,
   NewFileForm,
   NewFolderForm,
+  PromptFrontmatter,
 } from '@/../product/sections/prompt-library/types'
 import type {
   AgentBuilderScreenProps,
@@ -273,7 +274,13 @@ export function StudioShell({
   }, [knowledgeSections])
 
   // Access raw knowledge nodes and in-memory mutators from workspace context
-  const { knowledge: rawKnowledge, upsertAgent, deleteAgent } = useWorkspaceData()
+  const {
+    knowledge: rawKnowledge,
+    upsertAgent,
+    deleteAgent,
+    updateKnowledgeFileContent,
+    updateKnowledgeFileFrontmatter,
+  } = useWorkspaceData()
 
   // Extract agents from agents map
   const agents = useMemo(() => {
@@ -423,9 +430,20 @@ export function StudioShell({
   }, [onCollapseAll])
 
   const handleEditContent = useCallback((content: string) => {
-    setUnsavedChanges(true)
+    if (selectedFile?.path) {
+      updateKnowledgeFileContent(selectedFile.path, content)
+      setSelectedFile((prev) => (prev ? { ...prev, content } : prev))
+    }
+    setUnsavedChanges(false)
     onEditContent?.(content)
-  }, [onEditContent])
+  }, [onEditContent, selectedFile, updateKnowledgeFileContent])
+
+  const handleEditFrontmatter = useCallback((frontmatter: PromptFrontmatter) => {
+    if (selectedFile?.path) {
+      updateKnowledgeFileFrontmatter(selectedFile.path, frontmatter as Record<string, unknown>)
+      setSelectedFile((prev) => (prev ? { ...prev, frontmatter } : prev))
+    }
+  }, [selectedFile, updateKnowledgeFileFrontmatter])
 
   const handleSave = useCallback(() => {
     setUnsavedChanges(false)
@@ -949,6 +967,7 @@ export function StudioShell({
               onExpandAll={handleExpandAll}
               onCollapseAll={handleCollapseAll}
               onEditContent={handleEditContent}
+              onEditFrontmatter={handleEditFrontmatter}
               onSave={handleSave}
               onCreateFile={handleCreateFile}
               onCreateFolder={handleCreateFolder}

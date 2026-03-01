@@ -42,7 +42,64 @@ interface WorkspaceDataContextValue {
   setCurrentWorkspace: (workspaceId: string) => void
   upsertAgent: (agent: Agent) => void
   deleteAgent: (agentId: string) => void
+  updateKnowledgeFileContent: (filePath: string, content: string) => void
+  updateKnowledgeFileFrontmatter: (filePath: string, frontmatter: Record<string, unknown>) => void
   reload: () => Promise<void>
+}
+
+function updateKnowledgeNodeContent(
+  node: KnowledgeNode,
+  targetPath: string,
+  content: string
+): KnowledgeNode {
+  if (node.type === 'file' && node.path === targetPath) {
+    return {
+      ...node,
+      content,
+    }
+  }
+
+  if (!node.children || node.children.length === 0) {
+    return node
+  }
+
+  const nextChildren = node.children.map((child) =>
+    updateKnowledgeNodeContent(child, targetPath, content)
+  )
+
+  return {
+    ...node,
+    children: nextChildren,
+  }
+}
+
+function updateKnowledgeNodeFrontmatter(
+  node: KnowledgeNode,
+  targetPath: string,
+  frontmatter: Record<string, unknown>
+): KnowledgeNode {
+  if (node.type === 'file' && node.path === targetPath) {
+    return {
+      ...node,
+      frontmatter: {
+        ...(node.frontmatter || {}),
+        ...frontmatter,
+      },
+    }
+  }
+
+  if (!node.children || node.children.length === 0) {
+    return node
+  }
+
+  const nextChildren = node.children.map((child) =>
+    updateKnowledgeNodeFrontmatter(child, targetPath, frontmatter)
+  )
+
+  return {
+    ...node,
+    children: nextChildren,
+  }
 }
 
 const WorkspaceDataContext = createContext<WorkspaceDataContextValue | undefined>(undefined)
@@ -190,6 +247,30 @@ export function WorkspaceDataProvider({
     [updateCurrentWorkspace]
   )
 
+  const updateKnowledgeFileContent = useCallback(
+    (filePath: string, content: string) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        knowledge: workspace.knowledge.map((node) =>
+          updateKnowledgeNodeContent(node, filePath, content)
+        ),
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
+  const updateKnowledgeFileFrontmatter = useCallback(
+    (filePath: string, frontmatter: Record<string, unknown>) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        knowledge: workspace.knowledge.map((node) =>
+          updateKnowledgeNodeFrontmatter(node, filePath, frontmatter)
+        ),
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
   // Computed values
   const workspaceData: WorkspaceData | null = useMemo(
     () => (currentWorkspace && data ? data.workspaces[currentWorkspace] : null),
@@ -220,6 +301,8 @@ export function WorkspaceDataProvider({
     setCurrentWorkspace,
     upsertAgent,
     deleteAgent,
+    updateKnowledgeFileContent,
+    updateKnowledgeFileFrontmatter,
     reload: loadData,
   }
 
