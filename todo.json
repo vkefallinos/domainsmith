@@ -9,7 +9,7 @@
     },
     {
         "feature": "Save Content",
-        "issue": "Clicking Save in the File Editor does not save the file content, it simply logs 'Save changes' to the console."
+        "issue": "Auto save is enabled so it doesn't need to be manually triggered."
     },
     {
         "feature": "File Management Operations (Create/Rename/Delete)",

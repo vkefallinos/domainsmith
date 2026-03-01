@@ -26,4 +26,20 @@ test.describe('Agent Management & Interactions', () => {
         // Verify chat modal opens
         await expect(page.locator('text=Runtime Conversation Preview').first()).toBeVisible({ timeout: 10000 });
     });
+
+    test('should create a new agent', async ({ page }) => {
+        const createAgentBtn = page.locator('text=+ Create Agent').first();
+        await expect(createAgentBtn).toBeVisible();
+        await createAgentBtn.click();
+
+        // Fill in the modal
+        const nameInput = page.locator('input[placeholder="e.g. Assessment Assistant"]').first();
+        await expect(nameInput).toBeVisible();
+        await nameInput.fill('New Agent');
+        await page.locator('button:has-text("Create")').first().click();
+
+        // Verify that the URL changes and the new agent is opened
+        await page.waitForURL(/\/workspace\/.*\/studio\/agent\/agent-.*/);
+        await expect(page.locator('text=New Agent').first()).toBeVisible();
+    });
 });
