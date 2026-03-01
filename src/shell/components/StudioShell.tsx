@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { StudioSidebar } from './StudioSidebar'
-import { Plus, Bot, Folder, Zap, Play } from 'lucide-react'
+import { Plus, Bot, Folder, Zap, Play, Download } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
 import { AgentRuntimeView } from '@/sections/agent-runtime/components'
@@ -32,6 +32,7 @@ import type {
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
+import { downloadWorkspaceZip } from '@/lib/workspaceExport'
 import type { Agent as WorkspaceAgent } from '@/types/workspace-data'
 
 function toAgentId(name: string): string {
@@ -266,6 +267,7 @@ export function StudioShell({
   const pendingContentEditRef = useRef<{ path: string; content: string } | null>(null)
   const pendingFrontmatterEditRef = useRef<{ path: string; frontmatter: Record<string, unknown> } | null>(null)
   const runtimeResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isExportingWorkspace, setIsExportingWorkspace] = useState(false)
 
   // Extract domains from knowledge sections
   const domains = useMemo(() => {
@@ -319,6 +321,7 @@ export function StudioShell({
 
   // Access raw knowledge nodes and in-memory mutators from workspace context
   const {
+    workspaceData,
     knowledge: rawKnowledge,
     upsertAgent,
     deleteAgent,
@@ -1069,6 +1072,19 @@ export function StudioShell({
     onDeleteDomain?.(domainId)
   }, [onDeleteDomain])
 
+  const handleExportWorkspace = useCallback(async () => {
+    if (!workspaceData) return
+
+    try {
+      setIsExportingWorkspace(true)
+      await downloadWorkspaceZip(workspaceData)
+    } catch (error) {
+      console.error('Failed to export workspace:', error)
+    } finally {
+      setIsExportingWorkspace(false)
+    }
+  }, [workspaceData])
+
   // Show loading state while data loads (new hooks don't have loading, so we check if data exists)
   if (knowledgeSections.length === 0 && Object.keys(agentsMap).length === 0) {
     return (
@@ -1171,7 +1187,16 @@ export function StudioShell({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportWorkspace}
+              disabled={!workspaceData || isExportingWorkspace}
+              className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <Download className="h-4 w-4" />
+              {isExportingWorkspace ? 'Exporting…' : 'Export'}
+            </button>
+          </div>
         </header>
 
         {/* Content Area */}
