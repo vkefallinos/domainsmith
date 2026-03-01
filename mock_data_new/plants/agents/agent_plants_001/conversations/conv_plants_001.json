@@ -1,0 +1,60 @@
+{
+  "id": "conv_plants_001",
+  "agentId": "agent_plants_001",
+  "agentName": "IndoorPlantCoach",
+  "messages": [
+    {
+      "id": "msg_plants_001",
+      "role": "user",
+      "content": "My pothos leaves are turning yellow. What should I check first?",
+      "timestamp": "2026-02-27T18:01:00Z"
+    },
+    {
+      "id": "msg_plants_002",
+      "role": "assistant",
+      "content": "Start with drainage and watering frequency. Check if the top 2-3 cm of soil is dry before watering again, and confirm the pot has drainage holes. Then verify light is bright indirect, not harsh direct afternoon sun.",
+      "timestamp": "2026-02-27T18:01:20Z"
+    },
+    {
+      "id": "msg_plants_003",
+      "role": "user",
+      "content": "/careplan --roomTemperature \"22°C\" --currentSymptoms \"yellow lower leaves\"",
+      "timestamp": "2026-02-27T18:02:00Z",
+      "slashAction": {
+        "action": "careplan",
+        "agentId": "agent_plants_001",
+        "flowId": "flow-generate-care-plan",
+        "parameters": {
+          "roomTemperature": "22°C",
+          "currentSymptoms": "yellow lower leaves"
+        }
+      }
+    },
+    {
+      "id": "msg_plants_004",
+      "role": "assistant",
+      "content": "Generated a 7-day care plan with checks for moisture, light, and recovery progress.",
+      "timestamp": "2026-02-27T18:02:05Z",
+      "structuredOutput": {
+        "type": "carePlan",
+        "version": "1.0",
+        "metadata": {
+          "generatedAt": "2026-02-27T18:02:05Z",
+          "generatedBy": "IndoorPlantCoach",
+          "agentId": "agent_plants_001"
+        },
+        "carePlan": {
+          "plant": "Pothos",
+          "durationDays": 7,
+          "actions": [
+            "Check topsoil moisture daily before watering",
+            "Move plant 1 meter away from direct afternoon sun",
+            "Remove fully yellow leaves after verifying new growth"
+          ]
+        }
+      }
+    }
+  ],
+  "createdAt": "2026-02-27T18:01:00Z",
+  "updatedAt": "2026-02-27T18:02:05Z"
+}

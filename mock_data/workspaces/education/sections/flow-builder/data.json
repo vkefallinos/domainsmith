@@ -22,7 +22,11 @@
       "status": "active",
       "scope": "agent-specific",
       "agentId": "agent-lesson-plan",
-      "tags": ["lesson-plan", "generate", "structured"],
+      "tags": [
+        "lesson-plan",
+        "generate",
+        "structured"
+      ],
       "taskCount": 8,
       "createdAt": "2025-01-15T10:30:00Z",
       "updatedAt": "2025-02-27T10:00:00Z",
@@ -35,22 +39,13 @@
       "status": "active",
       "scope": "agent-specific",
       "agentId": "agent-assessment",
-      "tags": ["assessment", "generate", "structured"],
+      "tags": [
+        "assessment",
+        "generate",
+        "structured"
+      ],
       "taskCount": 6,
       "createdAt": "2025-01-20T09:15:00Z",
-      "updatedAt": "2025-02-27T10:00:00Z",
-      "lastRunAt": "2025-02-27T10:00:00Z"
-    },
-    {
-      "id": "flow_teambuild_generate",
-      "name": "Generate Team Building Session",
-      "description": "TeamBuildingAgent flow: Creates a complete team-building session with 5 gradual section generation tasks",
-      "status": "active",
-      "scope": "agent-specific",
-      "agentId": "agent-team-building",
-      "tags": ["team-building", "generate", "structured"],
-      "taskCount": 5,
-      "createdAt": "2025-02-01T16:00:00Z",
       "updatedAt": "2025-02-27T10:00:00Z",
       "lastRunAt": "2025-02-27T10:00:00Z"
     }
@@ -67,13 +62,33 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "title": { "type": "string", "description": "Lesson title" },
-            "gradeLevel": { "type": "string", "description": "Grade level" },
-            "subject": { "type": "string", "description": "Subject area" },
-            "duration": { "type": "number", "description": "Duration in minutes" },
-            "overview": { "type": "string", "description": "Brief lesson overview and instructions" }
+            "title": {
+              "type": "string",
+              "description": "Lesson title"
+            },
+            "gradeLevel": {
+              "type": "string",
+              "description": "Grade level"
+            },
+            "subject": {
+              "type": "string",
+              "description": "Subject area"
+            },
+            "duration": {
+              "type": "number",
+              "description": "Duration in minutes"
+            },
+            "overview": {
+              "type": "string",
+              "description": "Brief lesson overview and instructions"
+            }
           },
-          "required": ["title", "gradeLevel", "subject", "overview"]
+          "required": [
+            "title",
+            "gradeLevel",
+            "subject",
+            "overview"
+          ]
         },
         "targetFieldName": "overview",
         "taskInstructions": "Generate an engaging, standards-aligned lesson title and comprehensive overview. The title should be descriptive and student-friendly. Include grade level, subject area, estimated duration, and a concise overview that summarizes the lesson's focus, key activities, and learning goals. The overview should give a teacher a clear understanding of what the lesson entails at a glance.",
@@ -95,12 +110,16 @@
           "properties": {
             "learningObjectives": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Student-friendly learning objectives"
             },
             "standards": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Aligned curriculum standards"
             },
             "essentialQuestion": {
@@ -109,7 +128,9 @@
             },
             "successCriteria": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Criteria for success"
             }
           }
@@ -134,17 +155,23 @@
           "properties": {
             "materials": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Required materials for the lesson"
             },
             "preparation": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Advance preparation steps"
             },
             "resources": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Supplemental resources and references"
             }
           }
@@ -167,17 +194,32 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Opening/Warm-Up)" },
-            "sectionInstructions": { "type": "string", "description": "Teacher instructions for this section" },
-            "duration": { "type": "number", "description": "Duration in minutes" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title (e.g., Opening/Warm-Up)"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "Teacher instructions for this section"
+            },
+            "duration": {
+              "type": "number",
+              "description": "Duration in minutes"
+            },
             "activities": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "activity": { "type": "string" },
-                  "instructions": { "type": "string" },
-                  "duration": { "type": "number" }
+                  "activity": {
+                    "type": "string"
+                  },
+                  "instructions": {
+                    "type": "string"
+                  },
+                  "duration": {
+                    "type": "number"
+                  }
                 }
               }
             }
@@ -201,17 +243,32 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Direct Instruction)" },
-            "sectionInstructions": { "type": "string", "description": "Teacher instructions" },
-            "duration": { "type": "number", "description": "Duration in minutes" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title (e.g., Direct Instruction)"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "Teacher instructions"
+            },
+            "duration": {
+              "type": "number",
+              "description": "Duration in minutes"
+            },
             "content": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "step": { "type": "number" },
-                  "content": { "type": "string" },
-                  "scaffolding": { "type": "string" }
+                  "step": {
+                    "type": "number"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "scaffolding": {
+                    "type": "string"
+                  }
                 }
               }
             },
@@ -242,17 +299,29 @@
             "guidedPractice": {
               "type": "object",
               "properties": {
-                "sectionTitle": { "type": "string" },
-                "sectionInstructions": { "type": "string" },
-                "duration": { "type": "number" },
+                "sectionTitle": {
+                  "type": "string"
+                },
+                "sectionInstructions": {
+                  "type": "string"
+                },
+                "duration": {
+                  "type": "number"
+                },
                 "activities": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "activity": { "type": "string" },
-                      "instructions": { "type": "string" },
-                      "grouping": { "type": "string" }
+                      "activity": {
+                        "type": "string"
+                      },
+                      "instructions": {
+                        "type": "string"
+                      },
+                      "grouping": {
+                        "type": "string"
+                      }
                     }
                   }
                 }
@@ -261,17 +330,29 @@
             "independentPractice": {
               "type": "object",
               "properties": {
-                "sectionTitle": { "type": "string" },
-                "sectionInstructions": { "type": "string" },
-                "duration": { "type": "number" },
+                "sectionTitle": {
+                  "type": "string"
+                },
+                "sectionInstructions": {
+                  "type": "string"
+                },
+                "duration": {
+                  "type": "number"
+                },
                 "tasks": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "task": { "type": "string" },
-                      "instructions": { "type": "string" },
-                      "product": { "type": "string" }
+                      "task": {
+                        "type": "string"
+                      },
+                      "instructions": {
+                        "type": "string"
+                      },
+                      "product": {
+                        "type": "string"
+                      }
                     }
                   }
                 }
@@ -300,16 +381,26 @@
             "closure": {
               "type": "object",
               "properties": {
-                "sectionTitle": { "type": "string" },
-                "sectionInstructions": { "type": "string" },
-                "duration": { "type": "number" },
+                "sectionTitle": {
+                  "type": "string"
+                },
+                "sectionInstructions": {
+                  "type": "string"
+                },
+                "duration": {
+                  "type": "number"
+                },
                 "activities": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "activity": { "type": "string" },
-                      "instructions": { "type": "string" }
+                      "activity": {
+                        "type": "string"
+                      },
+                      "instructions": {
+                        "type": "string"
+                      }
                     }
                   }
                 }
@@ -320,7 +411,9 @@
               "properties": {
                 "formative": {
                   "type": "array",
-                  "items": { "type": "string" },
+                  "items": {
+                    "type": "string"
+                  },
                   "description": "Formative assessment strategies"
                 },
                 "summative": {
@@ -349,21 +442,37 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title" },
-            "sectionInstructions": { "type": "string", "description": "Overview of differentiation approach" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "Overview of differentiation approach"
+            },
             "strategies": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "studentGroup": { "type": "string", "description": "Target student group" },
-                  "modifications": { "type": "array", "items": { "type": "string" } }
+                  "studentGroup": {
+                    "type": "string",
+                    "description": "Target student group"
+                  },
+                  "modifications": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             },
             "extensions": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Extension activities for advanced learners"
             }
           }
@@ -386,14 +495,36 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "title": { "type": "string", "description": "Assessment title" },
-            "assessmentType": { "type": "string", "description": "Type of assessment" },
-            "gradeLevel": { "type": "string", "description": "Grade level" },
-            "subject": { "type": "string", "description": "Subject area" },
-            "overview": { "type": "string", "description": "Assessment overview and instructions" },
-            "duration": { "type": "number", "description": "Estimated duration in minutes" }
+            "title": {
+              "type": "string",
+              "description": "Assessment title"
+            },
+            "assessmentType": {
+              "type": "string",
+              "description": "Type of assessment"
+            },
+            "gradeLevel": {
+              "type": "string",
+              "description": "Grade level"
+            },
+            "subject": {
+              "type": "string",
+              "description": "Subject area"
+            },
+            "overview": {
+              "type": "string",
+              "description": "Assessment overview and instructions"
+            },
+            "duration": {
+              "type": "number",
+              "description": "Estimated duration in minutes"
+            }
           },
-          "required": ["title", "assessmentType", "overview"]
+          "required": [
+            "title",
+            "assessmentType",
+            "overview"
+          ]
         },
         "targetFieldName": "overview",
         "taskInstructions": "Generate a comprehensive assessment overview including a clear, descriptive title; assessment type (quiz, test, performance task, portfolio, etc.); grade level and subject area; estimated duration; and a brief overview explaining what knowledge and skills are being assessed. The overview should help teachers quickly understand the assessment's purpose and scope.",
@@ -413,26 +544,54 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Assessment Items)" },
-            "sectionInstructions": { "type": "string", "description": "Instructions for students" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title (e.g., Assessment Items)"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "Instructions for students"
+            },
             "items": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "number": { "type": "number" },
-                  "itemType": { "type": "string", "description": "Multiple choice, short answer, essay, etc." },
-                  "question": { "type": "string" },
+                  "number": {
+                    "type": "number"
+                  },
+                  "itemType": {
+                    "type": "string",
+                    "description": "Multiple choice, short answer, essay, etc."
+                  },
+                  "question": {
+                    "type": "string"
+                  },
                   "options": {
                     "type": "array",
-                    "items": { "type": "string" },
+                    "items": {
+                      "type": "string"
+                    },
                     "description": "Answer choices for multiple choice"
                   },
-                  "points": { "type": "number" },
-                  "standard": { "type": "string", "description": "Aligned standard" },
-                  "dokLevel": { "type": "string", "description": "Depth of Knowledge level" }
+                  "points": {
+                    "type": "number"
+                  },
+                  "standard": {
+                    "type": "string",
+                    "description": "Aligned standard"
+                  },
+                  "dokLevel": {
+                    "type": "string",
+                    "description": "Depth of Knowledge level"
+                  }
                 },
-                "required": ["number", "itemType", "question", "points"]
+                "required": [
+                  "number",
+                  "itemType",
+                  "question",
+                  "points"
+                ]
               }
             }
           }
@@ -455,8 +614,14 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Answer Key)" },
-            "sectionInstructions": { "type": "string", "description": "Scoring instructions" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title (e.g., Answer Key)"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "Scoring instructions"
+            },
             "answers": {
               "type": "object",
               "additionalProperties": {
@@ -469,9 +634,15 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "itemRange": { "type": "string" },
-                  "points": { "type": "number" },
-                  "criteria": { "type": "string" }
+                  "itemRange": {
+                    "type": "string"
+                  },
+                  "points": {
+                    "type": "number"
+                  },
+                  "criteria": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -495,19 +666,37 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Scoring Rubric)" },
-            "sectionInstructions": { "type": "string", "description": "How to use the rubric" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title (e.g., Scoring Rubric)"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "How to use the rubric"
+            },
             "criteria": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "criterion": { "type": "string" },
-                  "exemplary": { "type": "string" },
-                  "proficient": { "type": "string" },
-                  "developing": { "type": "string" },
-                  "beginning": { "type": "string" },
-                  "points": { "type": "number" }
+                  "criterion": {
+                    "type": "string"
+                  },
+                  "exemplary": {
+                    "type": "string"
+                  },
+                  "proficient": {
+                    "type": "string"
+                  },
+                  "developing": {
+                    "type": "string"
+                  },
+                  "beginning": {
+                    "type": "string"
+                  },
+                  "points": {
+                    "type": "number"
+                  }
                 }
               }
             }
@@ -531,17 +720,28 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Accommodations)" },
-            "sectionInstructions": { "type": "string", "description": "Implementation guidance" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title (e.g., Accommodations)"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "Implementation guidance"
+            },
             "accommodations": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "studentGroup": { "type": "string", "description": "ELL, IEP, 504, etc." },
+                  "studentGroup": {
+                    "type": "string",
+                    "description": "ELL, IEP, 504, etc."
+                  },
                   "accommodations": {
                     "type": "array",
-                    "items": { "type": "string" },
+                    "items": {
+                      "type": "string"
+                    },
                     "description": "Specific accommodations"
                   }
                 }
@@ -567,24 +767,38 @@
         "outputSchema": {
           "type": "object",
           "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title" },
-            "sectionInstructions": { "type": "string", "description": "Administration overview" },
+            "sectionTitle": {
+              "type": "string",
+              "description": "Section title"
+            },
+            "sectionInstructions": {
+              "type": "string",
+              "description": "Administration overview"
+            },
             "preparation": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Preparation steps"
             },
             "timing": {
               "type": "object",
               "properties": {
-                "totalTime": { "type": "number" },
+                "totalTime": {
+                  "type": "number"
+                },
                 "breakdown": {
                   "type": "array",
                   "items": {
                     "type": "object",
                     "properties": {
-                      "section": { "type": "string" },
-                      "suggestedTime": { "type": "number" }
+                      "section": {
+                        "type": "string"
+                      },
+                      "suggestedTime": {
+                        "type": "number"
+                      }
                     }
                   }
                 }
@@ -596,200 +810,6 @@
         "taskInstructions": "Create a comprehensive administration guide including preparation steps (materials needed, room setup, advance notices); total time allocation; and suggested timing breakdowns by section. Include instructions for test security, student communication, and handling special circumstances during administration.",
         "model": "claude-3-5-sonnet",
         "temperature": 0.3
-      },
-      "status": "valid"
-    },
-    {
-      "id": "task_team_001",
-      "flowId": "flow_teambuild_generate",
-      "type": "updateFlowOutput",
-      "order": 1,
-      "name": "Generate Session Overview",
-      "description": "Generates team-building session title and overview",
-      "config": {
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "title": { "type": "string", "description": "Session title" },
-            "gradeLevel": { "type": "string", "description": "Grade level" },
-            "duration": { "type": "string", "description": "Session duration" },
-            "overview": { "type": "string", "description": "Session overview and instructions" }
-          },
-          "required": ["title", "overview"]
-        },
-        "targetFieldName": "overview",
-        "taskInstructions": "Generate an engaging team-building session overview with a clear, descriptive title; appropriate grade level; estimated duration; and a brief overview explaining the session's purpose, key activities, and expected outcomes. The overview should help facilitators understand how this session strengthens team dynamics and builds collaborative skills.",
-        "model": "claude-3-5-sonnet",
-        "temperature": 0.4
-      },
-      "status": "valid"
-    },
-    {
-      "id": "task_team_002",
-      "flowId": "flow_teambuild_generate",
-      "type": "updateFlowOutput",
-      "order": 2,
-      "name": "Generate Goals and Skills Section",
-      "description": "Generates session goals and targeted skills section",
-      "config": {
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Goals & Skills)" },
-            "sectionInstructions": { "type": "string", "description": "Purpose of this section" },
-            "sessionGoals": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Specific goals for the session"
-            },
-            "targetSkills": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Targeted collaboration/SEL skills"
-            },
-            "essentialQuestion": {
-              "type": "string",
-              "description": "Essential question for the session"
-            }
-          }
-        },
-        "targetFieldName": "goals",
-        "taskInstructions": "Define specific, measurable session goals that focus on building collaborative skills and positive team dynamics. Identify targeted Social Emotional Learning skills such as communication, trust, problem-solving, empathy, and conflict resolution. Include an essential question that frames the session's purpose and guides participant reflection throughout the activities.",
-        "model": "claude-3-5-sonnet",
-        "temperature": 0.4
-      },
-      "status": "valid"
-    },
-    {
-      "id": "task_team_003",
-      "flowId": "flow_teambuild_generate",
-      "type": "updateFlowOutput",
-      "order": 3,
-      "name": "Generate Activities Section",
-      "description": "Generates team-building activities section",
-      "config": {
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Activities)" },
-            "sectionInstructions": { "type": "string", "description": "Activity implementation overview" },
-            "materials": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Required materials"
-            },
-            "activities": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "activityName": { "type": "string" },
-                  "activityInstructions": { "type": "string", "description": "Step-by-step instructions" },
-                  "duration": { "type": "string" },
-                  "groupSize": { "type": "string" },
-                  "setup": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "description": "Setup requirements"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "targetFieldName": "activities",
-        "taskInstructions": "Design engaging team-building activities with clear names; step-by-step implementation instructions; estimated duration per activity; recommended group sizes; and setup requirements. Activities should progressively build trust, communication, and collaboration skills. Include icebreakers, problem-solving challenges, and reflection exercises.",
-        "model": "claude-3-5-sonnet",
-        "temperature": 0.5
-      },
-      "status": "valid"
-    },
-    {
-      "id": "task_team_004",
-      "flowId": "flow_teambuild_generate",
-      "type": "updateFlowOutput",
-      "order": 4,
-      "name": "Generate Grouping Strategy Section",
-      "description": "Generates student grouping recommendations",
-      "config": {
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Grouping Strategy)" },
-            "sectionInstructions": { "type": "string", "description": "How to form groups" },
-            "groupingMethod": {
-              "type": "string",
-              "description": "Recommended grouping approach"
-            },
-            "groupSize": {
-              "type": "string",
-              "description": "Recommended group size"
-            },
-            "roles": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Suggested roles within groups"
-            },
-            "considerations": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Special considerations for grouping"
-            }
-          }
-        },
-        "targetFieldName": "grouping",
-        "taskInstructions": "Provide strategic grouping recommendations including the best method for forming groups (random, teacher-selected, student-choice); optimal group size for the activities; suggested roles within groups to ensure participation; and special considerations for ensuring diverse, balanced groups that maximize positive social interactions.",
-        "model": "claude-3-5-sonnet",
-        "temperature": 0.4
-      },
-      "status": "valid"
-    },
-    {
-      "id": "task_team_005",
-      "flowId": "flow_teambuild_generate",
-      "type": "updateFlowOutput",
-      "order": 5,
-      "name": "Generate Reflection Prompts Section",
-      "description": "Generates reflection and debrief questions",
-      "config": {
-        "outputSchema": {
-          "type": "object",
-          "properties": {
-            "sectionTitle": { "type": "string", "description": "Section title (e.g., Reflection & Debrief)" },
-            "sectionInstructions": { "type": "string", "description": "How to facilitate reflection" },
-            "openingPrompt": {
-              "type": "string",
-              "description": "Opening reflection question"
-            },
-            "activityReflections": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "activity": { "type": "string" },
-                  "reflectionQuestions": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                  }
-                }
-              }
-            },
-            "closingPrompts": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Closing reflection questions"
-            },
-            "journalPrompts": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "Optional journal/written reflection prompts"
-            }
-          }
-        },
-        "targetFieldName": "reflections",
-        "taskInstructions": "Create meaningful reflection prompts that help participants process their experience and connect learning to future collaboration. Include an opening reflection question to set intentions; activity-specific debrief questions; closing prompts that synthesize learning; and optional journal prompts for personal reflection. Questions should foster metacognition about teamwork and communication skills.",
-        "model": "claude-3-5-sonnet",
-        "temperature": 0.5
       },
       "status": "valid"
     }

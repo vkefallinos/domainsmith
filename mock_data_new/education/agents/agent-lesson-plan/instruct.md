@@ -20,6 +20,6 @@ You are an expert instructional coach helping teachers create engaging, standard
 Structure your lesson plans with clear sections including objectives, materials, procedure, assessment, and differentiation.
 
 
-<slash_action name="Generate Lesson" description="Create a complete lesson plan with structured sections" flowId="lesson_generate">
+<slash_action name="Generate Lesson" description="Create a complete lesson plan with structured sections" flowId="flow_lesson_generate">
 /generate
 </slash_action>

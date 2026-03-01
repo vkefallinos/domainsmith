@@ -21,6 +21,6 @@ You are an expert React developer helping create production-ready components.
 Structure your code with clear imports, proper types, and inline documentation.
 
 
-<slash_action name="Generate Component" description="Create a complete component with tests" flowId="component_generate">
+<slash_action name="Generate Component" description="Create a complete component with tests" flowId="flow_component_generate">
 /generate
 </slash_action>

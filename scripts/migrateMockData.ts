@@ -291,6 +291,39 @@ async function migrate() {
         } catch (err: any) {
             console.warn(`Could not process prompt library data for ${workspace}: ${err.message}`);
         }
+
+        // 4. Agent Runtime Data
+        const agentRuntimeDataPath = path.join(workspacePath, 'sections', 'agent-runtime', 'data.json');
+        console.log(`Trying to read agent runtime data from: ${agentRuntimeDataPath}`);
+
+        try {
+            const runtimeDataRaw = await fs.readFile(agentRuntimeDataPath, 'utf8');
+            console.log(`Successfully read data.json for agent-runtime (length: ${runtimeDataRaw.length})`);
+
+            const runtimeData = JSON.parse(runtimeDataRaw);
+
+            if (runtimeData.conversations && Array.isArray(runtimeData.conversations)) {
+                console.log(`Found ${runtimeData.conversations.length} conversations. Extracting...`);
+                for (const conversation of runtimeData.conversations) {
+                    if (!conversation.agentId) {
+                        console.warn('Conversation is missing agentId, skipping:', conversation.id);
+                        continue;
+                    }
+
+                    const convDir = path.join(outWorkspacePath, 'agents', conversation.agentId, 'conversations');
+                    await fs.mkdir(convDir, { recursive: true });
+
+                    const convFileName = `${conversation.id}.json`;
+                    await fs.writeFile(path.join(convDir, convFileName), JSON.stringify(conversation, null, 2));
+                    console.log(`  -> Wrote conversation ${conversation.id} to ${convDir}`);
+                }
+            } else {
+                console.log(`No conversations found in ${workspace}.`);
+            }
+
+        } catch (err: any) {
+            console.warn(`Could not process agent runtime data for ${workspace}: ${err.message}`);
+        }
     }
 
     console.log('Migration complete!');

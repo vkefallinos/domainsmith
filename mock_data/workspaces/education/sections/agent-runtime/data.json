@@ -16,28 +16,56 @@
   },
   "agents": [
     {
-      "id": "agent_001",
+      "id": "agent-lesson-plan",
       "name": "LessonPlanAgent",
       "description": "Creates comprehensive lesson plans aligned with standards, customized for classroom and teacher needs",
-      "domains": ["Classroom Management", "Teacher Profile", "Curriculum Standards", "Subject Topics"],
+      "domains": [
+        "Classroom Management",
+        "Teacher Profile",
+        "Curriculum Standards",
+        "Subject Topics"
+      ],
       "formValues": {
         "gradeLevel": "5th Grade",
         "classSize": "Medium (16-25)",
-        "studentNeeds": ["English Language Learners", "Gifted & Talented"],
+        "studentNeeds": [
+          "English Language Learners",
+          "Gifted & Talented"
+        ],
         "learningModel": "In-Person",
-        "resourcesAvailable": ["1:1 Devices", "Interactive Whiteboard"],
+        "resourcesAvailable": [
+          "1:1 Devices",
+          "Interactive Whiteboard"
+        ],
         "yearsExperience": "3-5 years (Beginning)",
-        "subjectExpertise": ["Mathematics", "Science"],
-        "teachingStyle": ["Differentiated Instruction", "Project-Based Learning"],
-        "certifications": ["General Elementary"],
+        "subjectExpertise": [
+          "Mathematics",
+          "Science"
+        ],
+        "teachingStyle": [
+          "Differentiated Instruction",
+          "Project-Based Learning"
+        ],
+        "certifications": [
+          "General Elementary"
+        ],
         "curriculumFramework": "Common Core State Standards",
-        "assessmentMethods": ["Formative Assessment", "Project-Based"],
+        "assessmentMethods": [
+          "Formative Assessment",
+          "Project-Based"
+        ],
         "pacingGuide": true,
         "differentiationRequired": true,
         "primarySubject": "Mathematics",
-        "topics": ["Fractions", "Decimals"],
+        "topics": [
+          "Fractions",
+          "Decimals"
+        ],
         "skillLevel": "Developing",
-        "crossCurricular": ["Real-World Applications", "Technology"]
+        "crossCurricular": [
+          "Real-World Applications",
+          "Technology"
+        ]
       },
       "runtimeFields": [
         {
@@ -52,7 +80,13 @@
           "id": "lessonLength",
           "label": "Lesson Length (minutes)",
           "type": "select",
-          "options": ["30", "45", "60", "90", "120"],
+          "options": [
+            "30",
+            "45",
+            "60",
+            "90",
+            "120"
+          ],
           "value": "60",
           "domain": "Classroom Management"
         },
@@ -102,7 +136,7 @@
           "name": "Generate Lesson",
           "description": "Create a complete lesson plan based on your specifications",
           "flowId": "flow_lesson_generate",
-          "agentId": "agent_001",
+          "agentId": "agent-lesson-plan",
           "enabled": true
         }
       ],
@@ -110,31 +144,57 @@
       "lastUsedAt": "2025-02-20T14:30:00Z"
     },
     {
-      "id": "agent_002",
+      "id": "agent-assessment",
       "name": "AssessmentAgent",
       "description": "Designs formative and summative assessments aligned to learning objectives and standards",
-      "domains": ["Curriculum Standards", "Subject Topics", "Classroom Management"],
+      "domains": [
+        "Curriculum Standards",
+        "Subject Topics",
+        "Classroom Management"
+      ],
       "formValues": {
         "gradeLevel": "8th Grade",
         "classSize": "Large (26-35)",
-        "studentNeeds": ["Reading Intervention", "Special Education"],
+        "studentNeeds": [
+          "Reading Intervention",
+          "Special Education"
+        ],
         "learningModel": "In-Person",
-        "resourcesAvailable": ["1:1 Devices"],
+        "resourcesAvailable": [
+          "1:1 Devices"
+        ],
         "curriculumFramework": "Common Core State Standards",
-        "assessmentMethods": ["Formative Assessment", "Summative Assessment", "Performance Tasks"],
+        "assessmentMethods": [
+          "Formative Assessment",
+          "Summative Assessment",
+          "Performance Tasks"
+        ],
         "pacingGuide": true,
         "differentiationRequired": true,
         "primarySubject": "Mathematics",
-        "topics": ["Algebra", "Linear Equations", "Graphing"],
+        "topics": [
+          "Algebra",
+          "Linear Equations",
+          "Graphing"
+        ],
         "skillLevel": "Proficient",
-        "crossCurricular": ["Real-World Applications"]
+        "crossCurricular": [
+          "Real-World Applications"
+        ]
       },
       "runtimeFields": [
         {
           "id": "assessmentType",
           "label": "Assessment Type",
           "type": "select",
-          "options": ["Quiz", "Test", "Project", "Performance Task", "Exit Ticket", "Portfolio"],
+          "options": [
+            "Quiz",
+            "Test",
+            "Project",
+            "Performance Task",
+            "Exit Ticket",
+            "Portfolio"
+          ],
           "value": "",
           "domain": "Curriculum Standards"
         },
@@ -150,7 +210,12 @@
           "id": "pointValue",
           "label": "Point Value",
           "type": "select",
-          "options": ["10", "20", "50", "100"],
+          "options": [
+            "10",
+            "20",
+            "50",
+            "100"
+          ],
           "value": "100",
           "domain": "Curriculum Standards"
         }
@@ -201,108 +266,18 @@
           "name": "Generate Assessment",
           "description": "Create a complete assessment with items and rubric",
           "flowId": "flow_assessment_generate",
-          "agentId": "agent_002",
+          "agentId": "agent-assessment",
           "enabled": true
         }
       ],
       "createdAt": "2025-01-20T10:30:00Z",
       "lastUsedAt": "2025-02-18T11:15:00Z"
-    },
-    {
-      "id": "agent_003",
-      "name": "TeamBuildingAgent",
-      "description": "Creates collaborative learning activities and team-building exercises for classroom community building",
-      "domains": ["Classroom Management", "Teacher Profile", "Subject Topics"],
-      "formValues": {
-        "gradeLevel": "6th Grade",
-        "classSize": "Medium (16-25)",
-        "studentNeeds": ["Behavioral Support"],
-        "learningModel": "In-Person",
-        "resourcesAvailable": ["Gym/Outdoor Space", "Art Supplies"],
-        "yearsExperience": "0-2 years (Novice)",
-        "subjectExpertise": ["Physical Education", "Health"],
-        "teachingStyle": ["Cooperative Learning", "Gamification"],
-        "certifications": ["General Elementary"],
-        "primarySubject": "Social Studies",
-        "topics": ["Teamwork", "Communication", "Problem Solving"],
-        "skillLevel": "Introduction",
-        "crossCurricular": ["Social-Emotional Learning"]
-      },
-      "runtimeFields": [
-        {
-          "id": "activityDuration",
-          "label": "Activity Duration (minutes)",
-          "type": "select",
-          "options": ["10-15", "20-30", "30-45", "45-60"],
-          "value": "",
-          "domain": "Classroom Management"
-        },
-        {
-          "id": "groupSize",
-          "label": "Group Size",
-          "type": "select",
-          "options": ["Pairs", "Trios", "Groups of 4", "Groups of 5-6", "Whole Class"],
-          "value": "",
-          "domain": "Classroom Management"
-        },
-        {
-          "id": "sessionGoal",
-          "label": "Session Goal",
-          "type": "textarea",
-          "placeholder": "What team-building skill or outcome are you targeting?",
-          "value": "",
-          "domain": "Subject Topics"
-        }
-      ],
-      "enabledTools": [
-        {
-          "toolId": "activity-database",
-          "name": "Activity Database",
-          "package": "@edtools/activities",
-          "version": "1.8.0",
-          "installed": true,
-          "source": "manual",
-          "icon": "🎯"
-        },
-        {
-          "toolId": "grouping-strategy",
-          "name": "Grouping Strategy Advisor",
-          "package": "@edtools/grouping",
-          "version": "1.1.0",
-          "installed": true,
-          "source": "manual",
-          "icon": "👥"
-        },
-        {
-          "toolId": "reflection-prompt-generator",
-          "name": "Reflection Prompt Generator",
-          "package": "@edtools/reflection",
-          "version": "1.0.0",
-          "installed": true,
-          "source": "manual",
-          "icon": "💭"
-        }
-      ],
-      "systemPrompt": "# Team Building & Collaboration Assistant\n\nYou are an expert in designing collaborative learning experiences that build classroom community and develop social-emotional skills.\n\n## Your Approach\n1. Design activities appropriate for grade level and group size\n2. Focus on specific collaboration skills (communication, trust, problem-solving)\n3. Include clear roles and responsibilities within groups\n4. Provide debrief questions for reflection\n5. Suggest grouping strategies based on student dynamics\n6. Consider physical space and available resources\n\n## Activity Design Elements\n- Icebreaker/getting to know you activities\n- Problem-solving challenges\n- Communication-building exercises\n- Trust-building activities\n- Reflection and debrief prompts\n- Extensions and variations",
-      "slashActions": [
-        {
-          "id": "sc_teambuild_generate",
-          "actionId": "generate",
-          "name": "Generate Session",
-          "description": "Create a complete team-building session plan",
-          "flowId": "flow_teambuild_generate",
-          "agentId": "agent_003",
-          "enabled": true
-        }
-      ],
-      "createdAt": "2025-02-01T08:00:00Z",
-      "lastUsedAt": "2025-02-15T16:45:00Z"
     }
   ],
   "conversations": [
     {
       "id": "conv_001",
-      "agentId": "agent_001",
+      "agentId": "agent-lesson-plan",
       "agentName": "LessonPlanAgent",
       "messages": [
         {
@@ -324,7 +299,7 @@
           "timestamp": "2025-02-20T14:31:30Z",
           "slashAction": {
             "action": "generate",
-            "agentId": "agent_001",
+            "agentId": "agent-lesson-plan",
             "flowId": "flow_lesson_generate",
             "parameters": {
               "unitFocus": "Introduction to Fractions",
@@ -344,39 +319,59 @@
             "metadata": {
               "generatedAt": "2025-02-20T14:31:31Z",
               "generatedBy": "LessonPlanAgent",
-              "agentId": "agent_001"
+              "agentId": "agent-lesson-plan"
             },
             "lessonPlan": {
               "title": "Introduction to Fractions",
               "gradeLevel": "5th Grade",
               "duration": 60,
-              "standards": ["5.NF.A.1", "5.NF.A.2"],
+              "standards": [
+                "5.NF.A.1",
+                "5.NF.A.2"
+              ],
               "objectives": [
                 "Identify numerator and denominator",
                 "Represent fractions using area models",
                 "Compare fractions with like denominators"
               ],
-              "materials": ["Fraction tiles", "Graph paper", "Whiteboard", "Worksheets"],
+              "materials": [
+                "Fraction tiles",
+                "Graph paper",
+                "Whiteboard",
+                "Worksheets"
+              ],
               "segments": [
                 {
                   "id": "warmup",
                   "title": "Warm-Up (10 min)",
-                  "activities": ["Fraction vocabulary review", "Quick fraction identifier game"]
+                  "activities": [
+                    "Fraction vocabulary review",
+                    "Quick fraction identifier game"
+                  ]
                 },
                 {
                   "id": "instruction",
                   "title": "Direct Instruction (15 min)",
-                  "activities": ["Introduction to fraction notation", "Area model demonstration"]
+                  "activities": [
+                    "Introduction to fraction notation",
+                    "Area model demonstration"
+                  ]
                 },
                 {
                   "id": "guided",
                   "title": "Guided Practice (20 min)",
-                  "activities": ["Hands-on fraction tiles", "Partner work with manipulatives"]
+                  "activities": [
+                    "Hands-on fraction tiles",
+                    "Partner work with manipulatives"
+                  ]
                 },
                 {
                   "id": "closure",
                   "title": "Closure (15 min)",
-                  "activities": ["Exit ticket", "Student reflection"]
+                  "activities": [
+                    "Exit ticket",
+                    "Student reflection"
+                  ]
                 }
               ],
               "differentiation": {
@@ -392,8 +387,13 @@
                 }
               },
               "assessment": {
-                "formative": ["Observation during practice", "Whiteboard responses"],
-                "summative": ["Exit ticket (5 questions)"]
+                "formative": [
+                  "Observation during practice",
+                  "Whiteboard responses"
+                ],
+                "summative": [
+                  "Exit ticket (5 questions)"
+                ]
               }
             }
           }
@@ -404,7 +404,7 @@
     },
     {
       "id": "conv_002",
-      "agentId": "agent_002",
+      "agentId": "agent-assessment",
       "agentName": "AssessmentAgent",
       "messages": [
         {
@@ -426,7 +426,7 @@
           "timestamp": "2025-02-18T11:17:00Z",
           "slashAction": {
             "action": "generate",
-            "agentId": "agent_002",
+            "agentId": "agent-assessment",
             "flowId": "flow_assessment_generate",
             "parameters": {
               "assessmentType": "Quiz",
@@ -446,14 +446,18 @@
             "metadata": {
               "generatedAt": "2025-02-18T11:17:01Z",
               "generatedBy": "AssessmentAgent",
-              "agentId": "agent_002"
+              "agentId": "agent-assessment"
             },
             "assessment": {
               "title": "Linear Equations Quiz",
               "gradeLevel": "8th Grade",
               "assessmentType": "Quiz",
               "pointValue": 100,
-              "standards": ["8.EE.C.7", "8.EE.C.7a", "8.EE.C.7b"],
+              "standards": [
+                "8.EE.C.7",
+                "8.EE.C.7a",
+                "8.EE.C.7b"
+              ],
               "duration": 45,
               "items": [
                 {
@@ -462,7 +466,12 @@
                   "points": 10,
                   "dokLevel": 1,
                   "question": "Solve for x: 3x + 5 = 20",
-                  "options": ["x = 3", "x = 5", "x = 7", "x = 15"],
+                  "options": [
+                    "x = 3",
+                    "x = 5",
+                    "x = 7",
+                    "x = 15"
+                  ],
                   "correctAnswer": "x = 5",
                   "standard": "8.EE.C.7"
                 },
@@ -519,144 +528,6 @@
       ],
       "createdAt": "2025-02-18T11:15:00Z",
       "updatedAt": "2025-02-18T11:16:00Z"
-    },
-    {
-      "id": "conv_003",
-      "agentId": "agent_003",
-      "agentName": "TeamBuildingAgent",
-      "messages": [
-        {
-          "id": "msg_003_1",
-          "role": "user",
-          "content": "My 6th graders are struggling to work together in groups. What activities can help?",
-          "timestamp": "2025-02-15T16:45:00Z"
-        },
-        {
-          "id": "msg_003_2",
-          "role": "assistant",
-          "content": "Here are some team-building activities perfect for 6th graders:\n\n## Activity 1: The Human Knot (15-20 minutes)\n**Skills:** Communication, problem-solving, patience\n\n**Setup:** Groups of 6-8 students stand in circle, reach hands across to grab random hands\n\n**Goal:** Untangle the knot without letting go\n\n**Debrief Questions:**\n- What strategies did your group try?\n- How did you handle disagreements?\n- What role did each person play?\n\n## Activity 2: Common Ground (10-15 minutes)\n**Skills:** Finding connections, active listening\n\n**Setup:** Groups of 4\n\n**Goal:** Find 10 things everyone in the group has in common (cannot be visible traits)\n\n## Activity 3: Build a Tower (20-30 minutes)\n**Skills:** Collaboration, planning, roles\n\n**Materials:** Straws, tape, string\n\n**Goal:** Build the tallest free-standing tower\n\n**Suggested Roles:**\n- Planner (reads instructions)\n- Builder (constructs)\n- Material manager (gets supplies)\n- Timekeeper/cheerleader\n\nWould you like detailed instructions for any of these or activities targeting a specific skill?",
-          "timestamp": "2025-02-15T16:46:00Z"
-        },
-        {
-          "id": "msg_003_3",
-          "role": "user",
-          "content": "/generate --activityDuration \"30-45\" --groupSize \"Groups of 4\" --sessionGoal \"Improve communication and trust among students\"",
-          "timestamp": "2025-02-15T16:47:00Z",
-          "slashAction": {
-            "action": "generate",
-            "agentId": "agent_003",
-            "flowId": "flow_teambuild_generate",
-            "parameters": {
-              "activityDuration": "30-45",
-              "groupSize": "Groups of 4",
-              "sessionGoal": "Improve communication and trust among students"
-            }
-          }
-        },
-        {
-          "id": "msg_003_4",
-          "role": "assistant",
-          "content": "Generating team-building session plan...",
-          "timestamp": "2025-02-15T16:47:01Z",
-          "structuredOutput": {
-            "type": "teamBuildingSession",
-            "version": "1.0",
-            "metadata": {
-              "generatedAt": "2025-02-15T16:47:01Z",
-              "generatedBy": "TeamBuildingAgent",
-              "agentId": "agent_003"
-            },
-            "session": {
-              "title": "Communication & Trust Building Session",
-              "gradeLevel": "6th Grade",
-              "duration": 45,
-              "groupSize": "Groups of 4",
-              "sessionGoal": "Improve communication and trust among students",
-              "targetSkills": ["Communication", "Trust", "Active Listening", "Collaboration"],
-              "activities": [
-                {
-                  "id": "activity_1",
-                  "name": "Two Truths and a Lie",
-                  "duration": 15,
-                  "setup": {
-                    "materials": ["Index cards", "Pencils"],
-                    "space": "Classroom desks arranged in groups"
-                  },
-                  "instructions": [
-                    "Each student writes three statements about themselves",
-                    "Two statements are true, one is false",
-                    "Group members guess which is the lie",
-                    "Student reveals the answer and shares a story"
-                  ],
-                  "targetSkills": ["Active Listening", "Getting to Know Each Other"],
-                  "debriefQuestions": [
-                    "What was surprising about your group members?",
-                    "How did you decide which statement was the lie?"
-                  ]
-                },
-                {
-                  "id": "activity_2",
-                  "name": "Blindfolded Obstacle Course",
-                  "duration": 20,
-                  "setup": {
-                    "materials": ["Blindfolds", "Cones/obstacles", "Open space"],
-                    "space": "Gym or outdoor area"
-                  },
-                  "instructions": [
-                    "One student is blindfolded",
-                    "Other group members guide them through obstacles using only words",
-                    "Rotate roles so everyone has a chance to be guided",
-                    "No touching - only verbal directions allowed"
-                  ],
-                  "targetSkills": ["Communication", "Trust", "Clear Directions"],
-                  "safetyNotes": "Clear area of hazards, have spotters",
-                  "debriefQuestions": [
-                    "How did it feel to be blindfolded?",
-                    "What made directions helpful or confusing?",
-                    "How did trust affect your experience?"
-                  ]
-                },
-                {
-                  "id": "activity_3",
-                  "name": "Group Reflection Circle",
-                  "duration": 10,
-                  "setup": {
-                    "materials": ["Talking piece (optional)", "Journal prompts"],
-                    "space": "Open circle formation"
-                  },
-                  "instructions": [
-                    "Sit in a circle",
-                    "Pass talking piece for sharing",
-                    "Reflect on today's activities",
-                    "Share one thing learned about the group"
-                  ],
-                  "targetSkills": ["Reflection", "Community Building"],
-                  "reflectionPrompts": [
-                    "What skill do you want to improve?",
-                    "How can we work better together?",
-                    "What was your favorite moment today?"
-                  ]
-                }
-              ],
-              "groupingStrategy": {
-                "method": "Mixed-ability grouping",
-                "considerations": ["Mix social dynamics", "Balance leadership", "Include all skill levels"],
-                "roles": ["Facilitator", "Timekeeper", "Materials Manager", "Encourager"]
-              },
-              "extensions": {
-                "followUp": ["Weekly check-ins", "Graduated challenge activities"],
-                "variations": ["Solo reflection journal", "Pair shares", "Whole class discussion"]
-              },
-              "assessment": {
-                "observationCriteria": ["Participation level", "Communication quality", "Trust behaviors"],
-                "studentReflection": "Exit ticket: What did you contribute to your group today?"
-              }
-            }
-          }
-        }
-      ],
-      "createdAt": "2025-02-15T16:45:00Z",
-      "updatedAt": "2025-02-15T16:46:00Z"
     }
   ]
 }

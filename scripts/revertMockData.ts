@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const IN_DIR = path.resolve('./mock_data_new');
-const OUT_DIR = path.resolve('./mock_data/workspaces');
+const OUT_DIR = path.resolve('./mock_data_reverted');
 
 // basic YAML parser for simple key-value frontmatter where values are strings, arrays or objects (JSON represented)
 function parseFrontmatter(content: string) {
@@ -266,6 +266,12 @@ async function revert() {
         }
 
         if (flowBuilderData.flows.length > 0) {
+            // Sort tasks by order
+            flowBuilderData.tasks.sort((a: any, b: any) => {
+                if (a.flowId !== b.flowId) return a.flowId.localeCompare(b.flowId);
+                return a.order - b.order;
+            });
+
             const flowBuilderOutDir = path.join(sectionsDir, 'flow-builder');
             await fs.mkdir(flowBuilderOutDir, { recursive: true });
             await fs.writeFile(path.join(flowBuilderOutDir, 'data.json'), JSON.stringify(flowBuilderData, null, 2));
@@ -276,7 +282,7 @@ async function revert() {
         const inKnowledgeDir = path.join(inWorkspacePath, 'knowledge');
         let promptLibSystem: any = null;
 
-        async function readPromptNode(dir: string, relativeParent: string = '/'): Promise<any> {
+        async function readPromptNode(dir: string, relativeParent: string = '/', itemRelName: string = ''): Promise<any> {
             try {
                 const stat = await fs.stat(dir);
                 if (!stat.isDirectory()) return null;
@@ -288,6 +294,8 @@ async function revert() {
             } catch { /* ignore */ }
 
             const node: any = {
+                id: relativeParent === '/' ? 'root' : 'dir-' + itemRelName,
+                name: relativeParent === '/' ? 'Prompt Library' : itemRelName,
                 type: 'directory',
                 path: relativeParent,
                 children: []
@@ -297,6 +305,9 @@ async function revert() {
             }
 
             const items = await fs.readdir(dir);
+            // Sort items intuitively
+            items.sort();
+
             for (const item of items) {
                 if (item === 'config.json' || item === '.DS_Store') continue;
                 const fullPath = path.join(dir, item);
@@ -305,24 +316,39 @@ async function revert() {
                 const itemRelPath = (relativeParent === '/' ? '/' : relativeParent + '/') + item;
 
                 if (stat.isDirectory()) {
-                    const childNode = await readPromptNode(fullPath, itemRelPath);
+                    const childNode = await readPromptNode(fullPath, itemRelPath, item);
                     if (childNode) node.children.push(childNode);
                 } else if (stat.isFile()) {
                     let fileContent = await fs.readFile(fullPath, 'utf8');
                     const { frontmatter, body } = parseFrontmatter(fileContent);
 
+                    const idMatch = item.match(/^(.*?)\.md$/);
+                    const fileId = idMatch ? 'frag-' + idMatch[1] : 'frag-' + item;
+
                     const fileNode: any = {
+                        id: fileId,
+                        name: item,
                         type: 'file',
                         path: itemRelPath,
-                        content: body
                     };
+
                     if (Object.keys(frontmatter).length > 0) {
                         fileNode.frontmatter = frontmatter;
                     }
 
+                    fileNode.content = body;
+
                     node.children.push(fileNode);
                 }
             }
+
+            // sort children by frontmatter order if present
+            node.children.sort((a: any, b: any) => {
+                const orderA = a.frontmatter?.order ?? (a.type === 'directory' ? -1 : Number.MAX_SAFE_INTEGER);
+                const orderB = b.frontmatter?.order ?? (b.type === 'directory' ? -1 : Number.MAX_SAFE_INTEGER);
+                if (orderA !== orderB) return orderA - orderB;
+                return a.name.localeCompare(b.name);
+            });
 
             return node;
         }
