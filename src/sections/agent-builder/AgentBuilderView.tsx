@@ -230,7 +230,30 @@ function AgentBuilderPreviewContent({ data, flowBuilderData, firstAgent }: Agent
 
   // Field handlers
   const handleFieldValueChange = useCallback((fieldId: string, value: FormFieldValue) => {
-    setFormValues(prev => ({ ...prev, [fieldId]: value }))
+    setFormValues(prev => {
+      // If fieldId contains '/', handle nested update
+      if (fieldId.includes('/')) {
+        const parts = fieldId.split('/')
+        const newFormValues = { ...prev }
+        let current: any = newFormValues
+
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i]
+          if (!current[part] || typeof current[part] !== 'object') {
+            current[part] = {}
+          } else {
+            current[part] = { ...current[part] }
+          }
+          current = current[part]
+        }
+
+        current[parts[parts.length - 1]] = value
+        return newFormValues
+      }
+
+      // Otherwise fallback to flat update
+      return { ...prev, [fieldId]: value }
+    })
   }, [])
 
   const handleEnableFieldForRuntime = useCallback((fieldId: string) => {

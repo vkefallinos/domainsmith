@@ -30,38 +30,48 @@
             }
           ],
           "config": {
-            "emptyFieldsForRuntime": [
-              "field-unit-focus",
-              "field-topics"
-            ]
+            "emptyFieldsForRuntime": {
+              "curriculum": [
+                "unit-focus"
+              ],
+              "subjects": [
+                "topics"
+              ]
+            }
           },
           "formValues": {
-            "gradeLevel": "opt-8th-grade",
-            "classSize": "opt-large",
-            "studentNeeds": [
-              "opt-reading-intervention",
-              "opt-special-ed"
-            ],
-            "learningModel": "opt-in-person",
-            "resourcesAvailable": [
-              "opt-1to1"
-            ],
-            "curriculumFramework": "opt-common-core",
-            "assessmentMethods": [
-              "opt-formative",
-              "opt-summative",
-              "opt-performance"
-            ],
-            "pacingGuide": true,
-            "differentiationRequired": true,
-            "unitFocus": "Linear Equations",
-            "primarySubject": "opt-math-subject",
-            "topics": [],
-            "skillLevel": "opt-proficient",
-            "crossCurricular": [
-              "opt-real-world"
-            ],
-            "essentialQuestions": "How can we represent real-world situations with equations?"
+            "classroom": {
+              "grade-level": "8th-grade",
+              "class-size": "large",
+              "student-needs": [
+                "reading-intervention",
+                "special-education"
+              ],
+              "learning-model": "in-person",
+              "resources": [
+                "1to1-devices"
+              ]
+            },
+            "curriculum": {
+              "framework": "common-core",
+              "assessment-methods": [
+                "formative",
+                "summative",
+                "performance-tasks"
+              ],
+              "pacing-guide": true,
+              "differentiation-required": true,
+              "unit-focus": "Linear Equations"
+            },
+            "subjects": {
+              "primary-subject": "mathematics",
+              "topics": [],
+              "skill-level": "proficient",
+              "cross-curricular": [
+                "real-world-applications"
+              ],
+              "essential-questions": "How can we represent real-world situations with equations?"
+            }
           },
           "conversations": [
             {
@@ -220,65 +230,46 @@
             }
           ],
           "config": {
-            "emptyFieldsForRuntime": [
-              {
-                "id": "field-unit-focus",
-                "label": "Current Unit or Topic Focus",
-                "domain": "/curriculum/unit-focus"
-              },
-              {
-                "id": "field-topics",
-                "label": "Topics to Cover",
-                "domain": "/subjects/topics"
-              },
-              {
-                "id": "field-essential-questions",
-                "label": "Essential Questions to Address",
-                "domain": "/subjects/essential-questions"
-              }
-            ]
+            "emptyFieldsForRuntime": {
+              "curriculum": [
+                "unit-focus"
+              ],
+              "subjects": [
+                "topics"
+              ]
+            }
           },
           "formValues": {
-            "gradeLevel": "opt-5th-grade",
-            "classSize": "opt-medium",
-            "studentNeeds": [
-              "opt-ell",
-              "opt-gifted"
-            ],
-            "learningModel": "opt-in-person",
-            "resourcesAvailable": [
-              "opt-1to1",
-              "opt-interactive-whiteboard"
-            ],
-            "yearsExperience": "opt-beginning",
-            "subjectExpertise": [
-              "opt-math",
-              "opt-science"
-            ],
-            "teachingStyle": [
-              "opt-differentiated",
-              "opt-pbl"
-            ],
-            "certifications": [
-              "opt-elementary"
-            ],
-            "professionalGoals": "Improve engagement through hands-on activities",
-            "curriculumFramework": "opt-common-core",
-            "assessmentMethods": [
-              "opt-formative",
-              "opt-project-based-assessment"
-            ],
-            "pacingGuide": true,
-            "differentiationRequired": true,
-            "unitFocus": "",
-            "primarySubject": "opt-math-subject",
-            "topics": [],
-            "skillLevel": "opt-developing",
-            "crossCurricular": [
-              "opt-real-world",
-              "opt-technology"
-            ],
-            "essentialQuestions": ""
+            "classroom": {
+              "grade-level": "8th-grade",
+              "class-size": "large",
+              "student-needs": [
+                "reading-intervention",
+                "special-education"
+              ],
+              "learning-model": "in-person",
+              "resources": [
+                "1to1-devices"
+              ]
+            },
+            "curriculum": {
+              "framework": "common-core",
+              "assessment-methods": [
+                "formative",
+                "summative",
+                "performance-tasks"
+              ],
+              "pacing-guide": true,
+              "differentiation-required": true
+            },
+            "subjects": {
+              "primary-subject": "mathematics",
+              "skill-level": "proficient",
+              "cross-curricular": [
+                "real-world-applications"
+              ],
+              "essential-questions": "How can we represent real-world situations with equations?"
+            }
           },
           "conversations": [
             {
@@ -2537,19 +2528,21 @@
             }
           ],
           "config": {
-            "emptyFieldsForRuntime": [
-              "field-watering-frequency"
-            ]
+            "emptyFieldsForRuntime": {
+              "care-routine": [
+                "watering-frequency"
+              ]
+            }
           },
           "formValues": {
-            "field-plant-type": "Houseplant",
-            "field-growth-stage": "Vegetative",
-            "field-light-exposure": "Bright Indirect",
-            "field-watering-frequency": "Weekly",
-            "field-constraints": [
-              "Pet-safe only",
-              "Low maintenance"
-            ]
+            "plant-profile": {
+              "plant-type": "houseplant",
+              "growth-stage": "vegetative"
+            },
+            "care-routine": {
+              "light-exposure": "bright indirect",
+              "watering-frequency": "weekly"
+            }
           },
           "conversations": []
         }
@@ -2899,30 +2892,34 @@
           "mainInstruction": "",
           "slashActions": [],
           "config": {
-            "emptyFieldsForRuntime": []
+            "emptyFieldsForRuntime": {}
           },
           "formValues": {
-            "projectType": "opt-spa",
-            "frontendFramework": "opt-react",
-            "cssFramework": "opt-tailwind",
-            "stateManagement": "opt-zustand",
-            "buildTool": "opt-vite",
-            "testingFramework": [
-              "vitest",
-              "msw"
-            ],
-            "experienceLevel": "opt-intermediate",
-            "specialization": [
-              "opt-fullstack"
-            ],
-            "codingStyle": [
-              "opt-typescript",
-              "opt-functional"
-            ],
-            "architecturePattern": "opt-component-based",
-            "designPatterns": [
-              "opt-observer"
-            ]
+            "project": {
+              "project-type": "spa",
+              "frontend-framework": "react",
+              "css-framework": "tailwind",
+              "state-management": "zustand",
+              "testing-framework": [
+                "vitest",
+                "msw"
+              ]
+            },
+            "developer": {
+              "experience-level": "intermediate",
+              "specialization": [
+                "fullstack"
+              ],
+              "coding-style": [
+                "typescript",
+                "functional"
+              ]
+            },
+            "architecture": {
+              "design-patterns": [
+                "observer"
+              ]
+            }
           },
           "conversations": []
         },
@@ -2952,36 +2949,33 @@
             }
           ],
           "config": {
-            "emptyFieldsForRuntime": [
-              "field-feature-description"
-            ]
+            "emptyFieldsForRuntime": {
+              "feature": [
+                "feature-description"
+              ]
+            }
           },
           "formValues": {
-            "projectType": "opt-spa",
-            "frontendFramework": "opt-react",
-            "cssFramework": "opt-tailwind",
-            "stateManagement": "opt-zustand",
-            "buildTool": "opt-vite",
-            "testingFramework": [
-              "vitest",
-              "testing-library"
-            ],
-            "experienceLevel": "opt-intermediate",
-            "specialization": [
-              "opt-frontend"
-            ],
-            "codingStyle": [
-              "opt-functional",
-              "opt-typescript"
-            ],
-            "learningGoals": "Advanced React patterns",
-            "architecturePattern": "opt-component-based",
-            "designPatterns": [],
-            "codeOrganization": [
-              "opt-feature-based"
-            ],
-            "featureType": "opt-component",
-            "featureDescription": ""
+            "project": {
+              "project-type": "spa",
+              "frontend-framework": "react",
+              "css-framework": "tailwind",
+              "state-management": "zustand",
+              "testing-framework": [
+                "vitest",
+                "testing-library"
+              ]
+            },
+            "developer": {
+              "experience-level": "intermediate",
+              "specialization": [
+                "frontend"
+              ],
+              "coding-style": [
+                "functional",
+                "typescript"
+              ]
+            }
           },
           "conversations": []
         },

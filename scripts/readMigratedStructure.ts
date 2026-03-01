@@ -29,7 +29,7 @@ interface AgentInstructFrontmatter {
 }
 
 interface AgentConfig {
-  emptyFieldsForRuntime: any[];
+  emptyFieldsForRuntime: string[] | Record<string, string[]>;
 }
 
 interface AgentFormValues {

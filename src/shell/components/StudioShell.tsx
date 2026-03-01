@@ -43,6 +43,21 @@ function useWorkspace(workspaceName?: string): Workspace {
   }, [workspaceName, workspaces])
 }
 
+/**
+ * Converts emptyFieldsForRuntime from the nested config format
+ * { curriculum: ["unit-focus"], subjects: ["topics"] }
+ * to a flat array of path-based field IDs
+ * ["curriculum/unit-focus", "subjects/topics"]
+ * Also accepts the legacy flat array format unchanged.
+ */
+function flattenEmptyFieldsForRuntime(value: unknown): string[] {
+  if (Array.isArray(value)) return value as string[]
+  if (!value || typeof value !== 'object') return []
+  return Object.entries(value as Record<string, unknown>).flatMap(([category, fields]) =>
+    Array.isArray(fields) ? (fields as string[]).map(f => `${category}/${f}`) : []
+  )
+}
+
 type StudioState = {
   sidebarCollapsed: boolean
 }
@@ -259,7 +274,7 @@ export function StudioShell({
       ),
       formValues: agent.formValues,
       enabledTools: [],
-      emptyFieldsForRuntime: agent.config.emptyFieldsForRuntime || [],
+      emptyFieldsForRuntime: flattenEmptyFieldsForRuntime(agent.config.emptyFieldsForRuntime),
       attachedFlows: (agent.slashActions || []).map(sa => ({
         flowId: sa.flowId,
         flowName: sa.name,
