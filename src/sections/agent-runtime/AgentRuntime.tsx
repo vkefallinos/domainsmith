@@ -33,6 +33,8 @@ export default function AgentRuntimePreview() {
             role: msg.role as 'user' | 'assistant',
             content: msg.content,
             timestamp: msg.timestamp,
+            slashAction: (msg as any).slashAction,
+            structuredOutput: (msg as any).structuredOutput,
           })),
         createdAt: conv.createdAt,
         updatedAt: conv.updatedAt,

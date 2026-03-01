@@ -18,13 +18,26 @@ function toRuntimeAgent(agent: DataAgent): RuntimeAgent {
     domains: agent.frontmatter.selectedDomains || [],
     formValues: agent.formValues as Record<string, string | string[] | boolean>,
     // Fields listed in config.emptyFieldsForRuntime become runtime fields
-    runtimeFields: (agent.config?.emptyFieldsForRuntime || []).map((fieldId: string) => ({
-      id: fieldId,
-      label: fieldId,
-      type: 'text' as const,
-      value: (agent.formValues?.[fieldId] as string) || '',
-      domain: '',
-    })),
+    runtimeFields: (agent.config?.emptyFieldsForRuntime || []).map((field: any) => {
+      const fieldId = typeof field === 'string' ? field : field.id
+      const label = typeof field === 'string' ? field : (field.label || field.id)
+      const domain = typeof field === 'string' ? '' : (field.domain || '')
+
+      // Try to find the value in formValues using the ID, or by stripping 'field-' prefix
+      let value = agent.formValues?.[fieldId]
+      if (value === undefined && fieldId.startsWith('field-')) {
+        const strippedId = fieldId.replace('field-', '')
+        value = agent.formValues?.[strippedId]
+      }
+
+      return {
+        id: fieldId,
+        label: label,
+        type: 'text' as const, // Default to text, maybe should be more?
+        value: (value as string | string[] | boolean) || '',
+        domain: domain,
+      }
+    }),
     // No tool resolution from JSON for now — empty array avoids the crash
     enabledTools: [],
     systemPrompt: agent.mainInstruction || '',

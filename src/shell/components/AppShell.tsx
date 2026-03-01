@@ -83,6 +83,8 @@ export function AppShell({
                 role: msg.role as MessageRole,
                 content: msg.content,
                 timestamp: msg.timestamp,
+                slashAction: msg.slashAction,
+                structuredOutput: msg.structuredOutput,
               })),
             createdAt: conv.createdAt,
             updatedAt: conv.updatedAt,

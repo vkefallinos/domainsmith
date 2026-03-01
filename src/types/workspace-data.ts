@@ -57,7 +57,7 @@ export interface AgentFrontmatter {
 }
 
 export interface AgentConfig {
-  emptyFieldsForRuntime: string[]
+  emptyFieldsForRuntime: (string | { id: string; label: string; domain: string })[]
   [key: string]: unknown
 }
 
