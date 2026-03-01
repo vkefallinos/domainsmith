@@ -1,212 +1,122 @@
-# Agent Directives for Design OS
+# Agents Guide (Minimal)
 
-Design OS is a **product planning and design tool** that helps users define their product vision, sketch out their data shape, design their UI, and prepare export packages for implementation in a separate codebase.
+## LMTHING
 
-> **Important**: Design OS is a planning tool, not the end product codebase. The screen designs and components generated here are meant to be exported and integrated into your actual product's codebase.
+LMTHING is a no-code platform designed to help users build, configure, and deploy custom AI agents by leveraging specific domain expertise.
 
----
+### Core Features
 
-## Understanding Design OS Context
+1. **Knowledge Organization (Domains)**
+	- Structure domain knowledge (for example, Classroom Management or Teacher Profile) as markdown in a file-tree format.
+	- This works as a prompt library that provides context to agents.
 
-When working in Design OS, be aware of two distinct contexts:
+2. **Agent Configuration (Studio)**
+	- Build specialized agents by combining high-level instructions with selected knowledge domains.
+	- Define parameters such as grade level, class size, and teaching style.
 
-### 1. Design OS Application
-The React application that displays and manages planning files. When modifying the Design OS UI itself:
-- Files live in `src/` (components, pages, utilities)
-- Uses the Design OS design system (stone palette, DM Sans, etc.)
-- Provides the interface for viewing specs, screen designs, exports, etc.
+3. **Task Workflows (Commands)**
+	- Create multi-step visual workflows for repeatable outcomes.
+	- Each task can define its own prompt, expected JSON output schema, and model selection.
+	- Models can be configured per task (for example, Claude 3.5 Sonnet or Claude 3 Opus).
+	- Example workflow: Generate Title and Overview → Generate Objectives → Generate Differentiation Strategies.
 
-### 2. Product Design (Screen Designs & Exports)
-The product you're planning and designing. When creating screen designs and exports:
-- Screen design components live in `src/sections/[section-name]/` and `src/shell/`
-- Product definition files live in `product/`
-- Exports are packaged to `product-plan/` for integration into a separate codebase
-- Follow the design requirements specified in each section's spec
+4. **Agent Execution (Chat)**
+	- Test and run agents in a dedicated chat interface.
+	- Provide runtime fields (for example, topic or duration) and trigger workflows to generate structured outputs.
 
----
+## Project
+- Vite + React + TypeScript app.
+- Main runtime data source: `src/extracted_data_structure.json`.
+- Canonical TS shapes: `src/types/workspace-data.ts`.
 
-## Getting Started — The Planning Flow
+## Core Data Model
+`workspaces -> { workspaceId -> { agents, flows, knowledge, packageJson } }`
 
-Design OS follows a structured planning sequence:
+### Agent (required keys)
+- `id`
+- `frontmatter` (`name`, `description`, `tools`, `selectedDomains`)
+- `mainInstruction`
+- `slashActions[]` (`name`, `description`, `flowId`, `actionId`)
+- `config.emptyFieldsForRuntime`
+- `formValues`
+- `conversations[]`
 
-### 1. Product Vision (`/product-vision`)
-Define your product overview, roadmap sections, and data shape — all in one conversational flow. After answering clarifying questions, all three files are generated automatically.
-**Output:** `product/product-overview.md`, `product/product-roadmap.md`, `product/data-shape/data-shape.md`
+### Built-in Agent: `thing`
+- `thing` is the Studio-side AI chat agent.
+- UI behavior: it opens as a right-side panel and pushes main Studio content to the left.
+- Responsibility: execute workspace data mutations and updates through the same in-memory actions used by Studio.
 
-Use `/product-roadmap`, `/data-shape` individually to update those files after initial creation.
+#### Supported workspace actions
+- `setCurrentWorkspace`
+- `reload`
+- `upsertAgent`
+- `deleteAgent`
+- `upsertFlow`
+- `deleteFlow`
+- `updateKnowledgeFileContent`
+- `updateKnowledgeFileFrontmatter`
+- `updateKnowledgeDirectoryConfig`
+- `addKnowledgeNode`
+- `updateKnowledgeNodePath`
+- `deleteKnowledgeNode`
+- `duplicateKnowledgeNode`
 
-### 2. Design System (`/design-tokens`)
-Choose your color palette (from Tailwind) and typography (from Google Fonts). These tokens are applied to all screen designs.
-**Output:** `product/design-system/colors.json`, `product/design-system/typography.json`
+#### Message format
+- `thing` accepts plain commands (`help`, `status`) and JSON envelopes:
+- `{"action":"<actionName>","payload":{...}}`
 
-### 3. Application Shell (`/design-shell`)
-Design the persistent navigation and layout that wraps all sections.
-**Output:** `product/shell/spec.md`, `src/shell/components/`
+### Flow (required keys)
+- `id`
+- `frontmatter` (`id`, `name`, `status`, `scope`, `agentId`, `tags`, `taskCount`)
+- `description`
+- `tasks[]` (`order`, `name`, `frontmatter`, `instructions`, optional `outputSchema`, optional `targetFieldName`)
 
-### 4. For Each Section:
-- `/shape-section` — Define the specification and generate sample data + types
-- `/sample-data` — Update sample data and types (if already created)
-- `/design-screen` — Create screen designs
-- `/screenshot-design` — Capture screenshots
+### Knowledge
+- Tree of `directory|file` nodes.
+- UI-relevant metadata lives in `config` (`label`, `fieldType`, `variableName`, `renderAs`, etc).
 
-### 5. Export (`/export-product`)
-Generate the complete export package with all components, types, and handoff documentation.
-**Output:** `product-plan/`
+## Implementation Notes
+- Data is loaded by `WorkspaceDataProvider` in `src/lib/workspaceDataContext.tsx`.
+- Persisted edits can be read from `localStorage` key: `domainsmith-workspace-data`.
+- Runtime agent mapping is in `src/hooks/useAgents.ts` (`toRuntimeAgent`).
 
----
+## File Save/Load (ZIP + GitHub Repo)
+- Export uses `src/lib/workspaceExport.ts`.
+	- ZIP export: `downloadWorkspaceZip()` / `downloadAllWorkspacesZip()`.
+	- GitHub export: `exportWorkspaceToNewGithubRepo()`.
+- GitHub load uses `src/lib/github/workspaceLoader.ts` via `WorkspaceDataProvider`.
+- File-path mapping follows the same structure shown in `scripts/readMigratedStructure.ts`.
 
-## File Structure
+### Path Mapping (workspace object -> files)
+- `packageJson` -> `package.json`
+- `agents[{agentId}]` -> `agents/{agentId}/`
+	- `frontmatter + mainInstruction + slashActions` -> `agents/{agentId}/instruct.md`
+	- `config` -> `agents/{agentId}/config.json`
+	- `formValues` -> `agents/{agentId}/values.json`
+	- `conversations[]` -> `agents/{agentId}/conversations/{conversationId}.json`
+- `flows[{flowId}]` -> `flows/{flowId}/`
+	- `frontmatter + description` -> `flows/{flowId}/index.md`
+	- `tasks[]` -> `flows/{flowId}/{order}.{name}.md`
+		- task `outputSchema` + `targetFieldName` are encoded in `<output ...>` tag in each task file
+- `knowledge[]` -> `knowledge/**`
+	- directory node `config` -> `knowledge/{path}/config.json`
+	- file node `frontmatter + content` -> `knowledge/{path}.md`
 
-```
-product/                           # Product definition (portable)
-├── product-overview.md            # Product description, problems/solutions, features
-├── product-roadmap.md             # List of sections with titles and descriptions
-│
-├── data-shape/                    # Product data shape
-│   └── data-shape.md              # Entity names, descriptions, and relationships
-│
-├── design-system/                 # Design tokens
-│   ├── colors.json                # { primary, secondary, neutral }
-│   └── typography.json            # { heading, body, mono }
-│
-├── shell/                         # Application shell
-│   └── spec.md                    # Shell specification
-│
-└── sections/
-    └── [section-name]/
-        ├── spec.md                # Section specification
-        ├── data.json              # Sample data for screen designs
-        ├── types.ts               # TypeScript interfaces
-        └── *.png                  # Screenshots
+### Tag/Frontmatter Conventions
+- `instruct.md` supports `<slash_action name="..." description="..." flowId="...">/actionId</slash_action>` blocks.
+- flow task markdown supports `<output target="fieldName">{...json schema...}</output>`.
+- Markdown frontmatter is parsed/serialized as flat key-value YAML-like lines (JSON values allowed for arrays/objects).
 
-src/
-├── shell/                         # Shell design components
-│   ├── components/
-│   │   ├── AppShell.tsx
-│   │   ├── MainNav.tsx
-│   │   ├── UserMenu.tsx
-│   │   └── index.ts
-│   └── ShellPreview.tsx
-│
-└── sections/
-    └── [section-name]/
-        ├── components/            # Exportable components
-        │   ├── [Component].tsx
-        │   └── index.ts
-        └── [ViewName].tsx         # Preview wrapper
+### Root Layout Differences
+- ZIP export includes a workspace root folder (`{workspace.id}/...`).
+- GitHub repo export writes files at repo root (`agents/`, `flows/`, `knowledge/`, `package.json`) without a `{workspace.id}` folder.
 
-product-plan/                      # Export package (generated)
-├── README.md                      # Quick start guide
-├── product-overview.md            # Product summary
-├── prompts/                       # Ready-to-use prompts for coding agents
-│   ├── one-shot-prompt.md         # Prompt for full implementation
-│   └── section-prompt.md          # Prompt template for incremental
-├── instructions/                  # Implementation instructions
-│   ├── one-shot-instructions.md   # All milestones combined
-│   └── incremental/               # Milestone-by-milestone instructions
-│       ├── 01-shell.md
-│       └── [NN]-[section-id].md   # Section-specific instructions
-├── design-system/                 # Tokens, colors, fonts
-├── data-shapes/                   # UI data contracts (types components expect)
-├── shell/                         # Shell components
-└── sections/                      # Section components (with tests.md each)
-```
+## Guardrails
+- Keep JSON and TS types in sync.
+- Keep IDs stable (`agentId`, `flowId`, workspace keys).
+- `config.emptyFieldsForRuntime` must remain compatible with flattening in `src/lib/utils.ts`.
+- Do not remove expected `frontmatter` keys used by lists and filters.
 
----
-
-## Design Requirements
-
-When creating screen designs, follow these guidelines:
-
-- **Mobile Responsive**: Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`, `xl:`) to ensure layouts adapt properly across screen sizes.
-
-- **Light & Dark Mode**: Use `dark:` variants for all colors. Test that all UI elements are visible and readable in both modes.
-
-- **Use Design Tokens**: When design tokens are defined, apply the product's color palette and typography. Otherwise, fall back to `stone` for neutrals and `lime` for accents.
-
-- **Props-Based Components**: All screen design components must accept data and callbacks via props. Never import data directly in exportable components.
-
-- **No Navigation in Section Screen Designs**: Section screen designs should not include navigation chrome. The shell handles all navigation.
-
----
-
-## Tailwind CSS Directives
-
-These rules apply to both the Design OS application and all screen designs/components it generates:
-
-- **Tailwind CSS v4**: We always use Tailwind CSS v4 (not v3). Do not reference or create v3 patterns.
-
-- **No tailwind.config.js**: Tailwind CSS v4 does not use a `tailwind.config.js` file. Never reference, create, or modify one.
-
-- **Use Built-in Utility Classes**: Avoid writing custom CSS. Stick to using Tailwind's built-in utility classes for all styling.
-
-- **Use Built-in Colors**: Avoid defining custom colors. Use Tailwind's built-in color utility classes (e.g., `stone-500`, `lime-400`, `red-600`).
-
----
-
-## The Four Pillars
-
-Design OS is organized around four main areas:
-
-1. **Product Overview** — The "what" and "why"
-   - Product name and description
-   - Problems and solutions
-   - Key features
-   - Sections/roadmap
-
-2. **Data Shape** — The "nouns" of the system
-   - Core entity names and descriptions
-   - Conceptual relationships between entities
-   - Shared vocabulary for consistent naming across sections
-
-3. **Design System** — The "look and feel"
-   - Color palette (Tailwind colors)
-   - Typography (Google Fonts)
-
-4. **Application Shell** — The persistent chrome
-   - Global navigation structure
-   - User menu
-   - Layout pattern
-
-Plus **Sections** — The individual features, each with spec, data, screen designs.
-
----
-
-## Design System Scope
-
-Design OS separates concerns between its own UI and the product being designed:
-
-- **Design OS UI**: Always uses the stone/lime palette and DM Sans typography
-- **Product Screen Designs**: Use the design tokens defined for the product (when available)
-- **Shell**: Uses product design tokens to preview the full app experience
-
----
-
-## Export & Handoff
-
-The `/export-product` command generates a UI design handoff package:
-
-- **Ready-to-use prompts**: Pre-written prompts to copy/paste into coding agents
-  - `one-shot-prompt.md`: For full implementation in one session
-  - `section-prompt.md`: Template for section-by-section implementation
-- **Implementation instructions**: UI-focused guides for each milestone
-  - `product-overview.md`: Always provide for context
-  - `one-shot-instructions.md`: All milestones combined
-  - Incremental instructions in `instructions/incremental/`
-- **Test specs**: Each section includes `tests.md` with UI behavior specs
-- **Portable components**: Props-based, ready for any React setup
-- **Data shapes**: TypeScript interfaces defining what data the components expect
-
-The handoff focuses on UI designs, product requirements, and user flows. Backend architecture, data modeling, and business logic decisions are left to the implementation agent. The prompts guide the agent to ask clarifying questions about tech stack and requirements before building.
-
----
-
-## Design System (Design OS Application)
-
-The Design OS application itself uses a "Refined Utility" aesthetic:
-
-- **Typography**: DM Sans for headings and body, IBM Plex Mono for code
-- **Colors**: Stone palette for neutrals (warm grays), lime for accents
-- **Layout**: Maximum 800px content width, generous whitespace
-- **Cards**: Minimal borders (1px), subtle shadows, generous padding
-- **Motion**: Subtle fade-ins (200ms), no bouncy animations
+## Quick Validation
+- App runs with `npm run dev`.
+- Build check: `npm run build`.
