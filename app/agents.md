@@ -1,6 +1,4 @@
-# Agents Guide (Minimal)
-
-## LMTHING
+# LMTHING
 
 LMTHING is a no-code platform designed to help users build, configure, and deploy custom AI agents by leveraging specific domain expertise.
 
