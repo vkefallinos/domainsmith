@@ -713,9 +713,6 @@ export function StudioShell({
   const handleDeleteDomainClick = useCallback((domainId: string) => {
     onDeleteDomain?.(domainId)
   }, [onDeleteDomain])
-  useEffect(() => {
-    handleExpandAll()
-  }, [domainFileSystem, handleExpandAll])
 
   // Show loading state while data loads (new hooks don't have loading, so we check if data exists)
   if (knowledgeSections.length === 0 && Object.keys(agentsMap).length === 0) {
