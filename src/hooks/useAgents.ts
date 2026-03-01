@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useWorkspaceData } from '@/lib/workspaceDataContext'
+import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
 import type { Agent as DataAgent, AgentListItem } from '@/types/workspace-data'
 import type { Agent as RuntimeAgent } from '@/../product/sections/agent-runtime/types'
 
@@ -17,8 +18,9 @@ function toRuntimeAgent(agent: DataAgent): RuntimeAgent {
     description: agent.frontmatter.description || '',
     domains: agent.frontmatter.selectedDomains || [],
     formValues: agent.formValues as Record<string, string | string[] | boolean>,
-    // Fields listed in config.emptyFieldsForRuntime become runtime fields
-    runtimeFields: (agent.config?.emptyFieldsForRuntime || []).map((field: any) => {
+    // Fields listed in config.emptyFieldsForRuntime become runtime fields.
+    // Supports both legacy flat array ["category/field"] and nested object { category: ["field"] }.
+    runtimeFields: flattenEmptyFieldsForRuntime(agent.config?.emptyFieldsForRuntime).map((field: any) => {
       const fieldId = typeof field === 'string' ? field : field.id
       const label = typeof field === 'string' ? field : (field.label || field.id)
       const domain = typeof field === 'string' ? '' : (field.domain || '')

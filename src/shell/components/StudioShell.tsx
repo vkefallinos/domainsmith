@@ -22,6 +22,7 @@ import type {
 } from '@/../product/sections/agent-builder/types'
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
+import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
 
 // Helper to get workspace from URL param
 function useWorkspace(workspaceName?: string): Workspace {
@@ -41,21 +42,6 @@ function useWorkspace(workspaceName?: string): Workspace {
     const first = workspaces[0]
     return first ? { id: first.id.toString(), name: first.name, color: '#10b981' } : defaultWorkspace
   }, [workspaceName, workspaces])
-}
-
-/**
- * Converts emptyFieldsForRuntime from the nested config format
- * { curriculum: ["unit-focus"], subjects: ["topics"] }
- * to a flat array of path-based field IDs
- * ["curriculum/unit-focus", "subjects/topics"]
- * Also accepts the legacy flat array format unchanged.
- */
-function flattenEmptyFieldsForRuntime(value: unknown): string[] {
-  if (Array.isArray(value)) return value as string[]
-  if (!value || typeof value !== 'object') return []
-  return Object.entries(value as Record<string, unknown>).flatMap(([category, fields]) =>
-    Array.isArray(fields) ? (fields as string[]).map(f => `${category}/${f}`) : []
-  )
 }
 
 type StudioState = {
