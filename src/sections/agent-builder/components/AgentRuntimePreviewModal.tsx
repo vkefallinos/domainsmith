@@ -162,8 +162,7 @@ export function AgentRuntimePreviewModal({
         onClick={handleClose}
       />
       <div
-        className="relative flex flex-col w-full max-w-5xl min-w-[340px] max-h-[80vh] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
-        style={{ height: 'auto' }}
+        className="relative flex h-[80vh] max-h-[80vh] w-full max-w-5xl min-w-[340px] flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div>

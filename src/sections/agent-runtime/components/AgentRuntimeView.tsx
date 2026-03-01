@@ -109,9 +109,9 @@ export function AgentRuntimeView({
   }
 
   return (
-    <div className="h-screen flex bg-white dark:bg-slate-950 overflow-hidden">
+    <div className="h-full min-h-0 flex bg-white dark:bg-slate-950 overflow-hidden">
       {/* Left Panel - Runtime Fields + Tools (35-40%) */}
-      <div className="w-[380px] flex-shrink-0 border-r border-slate-200 dark:border-slate-800">
+      <div className="w-[380px] min-h-0 flex-shrink-0 border-r border-slate-200 dark:border-slate-800">
         <RuntimePanel
           agent={agent}
           runtimeFieldValues={runtimeFieldValues}
@@ -121,7 +121,7 @@ export function AgentRuntimeView({
       </div>
 
       {/* Right Panel - Chat Interface (60-65%) */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 min-h-0 flex flex-col min-w-0">
         {/* Top navigation bar */}
         {!hideTopNav && (
           <div className="flex-shrink-0 px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30">
