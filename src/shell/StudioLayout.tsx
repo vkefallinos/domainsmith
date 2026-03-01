@@ -96,30 +96,44 @@ export default function StudioLayout() {
       return
     }
 
-    // Get the full flow data from the flows map
-    // For now, create a simplified flow object from the attached flow data
+    // Get the flow ID and source flow data first (needed for fullFlow construction)
+    const flowId = attachedFlow.flowId
+    const sourceFlow = flowId ? flowsMap[flowId] : null
+
+    // Build the Flow object for the UI editor
     const fullFlow: Flow = {
       id: attachedFlow.flowId,
       name: attachedFlow.flowName,
-      description: attachedFlow.flowDescription,
+      description: attachedFlow.flowDescription ?? '',
       agentId: agentId || '',
       status: 'active',
+      scope: (sourceFlow?.frontmatter?.scope as Flow['scope']) ?? 'agent-specific',
       tags: [],
       taskCount: 0,
+      lastRunAt: (sourceFlow?.frontmatter?.lastRunAt as string) ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
-
-    // Get the tasks for this flow from the actual flow data in the agent
-    const agent = agentsMap[agentId || '']
-    const flowData = agent?.slashActions?.find(sa => sa.actionId === actionId)
-    // Tasks are nested in the flow data, for now use empty array
-    const flowTasks: Task[] = []
+    const flowTasks: Task[] = (sourceFlow?.tasks ?? []).map(ft => ({
+      id: `task_${ft.order}_${flowId}`,
+      flowId: flowId,
+      type: (ft.frontmatter?.type as Task['type']) ?? 'updateFlowOutput',
+      order: ft.order,
+      name: ft.name,
+      description: ft.frontmatter?.description ?? '',
+      config: {
+        taskInstructions: ft.instructions,
+        outputSchema: ft.outputSchema as import('@/../product/sections/flow-builder/types').JSONSchema | undefined,
+        targetFieldName: ft.targetFieldName,
+        model: ft.frontmatter?.model as string | undefined,
+        temperature: ft.frontmatter?.temperature as number | undefined,
+      },
+      status: 'valid' as const,
+    }))
 
     setCurrentEditingFlow(fullFlow)
     setCurrentEditingTasks(flowTasks)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionId, attachedFlows, agentsMap, agentId])
+  }, [actionId, attachedFlows, flowsMap, agentId])
 
   const handleCloseFlowEditor = useCallback(() => {
     setCurrentEditingFlow(null)
