@@ -13,6 +13,7 @@ import type {
   FileSystemNode,
   PromptFragment,
   Directory,
+  DirectoryConfig,
   NewFileForm,
   NewFolderForm,
   PromptFrontmatter,
@@ -127,6 +128,7 @@ export interface StudioShellProps {
   onExpandAll?: () => void
   onCollapseAll?: () => void
   onEditContent?: (content: string) => void
+  onEditDirectoryConfig?: (directoryPath: string, config: DirectoryConfig) => void
   onSave?: () => void
   onCreateFile?: (form: NewFileForm) => void
   onCreateFolder?: (form: NewFileForm) => void
@@ -216,6 +218,7 @@ export function StudioShell({
   onExpandAll,
   onCollapseAll,
   onEditContent,
+  onEditDirectoryConfig,
   onSave,
   onCreateFile,
   onCreateFolder,
@@ -321,6 +324,7 @@ export function StudioShell({
     deleteAgent,
     updateKnowledgeFileContent,
     updateKnowledgeFileFrontmatter,
+    updateKnowledgeDirectoryConfig,
   } = useWorkspaceData()
 
   // Extract agents from agents map
@@ -588,6 +592,11 @@ export function StudioShell({
       setSelectedFile((prev) => (prev ? { ...prev, frontmatter } : prev))
     }
   }, [selectedFile, updateKnowledgeFileFrontmatter])
+
+  const handleEditDirectoryConfig = useCallback((directoryPath: string, config: DirectoryConfig) => {
+    updateKnowledgeDirectoryConfig(directoryPath, config as Record<string, unknown>)
+    onEditDirectoryConfig?.(directoryPath, config)
+  }, [onEditDirectoryConfig, updateKnowledgeDirectoryConfig])
 
   const flushPendingKnowledgeEdits = useCallback(() => {
     if (contentEditDebounceRef.current) {
@@ -1302,6 +1311,7 @@ export function StudioShell({
               onCollapseAll={handleCollapseAll}
               onEditContent={handleEditContent}
               onEditFrontmatter={handleEditFrontmatter}
+              onEditDirectoryConfig={handleEditDirectoryConfig}
               onSave={handleSave}
               onCreateFile={handleCreateFile}
               onCreateFolder={handleCreateFolder}

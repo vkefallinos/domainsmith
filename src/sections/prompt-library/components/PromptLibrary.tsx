@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo, useEffect, type KeyboardEvent, type MouseEvent } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect, type MouseEvent } from 'react'
 import {
   ChevronRight,
   ChevronDown,
@@ -39,6 +39,7 @@ import type {
   FileSystemNode,
   PromptFragment,
   Directory,
+  DirectoryConfig,
   NewFileForm,
   NewFolderForm,
   UnsavedChangesAction,
@@ -54,12 +55,13 @@ interface ContextMenuProps {
   onClose: () => void
   onRename: () => void
   onMove: () => void
+  onEditConfig: () => void
   onDelete: () => void
   onDuplicate: () => void
   position: { x: number; y: number }
 }
 
-function ContextMenu({ node, onClose, onRename, onMove, onDelete, onDuplicate, position }: ContextMenuProps) {
+function ContextMenu({ node, onClose, onRename, onMove, onEditConfig, onDelete, onDuplicate, position }: ContextMenuProps) {
   const isDirectory = node.type === 'directory'
 
   return (
@@ -85,13 +87,24 @@ function ContextMenu({ node, onClose, onRename, onMove, onDelete, onDuplicate, p
             Move to...
           </button>
         )}
-        <button
-          onClick={() => { onDuplicate(); onClose() }}
-          className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-violet-950/30 flex items-center gap-3 transition-colors"
-        >
-          <Copy className="w-4 h-4 text-slate-400" />
-          Duplicate
-        </button>
+        {isDirectory && (
+          <button
+            onClick={() => { onEditConfig(); onClose() }}
+            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-violet-950/30 flex items-center gap-3 transition-colors"
+          >
+            <Edit3 className="w-4 h-4 text-slate-400" />
+            Edit config
+          </button>
+        )}
+        {!isDirectory && (
+          <button
+            onClick={() => { onDuplicate(); onClose() }}
+            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-violet-950/30 flex items-center gap-3 transition-colors"
+          >
+            <Copy className="w-4 h-4 text-slate-400" />
+            Duplicate
+          </button>
+        )}
         <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
         <button
           onClick={() => { onDelete(); onClose() }}
@@ -117,6 +130,7 @@ interface TreeNodeProps {
   hasUnsaved: (id: string) => boolean
   onToggle: (path: string) => void
   onSelect: (file: PromptFragment) => void
+  onSelectDirectory: (directory: Directory) => void
   onContextMenu: (node: FileSystemNode, position: { x: number; y: number }) => void
 }
 
@@ -128,6 +142,7 @@ function TreeNode({
   hasUnsaved,
   onToggle,
   onSelect,
+  onSelectDirectory,
   onContextMenu,
 }: TreeNodeProps) {
   const isDir = node.type === 'directory'
@@ -138,6 +153,7 @@ function TreeNode({
   const handleClick = () => {
     if (isDir) {
       onToggle(node.path)
+      onSelectDirectory(node as Directory)
     } else {
       onSelect(node as PromptFragment)
     }
@@ -227,6 +243,7 @@ function TreeNode({
               hasUnsaved={hasUnsaved}
               onToggle={onToggle}
               onSelect={onSelect}
+              onSelectDirectory={onSelectDirectory}
               onContextMenu={onContextMenu}
             />
           ))}
@@ -795,6 +812,162 @@ function MetadataPanel({ frontmatter, onChange, fileName, filePath }: MetadataPa
   )
 }
 
+interface DirectoryMetadataPanelProps {
+  config: DirectoryConfig | undefined
+  onChange: (config: DirectoryConfig) => void
+  directoryName: string
+  directoryPath: string
+}
+
+function DirectoryMetadataPanel({ config, onChange, directoryName, directoryPath }: DirectoryMetadataPanelProps) {
+  const [localConfig, setLocalConfig] = useState<DirectoryConfig>(config || {})
+
+  useEffect(() => {
+    setLocalConfig(config || {})
+  }, [config])
+
+  const handleChange = (key: keyof DirectoryConfig, value: unknown) => {
+    const updated = { ...localConfig, [key]: value }
+    setLocalConfig(updated)
+    onChange(updated)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Directory Metadata</h4>
+        <span className="text-xs text-slate-500 dark:text-slate-400">config.json</span>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Label</label>
+          <input
+            type="text"
+            value={(localConfig.label as string) || ''}
+            onChange={(e) => handleChange('label', e.target.value)}
+            placeholder="Human-readable folder label"
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Description</label>
+          <textarea
+            value={(localConfig.description as string) || ''}
+            onChange={(e) => handleChange('description', e.target.value)}
+            placeholder="Describe this directory's purpose"
+            rows={3}
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Icon</label>
+            <input
+              type="text"
+              value={(localConfig.icon as string) || ''}
+              onChange={(e) => handleChange('icon', e.target.value)}
+              placeholder="📁 or icon id"
+              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Color</label>
+            <input
+              type="text"
+              value={(localConfig.color as string) || ''}
+              onChange={(e) => handleChange('color', e.target.value)}
+              placeholder="e.g. #6366f1"
+              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Render As</label>
+            <select
+              value={(localConfig.renderAs as string) || ''}
+              onChange={(e) => handleChange('renderAs', e.target.value || undefined)}
+              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+            >
+              <option value="">Default</option>
+              <option value="section">section</option>
+              <option value="field">field</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Field Type</label>
+            <select
+              value={(localConfig.fieldType as string) || ''}
+              onChange={(e) => handleChange('fieldType', e.target.value || undefined)}
+              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+            >
+              <option value="">Default</option>
+              <option value="text">text</option>
+              <option value="textarea">textarea</option>
+              <option value="select">select</option>
+              <option value="multiselect">multiselect</option>
+              <option value="toggle">toggle</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Variable Name</label>
+          <input
+            type="text"
+            value={(localConfig.variableName as string) || ''}
+            onChange={(e) => handleChange('variableName', e.target.value)}
+            placeholder="Variable key used in templates"
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Placeholder</label>
+          <input
+            type="text"
+            value={(localConfig.placeholder as string) || ''}
+            onChange={(e) => handleChange('placeholder', e.target.value)}
+            placeholder="Input placeholder"
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Hint</label>
+          <textarea
+            value={(localConfig.hint as string) || ''}
+            onChange={(e) => handleChange('hint', e.target.value)}
+            placeholder="Hint shown below the field"
+            rows={2}
+            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:text-white transition-all"
+          />
+        </div>
+
+        <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+          <input
+            type="checkbox"
+            checked={Boolean(localConfig.required)}
+            onChange={(e) => handleChange('required', e.target.checked)}
+            className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+          />
+          Required
+        </label>
+
+        <div className="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400">Directory Info</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 font-mono truncate">{directoryName}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-500 truncate">{directoryPath}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ============================================================================
 // SUB-COMPONENT: WYSIWYG Editor
 // ============================================================================
@@ -1000,6 +1173,7 @@ export function PromptLibrary({
   onCollapseAll,
   onEditContent,
   onEditFrontmatter,
+  onEditDirectoryConfig,
   onSave,
   onUnsavedChangesAction,
   onCreateFile,
@@ -1026,12 +1200,8 @@ export function PromptLibrary({
   const [newFileParentPath, setNewFileParentPath] = useState('/')
   const [showMetadata, setShowMetadata] = useState(false)
   const [localFrontmatter, setLocalFrontmatter] = useState<PromptFrontmatter | undefined>(selectedFile?.frontmatter)
-
-  const editorRef = useRef<HTMLTextAreaElement>(null)
-
-  // Determine selected node type for tool sidebar
-  const selectedNodeType = selectedFile ? 'file' as const : undefined
-  const selectedNodePath = selectedFile?.path
+  const [selectedDirectory, setSelectedDirectory] = useState<Directory | null>(null)
+  const [localDirectoryConfig, setLocalDirectoryConfig] = useState<DirectoryConfig | undefined>(undefined)
 
   // Track unsaved files
   const isFileUnsaved = (fileId: string) => {
@@ -1049,8 +1219,27 @@ export function PromptLibrary({
     setEditorContent(file.content)
     setNewFileParentPath(file.path.substring(0, file.path.lastIndexOf('/')) || '/')
     setLocalFrontmatter(file.frontmatter)
+    setSelectedDirectory(null)
     onSelectFile(file)
   }, [unsavedChanges, selectedFile, onSelectFile])
+
+  const handleSelectDirectory = useCallback((directory: Directory) => {
+    setSelectedDirectory(directory)
+    setLocalDirectoryConfig(directory.config)
+    setNewFileParentPath(directory.path)
+  }, [])
+
+  const handleEditDirectoryConfigFromMenu = useCallback(() => {
+    const node = contextMenu.node
+    if (!node || node.type !== 'directory') {
+      return
+    }
+
+    setSelectedDirectory(node)
+    setLocalDirectoryConfig(node.config)
+    setNewFileParentPath(node.path)
+    setShowMetadata(true)
+  }, [contextMenu.node])
 
   const handleUnsavedAction = useCallback((action: UnsavedChangesAction) => {
     setShowUnsavedModal(false)
@@ -1125,7 +1314,7 @@ export function PromptLibrary({
   const handleDuplicate = useCallback(() => {
     closeContextMenu()
     if (contextMenu.node) {
-      onDuplicate(contextMenu.node.id)
+      onDuplicate?.(contextMenu.node.id)
     }
   }, [closeContextMenu, contextMenu.node, onDuplicate])
 
@@ -1144,6 +1333,13 @@ export function PromptLibrary({
     onEditFrontmatter?.(frontmatter)
   }, [onEditFrontmatter])
 
+  const handleDirectoryConfigChange = useCallback((config: DirectoryConfig) => {
+    setLocalDirectoryConfig(config)
+    if (selectedDirectory?.path) {
+      onEditDirectoryConfig?.(selectedDirectory.path, config)
+    }
+  }, [onEditDirectoryConfig, selectedDirectory])
+
   // Update frontmatter when selection changes
   useEffect(() => {
     if (selectedFile) {
@@ -1152,6 +1348,32 @@ export function PromptLibrary({
       setLocalFrontmatter(undefined)
     }
   }, [selectedFile])
+
+  useEffect(() => {
+    if (!selectedDirectory) {
+      setLocalDirectoryConfig(undefined)
+      return
+    }
+
+    const findDirectoryByPath = (node: FileSystemNode, targetPath: string): Directory | null => {
+      if (node.type === 'directory') {
+        if (node.path === targetPath) {
+          return node
+        }
+        for (const child of node.children || []) {
+          const found = findDirectoryByPath(child, targetPath)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    const refreshed = findDirectoryByPath(fileSystem, selectedDirectory.path)
+    if (refreshed) {
+      setSelectedDirectory(refreshed)
+      setLocalDirectoryConfig(refreshed.config)
+    }
+  }, [fileSystem, selectedDirectory])
 
   // Filter tree nodes based on search
   const filterNodes = (nodes: FileSystemNode[], query: string): FileSystemNode[] => {
@@ -1180,13 +1402,6 @@ export function PromptLibrary({
     ...fileSystem,
     children: filterNodes(fileSystem.children || [], searchQuery),
   }
-
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault()
-      handleSave()
-    }
-  }, [handleSave])
 
   const totalItems = useMemo(() => {
     const count = (node: FileSystemNode): number => {
@@ -1298,10 +1513,11 @@ export function PromptLibrary({
                 node={node}
                 level={0}
                 isExpanded={(path) => expandedFolders.includes(path)}
-                isSelected={(id) => selectedFile?.id === id}
+                isSelected={(id) => selectedDirectory?.id === id || selectedFile?.id === id}
                 hasUnsaved={isFileUnsaved}
                 onToggle={onToggleFolder}
                 onSelect={handleSelectFile}
+                onSelectDirectory={handleSelectDirectory}
                 onContextMenu={handleContextMenu}
               />
             ))
@@ -1332,7 +1548,21 @@ export function PromptLibrary({
         {/* Editor Header */}
         <div className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 bg-slate-50/50 dark:bg-slate-800/50 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            {selectedFile ? (
+            {selectedDirectory ? (
+              <>
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600">
+                  <Folder className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate text-sm">
+                    {localDirectoryConfig?.label || selectedDirectory.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {selectedDirectory.path}
+                  </p>
+                </div>
+              </>
+            ) : selectedFile ? (
               <>
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600">
                   <FileText className="w-3.5 h-3.5 text-white" />
@@ -1353,13 +1583,13 @@ export function PromptLibrary({
                 )}
               </>
             ) : (
-              <div className="text-slate-400 text-sm">No file selected</div>
+              <div className="text-slate-400 text-sm">No item selected</div>
             )}
           </div>
 
           <div className="flex items-center gap-1.5">
             {/* Toggle Metadata Panel */}
-            {selectedFile && (
+            {(selectedFile || selectedDirectory) && (
               <button
                 onClick={() => setShowMetadata(!showMetadata)}
                 className={`
@@ -1405,7 +1635,7 @@ export function PromptLibrary({
         {/* Main Content Area */}
         <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Metadata Panel */}
-          {showMetadata && selectedFile && (
+          {showMetadata && (selectedFile || selectedDirectory) && (
             <aside className="w-72 border-r border-slate-200 dark:border-slate-800 p-4 overflow-y-auto bg-slate-50/30 dark:bg-slate-800/30 min-h-0">
               <style>{`
                 .metadata-scroll::-webkit-scrollbar {
@@ -1428,18 +1658,37 @@ export function PromptLibrary({
                   background: rgb(71 85 105);
                 }
               `}</style>
-              <MetadataPanel
-                frontmatter={localFrontmatter}
-                onChange={handleFrontmatterChange}
-                fileName={selectedFile.name}
-                filePath={selectedFile.path}
-              />
+              {selectedDirectory ? (
+                <DirectoryMetadataPanel
+                  config={localDirectoryConfig}
+                  onChange={handleDirectoryConfigChange}
+                  directoryName={selectedDirectory.name}
+                  directoryPath={selectedDirectory.path}
+                />
+              ) : selectedFile ? (
+                <MetadataPanel
+                  frontmatter={localFrontmatter}
+                  onChange={handleFrontmatterChange}
+                  fileName={selectedFile.name}
+                  filePath={selectedFile.path}
+                />
+              ) : null}
             </aside>
           )}
 
           {/* Editor Area */}
           <div className="flex-1 flex flex-col min-h-0">
-            {selectedFile ? (
+            {selectedDirectory ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-8">
+                <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4">
+                  <Folder className="w-12 h-12 opacity-50" />
+                </div>
+                <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">Directory selected</h3>
+                <p className="text-sm max-w-md text-center">
+                  Use the metadata panel to edit this directory&apos;s config values.
+                </p>
+              </div>
+            ) : selectedFile ? (
               <WysiwygEditor
                 content={editorContent}
                 onChange={handleEditContent}
@@ -1470,6 +1719,7 @@ export function PromptLibrary({
           onClose={closeContextMenu}
           onRename={handleRename}
           onMove={handleMove}
+          onEditConfig={handleEditDirectoryConfigFromMenu}
           onDelete={handleDelete}
           onDuplicate={handleDuplicate}
         />

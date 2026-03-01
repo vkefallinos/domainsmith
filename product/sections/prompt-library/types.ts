@@ -271,6 +271,8 @@ export interface PromptLibraryProps {
   onEditContent: (content: string) => void;
   /** Callback when file frontmatter metadata is edited */
   onEditFrontmatter?: (frontmatter: PromptFrontmatter) => void;
+  /** Callback when directory config metadata is edited */
+  onEditDirectoryConfig?: (directoryPath: string, config: DirectoryConfig) => void;
   /** Callback when changes are saved */
   onSave: () => void;
   /** Callback when unsaved changes dialog action is chosen */

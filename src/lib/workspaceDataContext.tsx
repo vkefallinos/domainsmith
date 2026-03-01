@@ -46,6 +46,7 @@ interface WorkspaceDataContextValue {
   deleteFlow: (flowId: string) => void
   updateKnowledgeFileContent: (filePath: string, content: string) => void
   updateKnowledgeFileFrontmatter: (filePath: string, frontmatter: Record<string, unknown>) => void
+  updateKnowledgeDirectoryConfig: (directoryPath: string, config: Record<string, unknown>) => void
   reload: () => Promise<void>
 }
 
@@ -96,6 +97,35 @@ function updateKnowledgeNodeFrontmatter(
 
   const nextChildren = node.children.map((child) =>
     updateKnowledgeNodeFrontmatter(child, targetPath, frontmatter)
+  )
+
+  return {
+    ...node,
+    children: nextChildren,
+  }
+}
+
+function updateKnowledgeNodeDirectoryConfig(
+  node: KnowledgeNode,
+  targetPath: string,
+  config: Record<string, unknown>
+): KnowledgeNode {
+  if (node.type === 'directory' && node.path === targetPath) {
+    return {
+      ...node,
+      config: {
+        ...(node.config || {}),
+        ...config,
+      },
+    }
+  }
+
+  if (!node.children || node.children.length === 0) {
+    return node
+  }
+
+  const nextChildren = node.children.map((child) =>
+    updateKnowledgeNodeDirectoryConfig(child, targetPath, config)
   )
 
   return {
@@ -330,6 +360,18 @@ export function WorkspaceDataProvider({
     [updateCurrentWorkspace]
   )
 
+  const updateKnowledgeDirectoryConfig = useCallback(
+    (directoryPath: string, config: Record<string, unknown>) => {
+      updateCurrentWorkspace((workspace) => ({
+        ...workspace,
+        knowledge: workspace.knowledge.map((node) =>
+          updateKnowledgeNodeDirectoryConfig(node, directoryPath, config)
+        ),
+      }))
+    },
+    [updateCurrentWorkspace]
+  )
+
   // Computed values
   const workspaceData: WorkspaceData | null = useMemo(
     () => (currentWorkspace && data ? data.workspaces[currentWorkspace] : null),
@@ -364,6 +406,7 @@ export function WorkspaceDataProvider({
     deleteFlow,
     updateKnowledgeFileContent,
     updateKnowledgeFileFrontmatter,
+    updateKnowledgeDirectoryConfig,
     reload: loadData,
   }
 
