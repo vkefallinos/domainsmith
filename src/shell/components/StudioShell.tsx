@@ -1,12 +1,13 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { StudioSidebar } from './StudioSidebar'
-import { Plus, Bot, Folder, Zap, Play, Download } from 'lucide-react'
+import { Plus, Bot, Folder, Zap, Play, Download, Github } from 'lucide-react'
 import { PromptLibrary } from '@/sections/prompt-library/components/PromptLibrary'
 import { AgentFormBuilder } from '@/sections/agent-builder/components/AgentFormBuilder'
 import { AgentRuntimeView } from '@/sections/agent-runtime/components'
 import { useAgents, useKnowledgeSections, useFlows, useRuntimeAgents } from '@/lib/workspaceContext'
 import { useWorkspaceData } from '@/lib/workspaceDataContext'
+import { useGithub } from '@/lib/github/GithubContext'
 import type { KnowledgeNode } from '@/types/workspace-data'
 import type {
   PromptLibraryProps,
@@ -32,8 +33,14 @@ import type {
 import { workspaceToSlug, type Workspace } from './WorkspaceSelector'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { flattenEmptyFieldsForRuntime } from '@/lib/utils'
-import { downloadWorkspaceZip } from '@/lib/workspaceExport'
+import { downloadWorkspaceZip, exportWorkspaceToNewGithubRepo } from '@/lib/workspaceExport'
 import type { Agent as WorkspaceAgent } from '@/types/workspace-data'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 function toAgentId(name: string): string {
   const base = name
@@ -268,6 +275,12 @@ export function StudioShell({
   const pendingFrontmatterEditRef = useRef<{ path: string; frontmatter: Record<string, unknown> } | null>(null)
   const runtimeResponseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isExportingWorkspace, setIsExportingWorkspace] = useState(false)
+  const [isExportingGithubRepo, setIsExportingGithubRepo] = useState(false)
+  const [githubExportProgress, setGithubExportProgress] = useState<{
+    uploadedFiles: number
+    totalFiles: number
+    currentPath: string
+  } | null>(null)
 
   // Extract domains from knowledge sections
   const domains = useMemo(() => {
@@ -329,6 +342,7 @@ export function StudioShell({
     updateKnowledgeFileFrontmatter,
     updateKnowledgeDirectoryConfig,
   } = useWorkspaceData()
+  const { octokit, isAuthenticated, user: githubUser } = useGithub()
 
   // Extract agents from agents map
   const agents = useMemo(() => {
@@ -1085,6 +1099,76 @@ export function StudioShell({
     }
   }, [workspaceData])
 
+  const handleExportWorkspaceToGithub = useCallback(async () => {
+    if (!workspaceData || !octokit || !githubUser) return
+
+    const defaultRepoName = `${workspaceData.id}-export`
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+
+    const repoName = window.prompt('Repository name for export:', defaultRepoName)?.trim()
+    if (!repoName) return
+
+    const privateRepo = window.confirm(
+      'Create as a private repository?\n\nClick OK for private, Cancel for public.'
+    )
+
+    const commitMessage = window.prompt(
+      'Commit message for the initial export:',
+      `Export workspace "${workspaceData.id}"`
+    )?.trim()
+
+    if (!commitMessage) return
+
+    try {
+      setIsExportingGithubRepo(true)
+      setGithubExportProgress({
+        uploadedFiles: 0,
+        totalFiles: 0,
+        currentPath: 'Preparing export…',
+      })
+
+      const result = await exportWorkspaceToNewGithubRepo(workspaceData, {
+        octokit,
+        owner: githubUser.login,
+        repoName,
+        privateRepo,
+        commitMessage,
+        onProgress: (progress) => {
+          setGithubExportProgress(progress)
+        },
+      })
+
+      const shouldOpen = window.confirm(
+        `Export completed. Created ${result.filesCreated} files in ${result.owner}/${result.repoName}.\n\nOpen repository now?`
+      )
+      if (shouldOpen) {
+        window.open(result.repoUrl, '_blank', 'noopener,noreferrer')
+      }
+    } catch (error) {
+      console.error('Failed to export workspace to GitHub:', error)
+      const apiError = error as {
+        status?: number
+        message?: string
+        response?: {
+          data?: {
+            message?: string
+          }
+        }
+      }
+
+      const statusText = apiError?.status ? ` (status ${apiError.status})` : ''
+      const detail = apiError?.response?.data?.message || apiError?.message || 'Unknown error'
+      window.alert(
+        `Failed to create GitHub repository export${statusText}. ${detail}`
+      )
+    } finally {
+      setIsExportingGithubRepo(false)
+      setGithubExportProgress(null)
+    }
+  }, [workspaceData, octokit, githubUser])
+
   // Show loading state while data loads (new hooks don't have loading, so we check if data exists)
   if (knowledgeSections.length === 0 && Object.keys(agentsMap).length === 0) {
     return (
@@ -1188,14 +1272,60 @@ export function StudioShell({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleExportWorkspace}
-              disabled={!workspaceData || isExportingWorkspace}
-              className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              <Download className="h-4 w-4" />
-              {isExportingWorkspace ? 'Exporting…' : 'Export'}
-            </button>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    disabled={!workspaceData || isExportingWorkspace || isExportingGithubRepo}
+                    className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    <Download className="h-4 w-4" />
+                    {isExportingWorkspace
+                      ? 'Downloading…'
+                      : isExportingGithubRepo
+                        ? `Creating repo… (${githubExportProgress?.uploadedFiles ?? 0}/${githubExportProgress?.totalFiles ?? 0})`
+                        : 'Export'}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      void handleExportWorkspace()
+                    }}
+                    disabled={!workspaceData || isExportingWorkspace || isExportingGithubRepo}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download ZIP
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      void handleExportWorkspaceToGithub()
+                    }}
+                    disabled={!workspaceData || isExportingWorkspace || isExportingGithubRepo}
+                  >
+                    <Github className="mr-2 h-4 w-4" />
+                    Create GitHub Repo
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <button
+                onClick={handleExportWorkspace}
+                disabled={!workspaceData || isExportingWorkspace}
+                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <Download className="h-4 w-4" />
+                {isExportingWorkspace ? 'Exporting…' : 'Export'}
+              </button>
+            )}
+            {isExportingGithubRepo && githubExportProgress && (
+              <span
+                className="max-w-64 truncate text-xs text-slate-500 dark:text-slate-400"
+                title={githubExportProgress.currentPath}
+              >
+                Uploading: {githubExportProgress.currentPath}
+              </span>
+            )}
           </div>
         </header>
 
