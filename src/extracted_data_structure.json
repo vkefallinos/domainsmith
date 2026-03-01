@@ -1790,44 +1790,44 @@
             ]
           },
           "formValues": {
-            "gradeLevel": "opt-5th-grade",
-            "classSize": "opt-medium",
+            "gradeLevel": "5th-grade",
+            "classSize": "medium",
             "studentNeeds": [
-              "opt-ell",
-              "opt-gifted"
+              "english-language-learners",
+              "gifted-talented"
             ],
-            "learningModel": "opt-in-person",
+            "learningModel": "in-person",
             "resourcesAvailable": [
-              "opt-1to1",
-              "opt-interactive-whiteboard"
+              "1to1-devices",
+              "interactive-whiteboard"
             ],
-            "yearsExperience": "opt-beginning",
+            "yearsExperience": "3-5-years",
             "subjectExpertise": [
-              "opt-math",
-              "opt-science"
+              "mathematics",
+              "science"
             ],
             "teachingStyle": [
-              "opt-differentiated",
-              "opt-pbl"
+              "differentiated-instruction",
+              "project-based-learning"
             ],
             "certifications": [
-              "opt-elementary"
+              "general-elementary"
             ],
             "professionalGoals": "Improve engagement through hands-on activities",
-            "curriculumFramework": "opt-common-core",
+            "curriculumFramework": "common-core",
             "assessmentMethods": [
-              "opt-formative",
-              "opt-project-based-assessment"
+              "formative",
+              "project-based"
             ],
             "pacingGuide": true,
             "differentiationRequired": true,
             "unitFocus": "",
-            "primarySubject": "opt-math-subject",
+            "primarySubject": "mathematics",
             "topics": [],
-            "skillLevel": "opt-developing",
+            "skillLevel": "developing",
             "crossCurricular": [
-              "opt-real-world",
-              "opt-technology"
+              "real-world-applications",
+              "technology"
             ],
             "essentialQuestions": ""
           },
@@ -1994,30 +1994,30 @@
             ]
           },
           "formValues": {
-            "gradeLevel": "opt-8th-grade",
-            "classSize": "opt-large",
+            "gradeLevel": "8th-grade",
+            "classSize": "large",
             "studentNeeds": [
-              "opt-reading-intervention",
-              "opt-special-ed"
+              "reading-intervention",
+              "special-education"
             ],
-            "learningModel": "opt-in-person",
+            "learningModel": "in-person",
             "resourcesAvailable": [
-              "opt-1to1"
+              "1to1-devices"
             ],
-            "curriculumFramework": "opt-common-core",
+            "curriculumFramework": "common-core",
             "assessmentMethods": [
-              "opt-formative",
-              "opt-summative",
-              "opt-performance"
+              "formative",
+              "summative",
+              "performance-tasks"
             ],
             "pacingGuide": true,
             "differentiationRequired": true,
             "unitFocus": "Linear Equations",
-            "primarySubject": "opt-math-subject",
+            "primarySubject": "mathematics",
             "topics": [],
-            "skillLevel": "opt-proficient",
+            "skillLevel": "proficient",
             "crossCurricular": [
-              "opt-real-world"
+              "real-world-applications"
             ],
             "essentialQuestions": "How can we represent real-world situations with equations?"
           },

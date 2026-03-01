@@ -120,7 +120,7 @@ export function FormField({
       )}
 
       {/* Helper text for multi-select */}
-      {field.type === 'multiselect' && Array.isArray(value) && value.length > 0 && (
+      {field.fieldType === 'multiselect' && Array.isArray(value) && value.length > 0 && (
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
           {value.length} option{value.length > 1 ? 's' : ''} selected
         </p>
